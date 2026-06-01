@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Moss · Client Hours</title>
+  <link rel="icon" href="https://brand.foundingcreative.com/favicon.svg" />
+
+  <!-- Founding Creative brand typefaces (hosted on the design-system site) -->
+  <style>
+    @font-face {
+      font-family: 'Gelica'; font-style: normal; font-weight: 500; font-display: swap;
+      src: url('https://brand.foundingcreative.com/fonts/Gelica-Medium.otf') format('opentype');
+    }
+    @font-face {
+      font-family: 'Gelica'; font-style: normal; font-weight: 600; font-display: swap;
+      src: url('https://brand.foundingcreative.com/fonts/Gelica-SemiBold.otf') format('opentype');
+    }
+    @font-face {
+      font-family: 'Gelica'; font-style: normal; font-weight: 700; font-display: swap;
+      src: url('https://brand.foundingcreative.com/fonts/Gelica-Bold.otf') format('opentype');
+    }
+    @font-face {
+      font-family: 'Manrope'; font-style: normal; font-weight: 200 800; font-display: swap;
+      src: url('https://brand.foundingcreative.com/fonts/Manrope-VariableFont_wght.ttf') format('truetype-variations');
+    }
+
+    /* ── Brand tokens (mirrored from brand.foundingcreative.com/css/tokens.css) ── */
+    :root {
+      --n-black: #000000;
+      --n-ink: #1C1C1E;
+      --n-darker: #252424;
+      --white: #FFFFFF;
+      --mint: #7EF893;
+      --mint-dark: #64C675;
+      --mint-darkest: #254A2C;
+      --holo-lavender: #C6A2FF;
+      --holo-cyan: #69EEFF;
+      --white-5: rgba(255,255,255,0.05);
+      --white-10: rgba(255,255,255,0.10);
+      --white-20: rgba(255,255,255,0.20);
+      --white-60: rgba(255,255,255,0.60);
+      --text-dim: rgba(255,255,255,0.72);
+
+      --font-display: 'Gelica', 'Times New Roman', serif;
+      --font-body: 'Manrope', system-ui, -apple-system, sans-serif;
+
+      --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px; --r-full: 9999px;
+      --glow-mint: 0 0 40px rgba(126,248,147,0.30);
+      --shadow-xl: 0 8px 32px -4px rgba(0,0,0,0.45), 0 2px 4px rgba(0,0,0,0.2);
+
+      --c-retainer: var(--mint);
+      --c-sow: var(--holo-lavender);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(126,248,147,0.10), transparent 60%),
+        radial-gradient(900px 500px at -10% 10%, rgba(198,162,255,0.08), transparent 55%),
+        var(--n-black);
+      background-attachment: fixed;
+      color: var(--white);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      min-height: 100vh;
+    }
+    h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+
+    /* Header */
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--mint); margin-bottom: 14px;
+    }
+    .eyebrow::before { content: ''; width: 8px; height: 8px; border-radius: var(--r-full); background: var(--mint); box-shadow: var(--glow-mint); }
+    .title { font-size: clamp(40px, 6vw, 76px); line-height: 1.0; }
+    .subtitle { color: var(--text-dim); font-size: 18px; margin-top: 12px; max-width: 56ch; }
+
+    .topbar { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; justify-content: space-between; margin-bottom: 40px; }
+
+    /* Year selector */
+    .years { display: inline-flex; background: var(--white-5); border: 1px solid var(--white-10); border-radius: var(--r-full); padding: 4px; gap: 2px; }
+    .years button {
+      font-family: var(--font-body); font-size: 15px; font-weight: 600;
+      color: var(--text-dim); background: transparent; border: 0; cursor: pointer;
+      padding: 9px 18px; border-radius: var(--r-full); transition: all .15s ease;
+    }
+    .years button:hover { color: var(--white); }
+    .years button[aria-pressed="true"] { background: var(--mint); color: var(--n-black); }
+
+    /* Stat cards */
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+    @media (max-width: 800px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 460px) { .cards { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--white-5); border: 1px solid var(--white-10);
+      border-radius: var(--r-lg); padding: 22px 22px 20px;
+    }
+    .card .label { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--white-60); display: flex; align-items: center; gap: 8px; }
+    .card .value { font-family: var(--font-display); font-weight: 600; font-size: 40px; line-height: 1.1; margin-top: 10px; }
+    .card .value .unit { font-size: 16px; font-weight: 600; color: var(--text-dim); font-family: var(--font-body); margin-left: 4px; }
+    .card.accent { background: linear-gradient(180deg, rgba(126,248,147,0.14), rgba(126,248,147,0.04)); border-color: rgba(126,248,147,0.30); }
+    .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+    .dot.retainer { background: var(--c-retainer); }
+    .dot.sow { background: var(--c-sow); }
+
+    /* Panel */
+    .panel { background: var(--white-5); border: 1px solid var(--white-10); border-radius: var(--r-xl); padding: 28px; box-shadow: var(--shadow-xl); }
+    .panel-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; margin-bottom: 24px; }
+    .panel-head h2 { font-size: 24px; }
+    .legend { display: flex; gap: 18px; font-size: 14px; color: var(--text-dim); }
+    .legend span { display: inline-flex; align-items: center; gap: 8px; }
+
+    /* Chart */
+    .chart { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; align-items: end; height: 280px; padding-top: 8px; }
+    .col { display: flex; flex-direction: column; align-items: center; gap: 10px; height: 100%; justify-content: flex-end; }
+    .bar-stack { width: 100%; max-width: 34px; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; border-radius: var(--r-sm); overflow: hidden; position: relative; }
+    .bar { width: 100%; transition: height .5s cubic-bezier(.2,.7,.2,1); }
+    .bar.retainer { background: var(--c-retainer); }
+    .bar.sow { background: var(--c-sow); }
+    .col .mlabel { font-size: 12px; color: var(--white-60); font-weight: 600; letter-spacing: .03em; }
+    .col .mtotal { font-size: 12px; color: var(--white); font-weight: 700; min-height: 16px; }
+    .bar-stack:hover .bar { filter: brightness(1.12); }
+    .col .tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--n-ink); border: 1px solid var(--white-10); border-radius: var(--r-sm); padding: 8px 10px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 5; box-shadow: var(--shadow-xl); }
+    .colwrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; height: 100%; justify-content: flex-end; }
+    .colwrap:hover .tip { opacity: 1; }
+    .tip b { color: var(--mint); }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; margin-top: 28px; font-size: 14px; }
+    th, td { text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--white-10); }
+    th:first-child, td:first-child { text-align: left; }
+    thead th { color: var(--white-60); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; font-size: 12px; }
+    tbody tr:hover { background: var(--white-5); }
+    tfoot td { font-weight: 700; border-top: 2px solid var(--white-20); border-bottom: 0; }
+
+    /* States */
+    .state { text-align: center; padding: 80px 20px; color: var(--text-dim); }
+    .spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--white-10); border-top-color: var(--mint); animation: spin 1s linear infinite; margin: 0 auto 18px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: #ff9b9b; }
+    .error code { display: block; margin-top: 12px; color: var(--text-dim); font-size: 13px; word-break: break-word; }
+    .note { color: var(--white-60); font-size: 13px; margin-top: 18px; }
+    .footer { color: var(--white-60); font-size: 13px; margin-top: 40px; text-align: center; }
+    .footer a { color: var(--mint); text-decoration: none; }
+  </style>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useMemo } = React;
+
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const fmt = (n) => (Math.round((n || 0) * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 });
+
+    // Resolve API base + initial year from the query string; default to same-origin /api.
+    const params = new URLSearchParams(location.search);
+    const API_BASE = params.get('api') || '/api/time';
+    const CURRENT_YEAR = new Date().getFullYear();
+    const INITIAL_YEAR = parseInt(params.get('year')) || CURRENT_YEAR;
+    const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => CURRENT_YEAR - i);
+
+    function StatCard({ label, value, unit, accent, dot }) {
+      return (
+        <div className={'card' + (accent ? ' accent' : '')}>
+          <div className="label">{dot && <span className={'dot ' + dot}></span>}{label}</div>
+          <div className="value">{value}{unit && <span className="unit">{unit}</span>}</div>
+        </div>
+      );
+    }
+
+    function Chart({ retainer, sow }) {
+      const max = Math.max(1, ...MONTHS.map((_, i) => (retainer[i] || 0) + (sow[i] || 0)));
+      return (
+        <div className="chart" role="img" aria-label="Monthly hours by category">
+          {MONTHS.map((m, i) => {
+            const r = retainer[i] || 0, s = sow[i] || 0, total = r + s;
+            return (
+              <div className="colwrap" key={m}>
+                <div className="tip">
+                  {m}: <b>{fmt(total)}h</b><br />
+                  Retainer {fmt(r)}h · SOW {fmt(s)}h
+                </div>
+                <div className="mtotal">{total > 0 ? fmt(total) : ''}</div>
+                <div className="bar-stack" style={{ height: '100%' }}>
+                  <div className="bar sow" style={{ height: (s / max * 100) + '%' }}></div>
+                  <div className="bar retainer" style={{ height: (r / max * 100) + '%' }}></div>
+                </div>
+                <div className="mlabel">{m}</div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function App() {
+      const [year, setYear] = useState(INITIAL_YEAR);
+      const [data, setData] = useState(null);
+      const [error, setError] = useState(null);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        let cancelled = false;
+        setLoading(true); setError(null);
+        fetch(`${API_BASE}?year=${year}`)
+          .then(async (r) => {
+            if (!r.ok) throw new Error(`API ${r.status}: ${(await r.text()).slice(0, 300)}`);
+            return r.json();
+          })
+          .then((json) => { if (!cancelled) { setData(json); setLoading(false); } })
+          .catch((e) => { if (!cancelled) { setError(e.message); setLoading(false); } });
+        return () => { cancelled = true; };
+      }, [year]);
+
+      const totals = useMemo(() => {
+        const r = (data?.retainer || []).reduce((a, b) => a + b, 0);
+        const s = (data?.sow || []).reduce((a, b) => a + b, 0);
+        return { r, s, all: r + s };
+      }, [data]);
+
+      return (
+        <div className="wrap">
+          <div className="topbar">
+            <div>
+              <div className="eyebrow">Moss · Client Hours</div>
+              <h1 className="title">Hours Dashboard</h1>
+              <p className="subtitle">Time tracked across Retainer and SOW work, bucketed by month and pulled live from ClickUp.</p>
+            </div>
+            <div className="years" role="group" aria-label="Select year">
+              {YEAR_OPTIONS.map((y) => (
+                <button key={y} aria-pressed={y === year} onClick={() => setYear(y)}>{y}</button>
+              ))}
+            </div>
+          </div>
+
+          {loading && (
+            <div className="panel"><div className="state"><div className="spinner"></div>Loading {year} hours…</div></div>
+          )}
+
+          {!loading && error && (
+            <div className="panel"><div className="state error">
+              Couldn’t load data.
+              <code>{error}</code>
+              <div className="note">If this is a fresh deploy, confirm <b>CLICKUP_TOKEN</b> is set in Vercel and that the API is reachable at <code>{API_BASE}</code>.</div>
+            </div></div>
+          )}
+
+          {!loading && !error && data && (
+            <React.Fragment>
+              <div className="cards">
+                <StatCard label="Total Hours" value={fmt(totals.all)} unit="h" accent />
+                <StatCard label="Retainer" value={fmt(totals.r)} unit="h" dot="retainer" />
+                <StatCard label="SOW" value={fmt(totals.s)} unit="h" dot="sow" />
+                <StatCard label="Time Entries" value={(data.totalEntries || 0).toLocaleString()} />
+              </div>
+
+              <div className="panel">
+                <div className="panel-head">
+                  <h2>{year} · Monthly Breakdown</h2>
+                  <div className="legend">
+                    <span><span className="dot retainer"></span> Retainer</span>
+                    <span><span className="dot sow"></span> SOW</span>
+                  </div>
+                </div>
+
+                <Chart retainer={data.retainer || []} sow={data.sow || []} />
+
+                <table>
+                  <thead>
+                    <tr><th>Month</th><th>Retainer</th><th>SOW</th><th>Total</th></tr>
+                  </thead>
+                  <tbody>
+                    {MONTHS.map((m, i) => {
+                      const r = data.retainer?.[i] || 0, s = data.sow?.[i] || 0;
+                      return (
+                        <tr key={m}>
+                          <td>{m}</td><td>{fmt(r)}</td><td>{fmt(s)}</td><td>{fmt(r + s)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr><td>Total</td><td>{fmt(totals.r)}</td><td>{fmt(totals.s)}</td><td>{fmt(totals.all)}</td></tr>
+                  </tfoot>
+                </table>
+
+                {data.unmatchedEntries > 0 && (
+                  <div className="note">
+                    {data.unmatchedEntries.toLocaleString()} entr{data.unmatchedEntries === 1 ? 'y' : 'ies'}
+                    {' '}({fmt(data.unmatchedHours)}h) fell outside the Retainer/SOW folders and aren’t shown above.
+                  </div>
+                )}
+              </div>
+
+              <div className="footer">
+                Founding Creative · <a href="https://brand.foundingcreative.com">Brand System</a>
+              </div>
+            </React.Fragment>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

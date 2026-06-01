@@ -33,8 +33,34 @@ export default async function handler(req, res) {
 
     const { data: entries } = await cuRes.json();
 
+    // ClickUp's v2 /team/{id}/time_entries returns each entry with a
+    // `task_location: { list_id, folder_id, space_id }` object, so
+    // task_location.folder_id is the canonical field. The fallbacks below
+    // guard against shape differences. Hit /api/time?debug=1 in production
+    // to dump a raw entry and confirm the mapping against live data.
+    const folderIdOf = (entry) =>
+      String(
+        entry?.task_location?.folder_id ||
+          entry?.task_location?.folder?.id ||
+          entry?.folder?.id ||
+          entry?.list?.folder?.id ||
+          ''
+      );
+
+    if (req.query.debug) {
+      const sample = (entries || [])[0] || null;
+      return res.status(200).json({
+        year,
+        totalEntries: (entries || []).length,
+        resolvedFolderIdOfSample: sample ? folderIdOf(sample) : null,
+        sampleEntry: sample,
+      });
+    }
+
     const retainer = Array(12).fill(0);
     const sow = Array(12).fill(0);
+    let unmatchedEntries = 0;
+    let unmatchedHours = 0;
 
     for (const entry of entries || []) {
       const startTs = parseInt(entry.start);
@@ -45,19 +71,15 @@ export default async function handler(req, res) {
 
       const month = d.getMonth();
       const hours = (parseInt(entry.duration) || 0) / 3600000;
+      const fid = folderIdOf(entry);
 
-      // Try every location field ClickUp might use
-      const fid =
-        entry?.task_location?.folder_id ||
-        entry?.task_location?.folder?.id ||
-        entry?.folder?.id ||
-        entry?.list?.folder?.id ||
-        '';
-
-      if (FOLDER_IDS.retainer.includes(String(fid))) {
+      if (FOLDER_IDS.retainer.includes(fid)) {
         retainer[month] += hours;
-      } else if (FOLDER_IDS.sow.includes(String(fid))) {
+      } else if (FOLDER_IDS.sow.includes(fid)) {
         sow[month] += hours;
+      } else {
+        unmatchedEntries += 1;
+        unmatchedHours += hours;
       }
     }
 
@@ -66,6 +88,8 @@ export default async function handler(req, res) {
       retainer,
       sow,
       totalEntries: (entries || []).length,
+      unmatchedEntries,
+      unmatchedHours: Math.round(unmatchedHours * 100) / 100,
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });
