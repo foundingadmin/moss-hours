@@ -5,7 +5,7 @@ A tiny Vercel project that surfaces Moss client hours from ClickUp:
 - **`api/time.js`** — a serverless proxy that fetches ClickUp time entries for a
   given year, buckets them by month across the Retainer and SOW folders, and
   returns clean JSON (CORS enabled).
-- **`public/index.html`** — a self-contained React dashboard (no build step)
+- **`index.html`** — a self-contained React dashboard (no build step)
   styled with the [Founding Creative brand system](https://brand.foundingcreative.com).
 
 ## API
