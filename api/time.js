@@ -101,6 +101,7 @@ export default async function handler(req, res) {
     const toItems = (map) =>
       [...map.entries()]
         .map(([name, hours]) => ({ name, hours: round(hours) }))
+        .filter((t) => t.hours > 0) // drop tasks that round to 0h (milestones, sub-second timers)
         .sort((a, b) => b.hours - a.hours);
 
     const monthsOut = months.map((mo, i) => ({
