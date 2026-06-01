@@ -1,6 +1,9 @@
 const CLICKUP_TOKEN = process.env.CLICKUP_TOKEN;
 const WORKSPACE_ID = '9011561475';
 
+// Monthly Creative Retainer budget, in hours (used for % / remaining figures).
+const RETAINER_BUDGET_HOURS = 50;
+
 const FOLDER_IDS = {
   retainer: ['90114447278', '90116369473'],
   sow: ['90117343728', '90117412643'],
@@ -57,8 +60,14 @@ export default async function handler(req, res) {
       });
     }
 
-    const retainer = Array(12).fill(0);
-    const sow = Array(12).fill(0);
+    // One bucket per month, each tracking total hours plus a per-task tally
+    // (keyed by task name) for the Retainer and SOW categories.
+    const months = Array.from({ length: 12 }, () => ({
+      retainerHours: 0,
+      sowHours: 0,
+      retainerTasks: new Map(),
+      sowTasks: new Map(),
+    }));
     let unmatchedEntries = 0;
     let unmatchedHours = 0;
 
@@ -72,24 +81,47 @@ export default async function handler(req, res) {
       const month = d.getMonth();
       const hours = (parseInt(entry.duration) || 0) / 3600000;
       const fid = folderIdOf(entry);
+      const taskName = entry?.task?.name || '(untitled task)';
 
-      if (FOLDER_IDS.retainer.includes(fid)) {
-        retainer[month] += hours;
-      } else if (FOLDER_IDS.sow.includes(fid)) {
-        sow[month] += hours;
-      } else {
+      let bucket;
+      if (FOLDER_IDS.retainer.includes(fid)) bucket = months[month].retainerTasks;
+      else if (FOLDER_IDS.sow.includes(fid)) bucket = months[month].sowTasks;
+      else {
         unmatchedEntries += 1;
         unmatchedHours += hours;
+        continue;
       }
+
+      bucket.set(taskName, (bucket.get(taskName) || 0) + hours);
+      if (bucket === months[month].retainerTasks) months[month].retainerHours += hours;
+      else months[month].sowHours += hours;
     }
+
+    const round = (n) => Math.round(n * 100) / 100;
+    const toItems = (map) =>
+      [...map.entries()]
+        .map(([name, hours]) => ({ name, hours: round(hours) }))
+        .filter((t) => t.hours > 0) // drop tasks that round to 0h (milestones, sub-second timers)
+        .sort((a, b) => b.hours - a.hours);
+
+    const monthsOut = months.map((mo, i) => ({
+      month: i,
+      retainerHours: round(mo.retainerHours),
+      sowHours: round(mo.sowHours),
+      retainerItems: toItems(mo.retainerTasks),
+      sowItems: toItems(mo.sowTasks),
+    }));
 
     return res.status(200).json({
       year,
-      retainer,
-      sow,
+      retainerBudget: RETAINER_BUDGET_HOURS,
+      months: monthsOut,
+      // Flat aggregates kept for convenience / back-compat.
+      retainer: monthsOut.map((m) => m.retainerHours),
+      sow: monthsOut.map((m) => m.sowHours),
       totalEntries: (entries || []).length,
       unmatchedEntries,
-      unmatchedHours: Math.round(unmatchedHours * 100) / 100,
+      unmatchedHours: round(unmatchedHours),
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });

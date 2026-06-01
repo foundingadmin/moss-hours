@@ -3,10 +3,12 @@
 A tiny Vercel project that surfaces Moss client hours from ClickUp:
 
 - **`api/time.js`** — a serverless proxy that fetches ClickUp time entries for a
-  given year, buckets them by month across the Retainer and SOW folders, and
-  returns clean JSON (CORS enabled).
-- **`index.html`** — a self-contained React dashboard (no build step)
-  styled with the [Founding Creative brand system](https://brand.foundingcreative.com).
+  given year, buckets them by month across the Retainer and SOW folders (with a
+  per-task breakdown within each), and returns clean JSON (CORS enabled).
+- **`index.html`** — a self-contained, client-facing hours **report** (no build
+  step) styled with the [Founding Creative brand system](https://brand.foundingcreative.com):
+  summary cards, a grouped monthly overview chart (Chart.js), per-month
+  task-level line items with retainer budget usage, and a year-to-date table.
 
 ## API
 
@@ -19,16 +21,33 @@ Response:
 ```json
 {
   "year": 2026,
-  "retainer": [/* 12 monthly hour totals, Jan→Dec */],
-  "sow":      [/* 12 monthly hour totals, Jan→Dec */],
-  "totalEntries": 284,
-  "unmatchedEntries": 0,
-  "unmatchedHours": 0
+  "retainerBudget": 50,
+  "months": [
+    {
+      "month": 0,
+      "retainerHours": 7.83,
+      "sowHours": 10.93,
+      "retainerItems": [{ "name": "Program Color Palettes", "hours": 2.68 }],
+      "sowItems":      [{ "name": "Moss Brochure Template", "hours": 4.25 }]
+    }
+    /* …one entry per month, Jan→Dec */
+  ],
+  "retainer": [/* 12 monthly hour totals, Jan→Dec (convenience) */],
+  "sow":      [/* 12 monthly hour totals, Jan→Dec (convenience) */],
+  "totalEntries": 1732,
+  "unmatchedEntries": 1321,
+  "unmatchedHours": 13039.54
 }
 ```
 
-`unmatchedEntries` / `unmatchedHours` count time that fell outside the four
-tracked folders — a quick sanity check that the folder mapping is complete.
+- `months[]` carries the per-month, per-task detail the report renders.
+  `retainerItems` / `sowItems` are summed by task name and sorted descending.
+- `retainerBudget` is the assumed monthly retainer budget (hours) used for the
+  `% of budget` / `remaining` figures.
+- `retainer[]` / `sow[]` are flat monthly totals kept for convenience.
+- `unmatchedEntries` / `unmatchedHours` count time outside the four tracked
+  folders (i.e. other clients in the shared workspace) — a sanity check that the
+  folder mapping is complete.
 
 ### Folder mapping
 
