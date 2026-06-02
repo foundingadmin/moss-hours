@@ -6,128 +6,118 @@
   <title>Moss · Hours Report</title>
   <link rel="icon" href="https://brand.foundingcreative.com/favicon.svg" />
 
+  <!-- Founding Creative design-system tokens (fonts, colors, radius, shadows, spacing) -->
+  <link rel="stylesheet" href="https://brand.foundingcreative.com/css/tokens.css" />
+
   <style>
-    /* ── Founding Creative brand typefaces (hosted on the design-system site) ── */
-    @font-face {
-      font-family: 'Gelica'; font-style: normal; font-weight: 500; font-display: swap;
-      src: url('https://brand.foundingcreative.com/fonts/Gelica-Medium.otf') format('opentype');
-    }
-    @font-face {
-      font-family: 'Gelica'; font-style: normal; font-weight: 600; font-display: swap;
-      src: url('https://brand.foundingcreative.com/fonts/Gelica-SemiBold.otf') format('opentype');
-    }
-    @font-face {
-      font-family: 'Manrope'; font-style: normal; font-weight: 200 800; font-display: swap;
-      src: url('https://brand.foundingcreative.com/fonts/Manrope-VariableFont_wght.ttf') format('truetype-variations');
-    }
-
+    /* Report-specific styling, layered on the DS dark scheme (default in tokens.css). */
     :root {
-      /* Light, document-style scheme (brand light scheme + neutrals) */
-      --color-bg: #FFFFFF;
-      --color-text-primary: #1C1C1E;   /* brand n-ink */
-      --color-text-secondary: #5C5C5E;
-      --color-text-tertiary: #9A9A9C;
-      --color-background-secondary: #F4F4F2;
-      --color-border-tertiary: rgba(28, 28, 30, 0.10);
-
-      /* Category colors — brand mint (retainer) + holo lavender (SOW), tuned for white */
-      --retainer: #2FA869;
-      --retainer-dark: #1F6B45;
-      --sow: #6E59C7;
-      --sow-dark: #4B3B97;
-      --warn: #BA7517;
-      --over: #A32D2D;
-
-      --font-display: 'Gelica', 'Times New Roman', serif;
-      --font-body: 'Manrope', system-ui, -apple-system, sans-serif;
+      --retainer: var(--mint);                 /* #7EF893 */
+      --sow: var(--holo-lavender);             /* #C6A2FF */
+      --ok: var(--mint);
+      --warn: #F5C26B;
+      --over: #FF8A80;
+      --surface: rgba(255, 255, 255, 0.045);
+      --surface-2: rgba(255, 255, 255, 0.08);
+      --line: rgba(255, 255, 255, 0.12);
+      --dim: rgba(255, 255, 255, 0.66);
+      --dim-2: rgba(255, 255, 255, 0.45);
     }
 
-    * , *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
     body {
-      font-family: var(--font-body);
-      color: var(--color-text-primary);
-      background: var(--color-bg);
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
+      background:
+        radial-gradient(1100px 560px at 82% -8%, rgba(126, 248, 147, 0.10), transparent 60%),
+        radial-gradient(820px 460px at -10% 6%, rgba(198, 162, 255, 0.08), transparent 55%),
+        var(--n-black);
+      background-attachment: fixed;
+      font-size: 16px;
     }
-    .page { max-width: 760px; margin: 0 auto; padding: 40px 28px 72px; }
+    .page { max-width: 840px; margin: 0 auto; padding: 56px 28px 90px; }
 
     /* Header */
-    .report-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 6px; }
-    .report-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-    .report-range { font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; }
+    .report-head { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+    .report-title { font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; }
+    .report-range { font-size: 15px; color: var(--dim); white-space: nowrap; }
 
-    /* Year selector */
-    .years { display: inline-flex; gap: 2px; background: var(--color-background-secondary); border-radius: 999px; padding: 3px; margin: 10px 0 20px; }
-    .years button {
-      font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--color-text-secondary);
-      background: transparent; border: 0; cursor: pointer; padding: 5px 13px; border-radius: 999px; transition: all .12s ease;
+    /* Pill selectors (years + month tabs) */
+    .pills { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-full); padding: 4px; }
+    .pills.scroll { display: flex; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+    .pills.scroll::-webkit-scrollbar { display: none; }
+    .pill {
+      font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--dim);
+      background: transparent; border: 0; cursor: pointer; padding: 8px 18px; border-radius: var(--r-full);
+      transition: all .14s ease; white-space: nowrap;
     }
-    .years button:hover { color: var(--color-text-primary); }
-    .years button[aria-pressed="true"] { background: var(--retainer); color: #fff; }
+    .pill:hover { color: var(--white); }
+    .pill[aria-pressed="true"], .pill[aria-selected="true"] { background: var(--mint); color: var(--n-black); }
+    .years { margin: 16px 0 26px; }
 
     /* Disclaimer */
     .disclaimer {
-      font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 24px; line-height: 1.6;
-      border-left: 2px solid var(--color-border-tertiary); padding-left: 12px;
+      font-size: 14px; color: var(--dim); margin-bottom: 30px; line-height: 1.7; max-width: 64ch;
+      border-left: 2px solid rgba(126, 248, 147, 0.5); padding-left: 16px;
     }
 
     /* Summary cards */
-    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 28px; }
-    .summary .card { background: var(--color-background-secondary); border-radius: 8px; padding: 14px 16px; }
-    .summary .card .k { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
-    .summary .card .v { font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
-    .summary .card .s { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 34px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px 22px; }
+    .card.accent { background: linear-gradient(180deg, rgba(126, 248, 147, 0.14), rgba(126, 248, 147, 0.035)); border-color: rgba(126, 248, 147, 0.32); }
+    .card .k { font-size: 14px; font-weight: 600; color: var(--dim); margin-bottom: 8px; }
+    .card .v { font-family: var(--font-display); font-size: 36px; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; }
+    .card .s { font-size: 13.5px; color: var(--dim); margin-top: 6px; }
     .v.green { color: var(--retainer); }
     .v.purple { color: var(--sow); }
 
-    /* Overview chart */
-    .chart-wrap { position: relative; width: 100%; height: 200px; margin-bottom: 8px; }
-    .legend { display: flex; gap: 16px; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 32px; }
-    .legend span { display: flex; align-items: center; gap: 5px; }
-    .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+    /* Section heading */
+    .sec-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; margin: 0 0 16px; }
 
-    /* Month blocks */
-    .month { border-top: 0.5px solid var(--color-border-tertiary); padding-top: 20px; margin-bottom: 24px; }
-    .month-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
-    .month-name { font-size: 13px; font-weight: 600; }
-    .month-total { font-size: 11px; color: var(--color-text-secondary); }
-    .cat { margin-bottom: 14px; }
+    /* Overview chart */
+    .chart-wrap { position: relative; width: 100%; height: 230px; margin-bottom: 14px; }
+    .legend { display: flex; gap: 22px; font-size: 14px; color: var(--dim); margin-bottom: 40px; flex-wrap: wrap; }
+    .legend span { display: flex; align-items: center; gap: 7px; }
+    .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+    /* Month tabs + detail panel */
+    .month-tabs { margin: 0 0 18px; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 26px 26px 22px; box-shadow: var(--shadow-xl); }
+    .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+    .panel-head .mname { font-family: var(--font-display); font-size: 24px; font-weight: 600; }
+    .panel-head .mtotal { font-size: 15px; color: var(--dim); }
+    .panel-head .mtotal strong { color: var(--white); font-weight: 700; }
+
+    .cat { margin-bottom: 26px; }
     .cat:last-child { margin-bottom: 0; }
-    .cat-head { display: flex; justify-content: space-between; margin-bottom: 8px; gap: 12px; }
-    .cat-name { font-size: 11px; font-weight: 600; }
-    .cat-name.green { color: var(--retainer-dark); }
-    .cat-name.purple { color: var(--sow-dark); }
-    .cat-meta { font-size: 11px; text-align: right; }
-    .row { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
-    .row .name {
-      font-size: 12px; color: var(--color-text-secondary); width: 240px; min-width: 240px;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .row .hrs { font-size: 12px; color: var(--color-text-primary); min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
-    .track { flex: 1; height: 5px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; }
-    .fill { height: 100%; border-radius: 3px; }
-    .empty-note { font-size: 11px; color: var(--color-text-tertiary); font-style: italic; margin: 0 0 8px; }
+    .cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+    .cat-name { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .cat-name.green { color: var(--retainer); }
+    .cat-name.purple { color: var(--sow); }
+    .cat-meta { font-size: 14px; font-weight: 600; text-align: right; }
+    .row { display: flex; align-items: center; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .row:last-child { border-bottom: 0; }
+    .row .name { flex: 1 1 0; min-width: 0; font-size: 15px; font-weight: 500; color: rgba(255, 255, 255, 0.9); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .track { flex: 0 0 150px; height: 7px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; }
+    .fill { height: 100%; border-radius: var(--r-full); }
+    .row .hrs { flex: 0 0 66px; font-size: 15px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
+    .empty-note { font-size: 14px; color: var(--dim-2); font-style: italic; margin: 0; }
+    @media (max-width: 540px) { .track { flex-basis: 90px; } }
 
     /* YTD table */
-    .ytd { border-top: 0.5px solid var(--color-border-tertiary); padding-top: 20px; margin-top: 4px; }
-    .ytd h3 { font-size: 13px; font-weight: 600; margin: 0 0 14px; font-family: var(--font-body); }
-    .ytd-grid { display: grid; grid-template-columns: 1.4fr 1fr 0.9fr 1fr 1fr; font-size: 11px; }
-    .ytd-grid > div { padding: 8px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
-    .ytd-grid .h { color: var(--color-text-secondary); font-weight: 600; }
+    .ytd { margin-top: 44px; }
+    .ytd-grid { display: grid; grid-template-columns: 1.4fr 1fr 0.9fr 1fr 1fr; font-size: 14.5px; }
+    .ytd-grid > div { padding: 11px 12px; border-bottom: 1px solid var(--line); }
+    .ytd-grid .h { color: var(--dim); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
     .ytd-grid .r { text-align: right; font-variant-numeric: tabular-nums; }
-    .ytd-grid .b { font-weight: 600; }
-    .ytd-grid .tot { border-bottom: 0; }
+    .ytd-grid .b { font-weight: 700; }
+    .ytd-grid .tot { border-bottom: 0; border-top: 2px solid var(--surface-2); padding-top: 13px; }
 
     /* States + footer */
-    .state { text-align: center; padding: 64px 20px; color: var(--color-text-secondary); font-size: 13px; }
-    .spinner { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--color-border-tertiary); border-top-color: var(--retainer); animation: spin 1s linear infinite; margin: 0 auto 16px; }
+    .state { text-align: center; padding: 80px 20px; color: var(--dim); font-size: 16px; }
+    .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--mint); animation: spin 1s linear infinite; margin: 0 auto 18px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .err { color: var(--over); }
-    .err code { display: block; margin-top: 10px; color: var(--color-text-tertiary); font-size: 12px; word-break: break-word; }
-    .foot { margin-top: 36px; font-size: 11px; color: var(--color-text-tertiary); text-align: center; line-height: 1.7; }
-    .foot a { color: var(--retainer-dark); text-decoration: none; }
+    .err code { display: block; margin-top: 12px; color: var(--dim); font-size: 13.5px; word-break: break-word; }
+    .foot { margin-top: 44px; font-size: 13.5px; color: var(--dim-2); text-align: center; line-height: 1.8; }
+    .foot a { color: var(--mint); text-decoration: none; }
   </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -138,7 +128,7 @@
       <div class="report-title">Moss · Hours Report</div>
       <div class="report-range" id="range"></div>
     </div>
-    <div class="years" id="years" role="group" aria-label="Select year"></div>
+    <div class="pills years" id="years" role="group" aria-label="Select year"></div>
 
     <div id="content"></div>
   </div>
@@ -147,11 +137,13 @@
     var API_BASE = new URLSearchParams(location.search).get('api') || '/api/time';
     var CURRENT_YEAR = new Date().getFullYear();
     var YEAR = parseInt(new URLSearchParams(location.search).get('year')) || CURRENT_YEAR;
+    var YEAR_OPTIONS = [CURRENT_YEAR, CURRENT_YEAR - 1]; // current + previous year only
     var BUDGET = 50;
     var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var RETAINER = '#2FA869', SOW = '#6E59C7';
+    var RETAINER = '#7EF893', SOW = '#C6A2FF';
     var chart = null;
+    var state = { months: [], range: [], selected: null };
 
     function fmtH(h) {
       if (h === null || h === undefined) return '—';
@@ -167,7 +159,7 @@
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
       });
     }
-    function pctColor(pct) { return pct > 100 ? 'var(--over)' : pct > 80 ? 'var(--warn)' : 'var(--retainer)'; }
+    function pctColor(pct) { return pct > 100 ? 'var(--over)' : pct > 80 ? 'var(--warn)' : 'var(--ok)'; }
     function bar(h, max, color) {
       var w = max > 0 ? Math.round((h / max) * 100) : 0;
       return '<div class="track"><div class="fill" style="width:' + w + '%;background:' + color + ';"></div></div>';
@@ -175,10 +167,8 @@
 
     function renderYears() {
       var el = document.getElementById('years');
-      var opts = [];
-      for (var i = 0; i < 4; i++) opts.push(CURRENT_YEAR - i);
-      el.innerHTML = opts.map(function (y) {
-        return '<button data-y="' + y + '" aria-pressed="' + (y === YEAR) + '">' + y + '</button>';
+      el.innerHTML = YEAR_OPTIONS.map(function (y) {
+        return '<button class="pill" data-y="' + y + '" aria-pressed="' + (y === YEAR) + '">' + y + '</button>';
       }).join('');
       el.querySelectorAll('button').forEach(function (b) {
         b.addEventListener('click', function () {
@@ -205,7 +195,7 @@
         .then(render)
         .catch(function (e) {
           content.innerHTML = '<div class="state err">Couldn’t load data.<code>' + esc(e.message) + '</code>' +
-            '<div style="margin-top:12px;color:var(--color-text-tertiary);">Confirm <b>CLICKUP_TOKEN</b> is set in Vercel and the API is reachable at <code>' + esc(API_BASE) + '</code>.</div></div>';
+            '<div style="margin-top:12px;color:var(--dim);">Confirm <b>CLICKUP_TOKEN</b> is set in Vercel and the API is reachable at <code>' + esc(API_BASE) + '</code>.</div></div>';
         });
     }
 
@@ -223,41 +213,44 @@
       }
 
       var first = active[0], last = active[active.length - 1];
-      document.getElementById('range').textContent =
-        MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR;
+      document.getElementById('range').textContent = MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR;
 
       var retYTD = 0, sowYTD = 0;
       months.forEach(function (m) { retYTD += m.retainerHours || 0; sowYTD += m.sowHours || 0; });
+
       var range = [];
       for (var i = first; i <= last; i++) range.push(months[i]);
+      state.months = months;
+      state.range = range;
+      state.selected = last; // default to the most recent month with data
 
       var html = '';
 
-      // ── Disclaimer ──
       html += '<div class="disclaimer">Hours are pulled live from ClickUp time tracking and grouped by project folder ' +
         '(Moss Creative Retainer and Moss SOWs). Figures are working estimates and may shift as timesheets are updated. ' +
         'Retainer percentages assume a ' + BUDGET + 'h / month budget.</div>';
 
-      // ── Summary cards ──
       html += '<div class="summary">';
-      html += card('Retainer used (YTD)', '<span class="v green">' + fmtH(retYTD) + '</span>', 'of ' + BUDGET + 'h/mo budget');
-      html += card('Non-retainer SOW (YTD)', '<span class="v purple">' + fmtH(sowYTD) + '</span>', 'outside retainer scope');
-      html += card('Total hours (YTD)', '<span class="v">' + fmtH(retYTD + sowYTD) + '</span>', 'all Moss work combined');
-      html += card('Retainer budget', '<span class="v">' + BUDGET + 'h</span>', 'per month');
+      html += card('Retainer used (YTD)', '<span class="v green">' + fmtH(retYTD) + '</span>', 'of ' + BUDGET + 'h/mo budget', true);
+      html += card('Non-retainer SOW (YTD)', '<span class="v purple">' + fmtH(sowYTD) + '</span>', 'outside retainer scope', false);
+      html += card('Total hours (YTD)', '<span class="v">' + fmtH(retYTD + sowYTD) + '</span>', 'all Moss work combined', false);
+      html += card('Retainer budget', '<span class="v">' + BUDGET + 'h</span>', 'per month', false);
       html += '</div>';
 
-      // ── Overview chart ──
+      html += '<h2 class="sec-title">Monthly overview</h2>';
       html += '<div class="chart-wrap"><canvas id="overviewChart" role="img" aria-label="Grouped bar chart of retainer vs SOW hours by month"></canvas></div>';
       html += '<div class="legend">' +
         '<span><span class="swatch" style="background:' + RETAINER + '"></span>Creative retainer</span>' +
         '<span><span class="swatch" style="background:' + SOW + '"></span>Non-retainer (SOW / project work)</span>' +
         '</div>';
 
-      // ── Month blocks ──
-      range.forEach(function (m) { html += monthBlock(m); });
+      // Month tabs + detail panel
+      html += '<h2 class="sec-title">By month</h2>';
+      html += '<div class="pills scroll month-tabs" id="monthTabs" role="tablist" aria-label="Select month"></div>';
+      html += '<div class="panel" id="monthPanel" role="tabpanel"></div>';
 
-      // ── YTD table ──
-      html += '<div class="ytd"><h3>Year-to-date summary</h3><div class="ytd-grid">';
+      // YTD table
+      html += '<div class="ytd"><h2 class="sec-title">Year-to-date summary</h2><div class="ytd-grid">';
       html += '<div class="h">Month</div><div class="h r">Retainer</div><div class="h r">% of ' + BUDGET + 'h</div><div class="h r">Non-retainer</div><div class="h r">Total</div>';
       range.forEach(function (m) {
         var pct = Math.round((m.retainerHours / BUDGET) * 100);
@@ -274,48 +267,61 @@
       html += '<div class="tot r b">' + fmtH(retYTD + sowYTD) + '</div>';
       html += '</div></div>';
 
-      // ── Footer ──
       var footExtra = data.unmatchedHours > 0
         ? fmtH(data.unmatchedHours) + ' of time tracked for other clients is excluded from this report.<br>'
         : '';
       html += '<div class="foot">' + footExtra + 'Founding Creative · <a href="https://brand.foundingcreative.com">Brand System</a></div>';
 
       content.innerHTML = html;
+      renderMonthTabs();
+      renderMonthPanel();
       drawChart(range);
     }
 
-    function card(k, v, s) {
-      return '<div class="card"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="s">' + s + '</div></div>';
+    function card(k, v, s, accent) {
+      return '<div class="card' + (accent ? ' accent' : '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="s">' + s + '</div></div>';
     }
 
-    function monthBlock(m) {
-      var html = '<div class="month"><div class="month-head">';
-      html += '<span class="month-name">' + MONTH_NAMES[m.month] + ' ' + YEAR + '</span>';
-      html += '<span class="month-total">Total: <strong>' + fmtH(m.retainerHours + m.sowHours) + '</strong></span>';
+    function renderMonthTabs() {
+      var el = document.getElementById('monthTabs');
+      el.innerHTML = state.range.map(function (m) {
+        return '<button class="pill" role="tab" data-m="' + m.month + '" aria-selected="' + (m.month === state.selected) + '">' + MONTH_ABBR[m.month] + '</button>';
+      }).join('');
+      el.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.selected = parseInt(b.dataset.m);
+          el.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-selected', x === b); });
+          renderMonthPanel();
+        });
+      });
+    }
+
+    function renderMonthPanel() {
+      var m = state.months[state.selected];
+      var panel = document.getElementById('monthPanel');
+      var html = '<div class="panel-head">';
+      html += '<span class="mname">' + MONTH_NAMES[m.month] + ' ' + YEAR + '</span>';
+      html += '<span class="mtotal">Total: <strong>' + fmtH(m.retainerHours + m.sowHours) + '</strong></span>';
       html += '</div>';
 
-      // Retainer category
       var pct = Math.round((m.retainerHours / BUDGET) * 100);
       var remaining = BUDGET - m.retainerHours;
       html += '<div class="cat"><div class="cat-head">';
-      html += '<span class="cat-name green">Creative retainer</span>';
+      html += '<span class="cat-name green"><span class="swatch" style="background:' + RETAINER + '"></span>Creative retainer</span>';
       html += '<span class="cat-meta" style="color:' + pctColor(pct) + '">' + fmtH(m.retainerHours) + ' used · ' + pct + '% of ' + BUDGET + 'h · ' +
         (remaining >= 0 ? fmtH(remaining) + ' remaining' : fmtH(-remaining) + ' over') + '</span>';
       html += '</div>';
       html += taskRows(m.retainerItems, RETAINER) || '<p class="empty-note">No retainer time tracked this month.</p>';
       html += '</div>';
 
-      // SOW category
-      if (m.sowItems && m.sowItems.length) {
-        html += '<div class="cat"><div class="cat-head">';
-        html += '<span class="cat-name purple">Non-retainer (SOW / project work)</span>';
-        html += '<span class="cat-meta" style="color:var(--sow)">' + fmtH(m.sowHours) + ' total</span>';
-        html += '</div>';
-        html += taskRows(m.sowItems, SOW);
-        html += '</div>';
-      }
+      html += '<div class="cat"><div class="cat-head">';
+      html += '<span class="cat-name purple"><span class="swatch" style="background:' + SOW + '"></span>Non-retainer (SOW / project work)</span>';
+      html += '<span class="cat-meta" style="color:var(--sow)">' + fmtH(m.sowHours) + ' total</span>';
       html += '</div>';
-      return html;
+      html += taskRows(m.sowItems, SOW) || '<p class="empty-note">No SOW / project time tracked this month.</p>';
+      html += '</div>';
+
+      panel.innerHTML = html;
     }
 
     function taskRows(items, color) {
@@ -339,9 +345,9 @@
           labels: range.map(function (m) { return MONTH_ABBR[m.month]; }),
           datasets: [
             { label: 'Creative retainer', data: range.map(function (m) { return m.retainerHours; }),
-              backgroundColor: RETAINER + 'cc', borderColor: RETAINER, borderWidth: 1, borderRadius: 3 },
+              backgroundColor: RETAINER + 'd9', borderColor: RETAINER, borderWidth: 1, borderRadius: 4 },
             { label: 'Non-retainer (SOW)', data: range.map(function (m) { return m.sowHours; }),
-              backgroundColor: SOW + 'cc', borderColor: SOW, borderWidth: 1, borderRadius: 3 }
+              backgroundColor: SOW + 'd9', borderColor: SOW, borderWidth: 1, borderRadius: 4 }
           ]
         },
         options: {
@@ -351,9 +357,9 @@
             tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtH(c.parsed.y); } } }
           },
           scales: {
-            x: { ticks: { autoSkip: false, maxRotation: 0, font: { size: 11 }, color: '#999' }, grid: { display: false }, border: { display: false } },
-            y: { ticks: { font: { size: 11 }, color: '#999', callback: function (v) { return v + 'h'; } },
-                 grid: { color: 'rgba(128,128,128,0.1)' }, border: { display: false }, beginAtZero: true }
+            x: { ticks: { autoSkip: false, maxRotation: 0, font: { size: 13 }, color: 'rgba(255,255,255,0.62)' }, grid: { display: false }, border: { display: false } },
+            y: { ticks: { font: { size: 13 }, color: 'rgba(255,255,255,0.62)', callback: function (v) { return v + 'h'; } },
+                 grid: { color: 'rgba(255,255,255,0.09)' }, border: { display: false }, beginAtZero: true }
           }
         }
       });
