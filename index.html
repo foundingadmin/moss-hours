@@ -150,14 +150,27 @@
       background: var(--warn); margin-left: 6px; vertical-align: middle;
     }
 
-    /* ── Lede / method note ─────────────────────────────────────── */
-    .lede {
-      display: flex; gap: 11px; align-items: flex-start;
-      font-size: 14px; line-height: 1.65; color: var(--dim);
-      margin: 22px 0 36px; text-wrap: pretty;
+    /* ── Intro: body copy plus the two category definitions ─────── */
+    .intro { margin: 26px 0 40px; }
+    .intro p {
+      font-size: 15.5px; line-height: 1.7; color: var(--dim);
+      max-width: 68ch; text-wrap: pretty; margin: 0 0 10px;
     }
-    .lede svg { width: 15px; height: 15px; flex: none; margin-top: 3px; color: var(--dim-2); }
-    .lede b { color: var(--ink-strong); font-weight: 600; }
+    .intro p:last-of-type { margin-bottom: 0; }
+    .intro b { color: var(--ink-strong); font-weight: 600; }
+
+    .defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 22px; }
+    .def {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--r-md); padding: 15px 17px;
+      border-left: 3px solid var(--def-accent, var(--line));
+    }
+    .def .def-name {
+      display: flex; align-items: center; gap: 9px;
+      font-size: 14.5px; font-weight: 700; margin-bottom: 7px;
+    }
+    .def .def-body { font-size: 13.5px; line-height: 1.6; color: var(--dim); }
+    .def .def-body b { color: var(--ink-strong); font-weight: 600; }
 
     /* ── Section scaffolding ────────────────────────────────────── */
     .sec { margin-bottom: 52px; }
@@ -271,7 +284,44 @@
     .legend-item[data-off="true"] { opacity: .4; }
     .legend-item[data-off="true"] .swatch { background: var(--dim-2) !important; }
     .legend-item .val { color: var(--dim-2); font-weight: 500; font-variant-numeric: tabular-nums; }
-    .legend-hint { font-size: 12.5px; color: var(--dim-2); margin-left: 4px; }
+    .legend-hint { font-size: 12.5px; color: var(--dim-2); margin-left: 2px; }
+    @media (max-width: 560px) { .legend-hint { margin: 4px 0 0; flex-basis: 100%; } }
+
+    /* Flag button: opens the shared modal instead of pushing a callout inline. */
+    .flag-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      font-family: var(--font-body); font-size: 11px; font-weight: 700;
+      color: var(--warn); background: rgba(245, 194, 107, 0.11);
+      border: 1px solid rgba(245, 194, 107, 0.32); border-radius: var(--r-full);
+      padding: 3px 4px; cursor: pointer; transition: all .14s ease; vertical-align: middle;
+    }
+    .flag-btn:hover { background: rgba(245, 194, 107, 0.22); border-color: var(--warn); }
+    .flag-btn:focus-visible { outline: 2px solid var(--warn); outline-offset: 2px; }
+    .flag-btn svg { width: 12px; height: 12px; }
+    .flag-btn.labelled { padding: 3px 9px 3px 7px; }
+
+    /* ── Modal ──────────────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 60; display: flex;
+      align-items: center; justify-content: center; padding: 24px;
+      background: rgba(0, 0, 0, 0.66); backdrop-filter: blur(3px);
+    }
+    .modal-backdrop[hidden] { display: none; }
+    .modal {
+      width: min(520px, 100%); background: #0E0E0E;
+      border: 1px solid var(--line); border-radius: var(--r-lg);
+      box-shadow: var(--shadow-2xl); padding: 22px 24px 24px;
+    }
+    .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+    .modal-title {
+      font-family: var(--font-display); font-size: 20px; font-weight: 600; margin: 0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .modal-title svg { width: 18px; height: 18px; flex: none; color: var(--warn); }
+    .modal-body { font-size: 14.5px; line-height: 1.7; color: var(--dim); }
+    .modal-body p { margin: 0 0 11px; }
+    .modal-body p:last-child { margin-bottom: 0; }
+    .modal-body b { color: var(--ink-strong); font-weight: 600; }
 
     /* ── Monthly summary table ──────────────────────────────────── */
     .table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
@@ -281,9 +331,13 @@
       color: var(--dim-2); border-bottom: 1px solid var(--line); white-space: nowrap;
     }
     .table td.r, .table th.r { text-align: right; }
-    .table tbody tr { cursor: pointer; transition: background .12s ease; }
-    .table tbody tr:hover { background: rgba(255,255,255,0.035); }
-    .table tbody tr[aria-current="true"] { background: rgba(126, 248, 147, 0.07); }
+    .table tbody tr { cursor: pointer; transition: background .12s ease, box-shadow .12s ease; }
+    .table tbody tr:hover { background: rgba(255,255,255,0.085); }
+    .table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--dim-2); }
+    .table tbody tr[aria-current="true"] { background: rgba(126, 248, 147, 0.11); }
+    .table tbody tr[aria-current="true"] td { color: var(--white); }
+    .table tbody tr[aria-current="true"] td:first-child { box-shadow: inset 3px 0 0 var(--mint); }
+    .table tbody tr[aria-current="true"] .mo { font-weight: 700; }
     .table .mo { font-weight: 600; display: flex; align-items: center; gap: 8px; }
     .table .primary { font-weight: 600; color: var(--white); }
     .table .of { color: var(--dim-2); font-weight: 500; }
@@ -309,21 +363,11 @@
     }
 
     /* ── Month detail panel ─────────────────────────────────────── */
-    .panel-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 16px; }
-    .seg { display: inline-flex; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 3px; }
-    .seg button {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-family: var(--font-body); font-size: 12.5px; font-weight: 600; color: var(--dim);
-      background: transparent; border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; white-space: nowrap;
-    }
-    .seg button:hover { color: var(--white); }
-    .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--white); }
-    .seg button svg { width: 12px; height: 12px; }
-    .seg-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim-2); margin-right: 9px; }
-
-    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 24px 26px 22px; box-shadow: var(--shadow-xl); }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 18px 26px 22px; box-shadow: var(--shadow-xl); }
+    .panel .month-tabs { margin: 0 -8px 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .panel .month-tabs .pills { border: 0; background: transparent; padding: 0; }
     .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
-    .panel-head .mname { font-family: var(--font-display); font-size: 24px; font-weight: 600; }
+    .panel-head .mname { font-family: var(--font-display); font-size: 24px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; }
     .panel-head .mtotal { font-size: 14px; color: var(--dim); }
     .panel-head .mtotal strong { color: var(--white); font-weight: 700; font-size: 15px; }
 
@@ -358,8 +402,21 @@
       display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap;
       font-size: 13px; color: var(--dim-2); line-height: 1.7;
     }
-    .foot a { color: var(--dim); text-decoration: none; display: inline-flex; align-items: center; gap: 9px; transition: color .14s ease; }
-    .foot a:hover { color: var(--mint); }
+    .foot-brand { display: flex; flex-direction: column; gap: 9px; max-width: 62ch; }
+    .foot-fine { font-size: 12.5px; line-height: 1.75; color: var(--dim-2); margin: 0; }
+    .foot-link {
+      color: var(--mint); text-decoration: underline; text-underline-offset: 3px;
+      text-decoration-thickness: 1px; text-decoration-color: rgba(126, 248, 147, 0.45);
+      transition: text-decoration-color .14s ease, color .14s ease;
+    }
+    .foot-link:hover { text-decoration-color: var(--mint); }
+    .foot-link.primary {
+      display: inline-flex; align-items: center; gap: 9px; width: fit-content;
+      font-size: 14px; font-weight: 600; color: var(--white);
+      text-decoration-color: rgba(255, 255, 255, 0.3);
+    }
+    .foot-link.primary:hover { color: var(--mint); text-decoration-color: var(--mint); }
+    .foot-link.primary svg { width: 13px; height: 13px; opacity: .7; }
     .foot img { height: 17px; width: auto; display: block; }
 
     .sr-only {
@@ -395,7 +452,7 @@
       .page { max-width: none; padding: 0; }
       .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
       .lockup img { filter: invert(1); }
-      .status, .pills, .seg, .panel-toolbar, .sec-note, .row .link, .menu-wrap { display: none !important; }
+      .status, .pills, .sec-note, .row .link, .menu-wrap, .flag-btn { display: none !important; }
       .hero, .panel { background: none !important; box-shadow: none; }
       .sec { break-inside: avoid; margin-bottom: 26px; }
       .table tbody tr[aria-current="true"] { background: none; }
@@ -414,7 +471,6 @@
         <img class="fc" src="assets/fc-wordmark-white.svg" alt="Founding Creative" />
         <span class="x" aria-hidden="true"></span>
         <img class="moss" src="assets/moss-wordmark-white.svg" alt="Moss" />
-        <span class="role">Hours Report</span>
       </div>
 
       <div class="status">
@@ -441,12 +497,33 @@
     <div id="content"></div>
 
     <footer class="foot">
-      <a href="https://foundingcreative.com" target="_blank" rel="noopener">
-        <img src="assets/fc-icon-white.svg" alt="" />
-        <span>Founding Creative</span>
-      </a>
+      <div class="foot-brand">
+        <a class="foot-link primary" href="https://foundingcreative.com" target="_blank" rel="noopener">
+          <img src="assets/fc-icon-white.svg" alt="" />
+          <span>foundingcreative.com</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+        </a>
+        <p class="foot-fine">
+          Questions about anything in this report?
+          <a class="foot-link" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ05BDuPiNgyfpK6HRFzchDUrBoX2SjOj_dGFp47_xWtYoovrxOv1kLTSdDIoXCudPLii9WVIFpX" target="_blank" rel="noopener">Book a meeting</a>
+          or <a class="foot-link" href="https://foundingcreative.com/contact-us/" target="_blank" rel="noopener">send us a message</a>.
+          We are happy to walk through any line item with you.
+        </p>
+      </div>
       <span id="footStamp"></span>
     </footer>
+
+    <!-- Reusable detail modal: used by the data-integrity flags, and available
+         to any future note that would otherwise clutter the layout. -->
+    <div class="modal-backdrop" id="modalBackdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head">
+          <h2 class="modal-title" id="modalTitle"></h2>
+          <button class="btn icon-only" id="modalClose" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -470,7 +547,7 @@
         fill: '#27AC4B', ink: '#7EF893',                                 // literals: Chart.js canvas
         fillVar: 'var(--creative-fill)', inkVar: 'var(--creative-ink)',  // DOM: re-pointable per media
         items: 'creativeItems', hours: 'creative' },
-      { key: 'nonCreative', label: 'Non-Creative', budgeted: false,
+      { key: 'nonCreative', label: 'Other', budgeted: false,
         fill: '#9B77D0', ink: '#C6A2FF',
         fillVar: 'var(--noncreative-fill)', inkVar: 'var(--noncreative-ink)',
         items: 'nonCreativeItems', hours: 'nonCreative' }
@@ -510,7 +587,7 @@
     }
 
     var chart = null;
-    var state = { months: [], range: [], selected: null, sort: 'hours-desc', hidden: {}, generatedAt: null };
+    var state = { months: [], range: [], selected: null, hidden: {}, generatedAt: null };
 
     /* ═══════════════════════════════════════════════════════════════
        Formatting helpers
@@ -542,9 +619,7 @@
       external: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
       alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
       info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
-      arrowDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
-      arrowUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
-      az: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="16" y2="7"/><line x1="4" y1="12" x2="13" y2="12"/><line x1="4" y1="17" x2="10" y2="17"/><polyline points="18 14 20.5 17 23 14"/></svg>'
+      close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
     };
 
     /* ═══════════════════════════════════════════════════════════════
@@ -592,11 +667,7 @@
       });
     }
     function sortItems(items) {
-      var out = items.slice();
-      if (state.sort === 'hours-asc') out.sort(function (a, b) { return a.hours - b.hours; });
-      else if (state.sort === 'name') out.sort(function (a, b) { return a.name.localeCompare(b.name); });
-      else out.sort(function (a, b) { return b.hours - a.hours; });
-      return out;
+      return items.slice().sort(function (a, b) { return b.hours - a.hours; });
     }
     function totals() {
       var t = { creative: 0, nonCreative: 0, total: 0 };
@@ -698,25 +769,41 @@
       wireLegend();
       wireSummaryTable();
       renderMonthTabs();
-      renderSortControls();
       renderMonthPanel();
       drawChart();
       tickClock();
     }
 
-    /* ── Method note ────────────────────────────────────────────── */
+    /* ── Intro ──────────────────────────────────────────────────── */
     function ledeHtml() {
-      return '<p class="lede">' + ICONS.info +
-        '<span>Every figure below is pulled live from our ClickUp time tracking, with no manual entry and ' +
-        'no rounding in our favour. <b>Creative</b> is retainer work drawn against your ' +
-        BUDGET + ' hours per month; <b>Non-Creative</b> is separately scoped project work (SOW) ' +
-        'that sits outside the retainer. Line items link straight to the task they were logged against.</span></p>';
+      var h = '<section class="intro">';
+      h += '<p>This is a live view of the hours we have delivered for Moss. Every figure is pulled ' +
+           'straight from our ClickUp time tracking when the page loads, with no manual entry and no ' +
+           'rounding in our favour. We publish it because you should be able to see exactly what you ' +
+           'are paying for, month by month and task by task.</p>';
+      h += '<p>Work falls into two buckets:</p>';
+
+      h += '<div class="defs">';
+      h += '<div class="def" style="--def-accent:' + CATS[0].inkVar + '">' +
+           '<div class="def-name"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>Creative</div>' +
+           '<div class="def-body">Your monthly retainer. <b>' + BUDGET + ' hours every month</b>, covering ongoing ' +
+           'design and brand work. This is the budget the meters below measure against.</div></div>';
+      h += '<div class="def" style="--def-accent:' + CATS[1].inkVar + '">' +
+           '<div class="def-name"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>Other</div>' +
+           '<div class="def-body">Project work scoped and approved separately, under its own ' +
+           '<b>statement of work (SOW)</b>. It sits outside the retainer and does not draw against those hours.</div></div>';
+      h += '</div>';
+
+      h += '<p style="margin-top:20px">Where a task was tracked in ClickUp, its line item links straight to it, so ' +
+           'you can open the work itself. Some time is logged against work that never got a ClickUp task, ' +
+           'in which case no link appears. Closing those gaps is exactly what the data note below is about.</p>';
+      h += '</section>';
+      return h;
     }
 
     /* ── Year-to-date hero ──────────────────────────────────────── */
     function heroHtml() {
       var t = totals(), allow = allowance(), pct = pctOf(t.creative, allow);
-      var flags = flagsInRange(YEAR, state.range, 'creative');
       var span = MONTH_ABBR[state.range[0].month] + '–' + MONTH_ABBR[state.range[state.range.length - 1].month];
 
       var h = '<section class="sec"><div class="hero">';
@@ -747,19 +834,17 @@
       h += '<div class="r"><span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></div>';
       h += '</div>';
 
-      // Non-Creative has no budget, so no meter and no invented denominator.
+      // Other has no budget, so no meter and no invented denominator.
       var shareOfTotal = t.total > 0 ? Math.round((t.nonCreative / t.total) * 100) : 0;
       h += '<div class="srow">';
       h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>' +
-           '<span>Non-Creative<span class="sub">Scoped project work, outside the retainer</span></span></div>';
+           '<span>' + CATS[1].label + '<span class="sub">Scoped project work (SOW), outside the retainer</span></span></div>';
       h += '<div><div class="stat"><span class="used num" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</span>' +
            '<span class="of">delivered</span></div></div>';
       h += '<div class="r"><span class="pct-chip neutral">' + shareOfTotal + '% of total</span></div>';
       h += '</div>';
 
       h += '</div>'; // .split
-
-      if (flags.length) h += calloutHtml(flags[0], true);
       h += '</div></section>';
       return h;
     }
@@ -778,33 +863,32 @@
       var label = ms.length > 1 ? MONTH_ABBR[ms[0]] + '–' + MONTH_ABBR[ms[ms.length - 1]] : MONTH_ABBR[ms[0]];
       return label + ' ' + flag.year + ' Creative';
     }
-    function flagTagHtml(flag, compact) {
-      var title = flag.label + ': ' + flag.detail;
-      return '<span class="flag-tag' + (compact ? ' compact' : '') + '" title="' + esc(title) + '"' +
-        (compact ? ' role="img" aria-label="' + esc(title) + '"' : '') + '>' +
-        ICONS.alert + (compact ? '' : esc(flag.label)) + '</span>';
+    /* A compact affordance that opens the shared modal. Same behaviour on
+       desktop and touch, so there is no hover-only information. */
+    function flagBtnHtml(flag, labelled) {
+      return '<button type="button" class="flag-btn' + (labelled ? ' labelled' : '') +
+        '" data-flag="' + esc(flag.id) + '" aria-label="' + esc(flag.label) + ', read the data note">' +
+        ICONS.alert + (labelled ? esc(flag.label) : '') + '</button>';
     }
 
     /* ── Monthly overview ───────────────────────────────────────── */
     function overviewHtml() {
       var t = totals();
       var h = '<section class="sec"><div class="sec-head">' +
-        '<h2 class="sec-title">Monthly overview</h2>' +
-        '<span class="sec-note">Hover a series to isolate it · click to hide</span></div>';
+        '<h2 class="sec-title">Monthly overview</h2></div>';
       h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
-        'aria-label="Grouped bar chart of Creative and Non-Creative hours by month"></canvas></div>';
+        'aria-label="Grouped bar chart of Creative and Other hours by month"></canvas></div>';
       h += '<div class="legend" id="legend">';
       CATS.forEach(function (c, i) {
         h += '<button class="legend-item" data-i="' + i + '" data-off="false" aria-pressed="true">' +
           '<span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label +
           '<span class="val">' + fmtH(t[c.hours]) + '</span></button>';
       });
+      h += '<span class="legend-hint">Hover to isolate a series, click to hide it</span>';
       h += '</div>';
 
       var flags = flagsInRange(YEAR, state.range, 'creative');
-      if (flags.length) {
-        h += flagNoteHtml(flags[0], 'is hatched and marked ▾. Those bars understate actual usage.');
-      }
+      if (flags.length) h += '<div style="margin-top:18px">' + calloutHtml(flags[0]) + '</div>';
       h += '</section>';
       return h;
     }
@@ -821,7 +905,7 @@
         '<th class="r">Creative</th>' +
         '<th class="r hide-sm">Used</th>' +
         '<th class="r hide-sm"><span class="sr-only">Creative usage meter</span></th>' +
-        '<th class="r">Non-Creative</th>' +
+        '<th class="r">' + CATS[1].label + '</th>' +
         '<th class="r">Total</th>' +
         '</tr></thead><tbody>';
 
@@ -829,7 +913,7 @@
         var pct = pctOf(m.creative, BUDGET);
         var flag = flagFor(YEAR, m.month, 'creative');
         h += '<tr data-m="' + m.month + '" aria-current="' + (m.month === state.selected) + '">';
-        h += '<td><span class="mo">' + MONTH_NAMES[m.month] + (flag ? flagTagHtml(flag, true) : '') + '</span></td>';
+        h += '<td><span class="mo">' + MONTH_NAMES[m.month] + (flag ? flagBtnHtml(flag) : '') + '</span></td>';
         h += '<td class="r num"><span class="primary">' + fmtH(m.creative) + '</span> <span class="of">/ ' + BUDGET + 'h</span></td>';
         h += '<td class="r num hide-sm" style="color:' + pctColor(pct) + ';font-weight:700">' + pct + '%</td>';
         h += '<td class="hide-sm"><div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
@@ -859,10 +943,11 @@
     function detailHtml() {
       return '<section class="sec"><div class="sec-head">' +
         '<h2 class="sec-title">Task detail by month</h2>' +
-        '<span class="sec-note">Every line links to its ClickUp task</span></div>' +
-        '<div class="pills scroll" id="monthTabs" role="tablist" aria-label="Select month" style="margin-bottom:16px"></div>' +
-        '<div class="panel-toolbar"><div id="sortControls"></div></div>' +
-        '<div class="panel" id="monthPanel" role="tabpanel"></div></section>';
+        '<span class="sec-note">Sorted by most hours. Links open the ClickUp task where one exists.</span></div>' +
+        '<div class="panel">' +
+          '<div class="month-tabs"><div class="pills scroll" id="monthTabs" role="tablist" aria-label="Select month"></div></div>' +
+          '<div id="monthPanel" role="tabpanel"></div>' +
+        '</div></section>';
     }
 
     function renderMonthTabs() {
@@ -874,25 +959,6 @@
       }).join('');
       el.querySelectorAll('button').forEach(function (b) {
         b.addEventListener('click', function () { selectMonth(parseInt(b.dataset.m)); });
-      });
-    }
-
-    function renderSortControls() {
-      var opts = [
-        { k: 'hours-desc', label: 'Most hours', icon: ICONS.arrowDown },
-        { k: 'hours-asc', label: 'Fewest hours', icon: ICONS.arrowUp },
-        { k: 'name', label: 'Name', icon: ICONS.az }
-      ];
-      var el = document.getElementById('sortControls');
-      el.innerHTML = '<span class="seg-label">Sort</span><span class="seg">' + opts.map(function (o) {
-        return '<button data-k="' + o.k + '" aria-pressed="' + (state.sort === o.k) + '">' + o.icon + o.label + '</button>';
-      }).join('') + '</span>';
-      el.querySelectorAll('button').forEach(function (b) {
-        b.addEventListener('click', function () {
-          state.sort = b.dataset.k;
-          renderSortControls();
-          renderMonthPanel();
-        });
       });
     }
 
@@ -920,14 +986,15 @@
       var m = state.months[state.selected];
       var panel = document.getElementById('monthPanel');
 
+      var monthFlag = flagFor(YEAR, m.month, 'creative') || flagFor(YEAR, m.month, 'nonCreative');
       var h = '<div class="panel-head">';
-      h += '<span class="mname">' + MONTH_NAMES[m.month] + ' ' + YEAR + '</span>';
+      h += '<span class="mname">' + MONTH_NAMES[m.month] + ' ' + YEAR +
+           (monthFlag ? flagBtnHtml(monthFlag, true) : '') + '</span>';
       h += '<span class="mtotal">Total <strong class="num">' + fmtH(m.total) + '</strong></span>';
       h += '</div>';
 
       CATS.forEach(function (c) {
         var hours = m[c.hours], items = m[c.items] || [];
-        var flag = flagFor(YEAR, m.month, c.key);
 
         h += '<div class="cat">';
         h += '<div class="cat-head">';
@@ -948,7 +1015,6 @@
         }
         h += '</div>';
 
-        if (flag) h += calloutHtml(flag, true);
         h += taskRows(items, c) || '<p class="empty-note">No ' + c.label.toLowerCase() + ' time tracked this month.</p>';
         h += '</div>';
       });
@@ -1157,6 +1223,53 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════
+       Modal
+       ═══════════════════════════════════════════════════════════════ */
+    var lastFocus = null;
+    function openModal(titleHtml, bodyHtml) {
+      lastFocus = document.activeElement;
+      document.getElementById('modalTitle').innerHTML = titleHtml;
+      document.getElementById('modalBody').innerHTML = bodyHtml;
+      document.getElementById('modalBackdrop').hidden = false;
+      document.getElementById('modalClose').focus();
+    }
+    function closeModal() {
+      if (document.getElementById('modalBackdrop').hidden) return;
+      document.getElementById('modalBackdrop').hidden = true;
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    function openFlagModal(flagId) {
+      var flag = null;
+      DATA_FLAGS.forEach(function (f) { if (f.id === flagId) flag = f; });
+      if (!flag) return;
+      openModal(ICONS.alert + esc(flag.label),
+        '<p><b>' + esc(monthSpanLabel(flag)) + '</b></p><p>' + esc(flag.detail) + '</p>' +
+        '<p>Line items for these months link to ClickUp where a task exists. Some of the ' +
+        'missing time was never logged against a task at all, which is part of what we are ' +
+        'reconstructing.</p>');
+    }
+
+    function wireModal() {
+      document.getElementById('modalClose').innerHTML = ICONS.close;
+      document.getElementById('modalClose').addEventListener('click', closeModal);
+      document.getElementById('modalBackdrop').addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+      });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+      // Delegated so it covers flag buttons in any re-rendered section. Bound in
+      // the capture phase: a flag button inside a summary-table row would
+      // otherwise hit the row's own bubble listener first, selecting the month
+      // before this handler could stop it.
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('.flag-btn') : null;
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openFlagModal(btn.dataset.flag);
+      }, true);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
        Export
        ═══════════════════════════════════════════════════════════════ */
     function csvCell(v) {
@@ -1179,7 +1292,7 @@
 
     function exportSummary() {
       var t = totals(), allow = allowance();
-      var rows = [['Month', 'Creative hours', 'Retainer budget (h)', 'Creative % used', 'Non-Creative hours', 'Total hours', 'Data note']];
+      var rows = [['Month', 'Creative hours', 'Retainer budget (h)', 'Creative % used', 'Other hours (SOW)', 'Total hours', 'Data note']];
       state.range.forEach(function (m) {
         var f = flagFor(YEAR, m.month, 'creative');
         rows.push([MONTH_NAMES[m.month] + ' ' + YEAR, m.creative.toFixed(2), BUDGET,
@@ -1192,6 +1305,35 @@
       rows.push([]);
       rows.push(['Generated', (state.generatedAt || new Date()).toISOString(), 'Source', 'ClickUp time tracking']);
       download('moss-hours-' + YEAR + '-summary-' + stampSuffix() + '.csv', rows);
+    }
+
+    function exportYear() {
+      var t = totals(), allow = allowance(), months = allowanceMonths();
+      var rows = [['Moss hours report', YEAR + ' year summary']];
+      rows.push([]);
+      rows.push(['Period', MONTH_NAMES[state.range[0].month] + ' to ' +
+                 MONTH_NAMES[state.range[state.range.length - 1].month] + ' ' + YEAR]);
+      rows.push(['Months of retainer', months]);
+      rows.push(['Retainer budget (h/month)', BUDGET]);
+      rows.push([]);
+      rows.push(['Category', 'Hours', 'Available (h)', '% used', 'Share of total']);
+      rows.push(['Creative (retainer)', t.creative.toFixed(2), allow, pctOf(t.creative, allow) + '%',
+                 (t.total > 0 ? Math.round((t.creative / t.total) * 100) : 0) + '%']);
+      rows.push(['Other (SOW / project work)', t.nonCreative.toFixed(2), '', '',
+                 (t.total > 0 ? Math.round((t.nonCreative / t.total) * 100) : 0) + '%']);
+      rows.push(['Total delivered', t.total.toFixed(2), '', '', '100%']);
+      rows.push([]);
+      rows.push(['Retainer months consumed', fmtMonths(t.creative / BUDGET) + ' of ' + months]);
+
+      var flags = flagsInRange(YEAR, state.range, 'creative');
+      if (flags.length) {
+        rows.push([]);
+        rows.push(['Data note', flags[0].label + ': ' + monthSpanLabel(flags[0])]);
+        rows.push(['', flags[0].detail]);
+      }
+      rows.push([]);
+      rows.push(['Generated', (state.generatedAt || new Date()).toISOString(), 'Source', 'ClickUp time tracking']);
+      download('moss-hours-' + YEAR + '-year-summary-' + stampSuffix() + '.csv', rows);
     }
 
     function exportLineItems() {
@@ -1219,6 +1361,7 @@
       btn.innerHTML = ICONS.download + 'Export';
       menu.innerHTML =
         '<div class="menu-label">Download</div>' +
+        '<button data-a="year">' + ICONS.download + 'Year summary (CSV)</button>' +
         '<button data-a="summary">' + ICONS.download + 'Monthly summary (CSV)</button>' +
         '<button data-a="items">' + ICONS.download + 'Task line items (CSV)</button>' +
         '<div class="menu-label">Share</div>' +
@@ -1234,7 +1377,8 @@
       menu.addEventListener('click', function (e) {
         var b = e.target.closest('button');
         if (!b) return;
-        if (b.dataset.a === 'summary') exportSummary();
+        if (b.dataset.a === 'year') exportYear();
+        else if (b.dataset.a === 'summary') exportSummary();
         else if (b.dataset.a === 'items') exportLineItems();
         else if (b.dataset.a === 'print') window.print();
         close();
@@ -1247,6 +1391,7 @@
        Boot
        ═══════════════════════════════════════════════════════════════ */
     wireChrome();
+    wireModal();
     renderYears();
     tickClock();
     setInterval(tickClock, 1000);
