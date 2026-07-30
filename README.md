@@ -18,14 +18,14 @@ Laid out high level → low level:
 
 1. **Masthead**: Founding Creative × Moss lockup, a live clock, the data's
    last-updated time, a manual refresh button and an export menu.
-2. **Year to date**: total hours delivered, then Creative against its available
-   retainer hours (with a usage meter and a *% used* chip) and Non-Creative as a
-   share of the total.
-3. **Monthly overview**: grouped bar chart. Hovering a legend entry ghosts every
-   other series; clicking hides it.
-4. **Summary by month**: per-month table (`15h 12m / 50h` plus *% used*).
-   Selecting a row jumps to that month's detail.
-5. **Task detail by month**: month tabs, sorting controls, and one row per
+2. **Year to date**: total hours delivered, the range and retainer terms
+   directly beneath it, a rotating comparison line alongside, and the team who
+   worked the year in the same card.
+3. **Monthly overview**: grouped bar chart with a dashed total-hours line over
+   it, and the legend floating in the plot's top-right corner. Hovering a
+   legend entry ghosts every other series; clicking hides it.
+4. **Summary by month**: per-month table (hours plus that month's *% used*),
+   where each row expands in place into that month's task detail: one row per
    ClickUp task with a permalink out to the task itself.
 
 ### Categories
@@ -47,15 +47,10 @@ retainer accrues on the 1st whether or not anyone logs hours, so for the current
 year the count runs from the first tracked month through the month we are in
 now. A quiet August still adds 50h to the denominator.
 
-The hero meter is segmented, one tick per month of retainer, so the bar reads as
-"N months at 50h" rather than an abstract percentage. Reading it:
-
-- The bar filling completely means the retainer is being consumed exactly as
-  fast as it accrues.
-- The fill covering 2.3 of 7 segments means roughly two and a bit months' worth
-  of a seven-month retainer has been used, so there is unused capacity.
-
-Per-month pace lives in the summary table's **Used** column.
+Per-month pace lives in the summary table, as the percentage beside each
+month's Creative figure. The monthly budget it measures against is stated once,
+in the note under the table, rather than repeated in every cell. The year-to-date
+row runs against the full accrued allowance, not against 50h.
 
 ### Freshness
 
@@ -90,9 +85,9 @@ var DATA_FLAGS = [
 ```
 
 One entry drives every surface at once: a hatched fill and a ▾ marker on the
-chart, a warning tag in the summary table, a dot on the month tab, a note in the
-tooltip, a full callout in the year-to-date panel and in the affected month's
-detail panel, and a `Data note` column in both CSV exports.
+chart, a warning tag in the summary table, a note in the tooltip, a labelled tag
+in the affected month's expanded detail, a line under the table, and a
+`Data note` column in both CSV exports.
 
 **Delete the entry once the underlying data is repaired.** Nothing else needs
 to change.
@@ -199,9 +194,9 @@ each month's `contributorIds` so counts remain accurate, but the frontend
 resolves them all to one avatar.
 
 `active: false` keeps a departed teammate resolving correctly for past years
-while dropping them from the current year's header strip.
+while dropping them from the current year's roster strip.
 
-Images live at `team/roster/<slug>.webp` (160px, shown in the header strip) and
+Images live at `team/roster/<slug>.webp` (160px source, shown in the hero card's roster strip) and
 `team/stack/<slug>.webp` (48px head crop, shown in the monthly avatar stacks).
 Never use a roster image in a stack: it is four times the weight and the face is
 unreadable at that size. `team/roster/fc-mark.svg` and `team/stack/fc-mark.svg`
