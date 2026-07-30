@@ -13,31 +13,34 @@
  * users who logged time against the configured folders, so one roster serves
  * every client this app is pointed at.
  */
+/* TODO: every `title` below is the placeholder 'Creative Team'. Replace with
+   real titles before this goes in front of the client. Regenerating this file
+   discards them, so diff before committing. */
 export const ROSTER = {
   '81552507': {
     name:   "Jamie Lukey",
-    title:  '',
+    title:  'Creative Team',   // TODO placeholder, replace with the real title
     roster: '/team/roster/jamie.webp',
     stack:  '/team/stack/jamie.webp',
     active: true
   },
   '81327662': {
     name:   "Josh Titus",
-    title:  '',
+    title:  'Creative Team',   // TODO placeholder, replace with the real title
     roster: '/team/roster/titus.webp',
     stack:  '/team/stack/titus.webp',
     active: true
   },
   '81549208': {
     name:   "Sasha Beck",
-    title:  '',
+    title:  'Creative Team',   // TODO placeholder, replace with the real title
     roster: '/team/roster/sasha.webp',
     stack:  '/team/stack/sasha.webp',
     active: true
   },
   '114140375': {
     name:   "Tyler Lukey",
-    title:  '',
+    title:  'Creative Team',   // TODO placeholder, replace with the real title
     roster: '/team/roster/tyler.webp',
     stack:  '/team/stack/tyler.webp',
     active: true
