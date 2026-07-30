@@ -1,3 +1,5 @@
+import { ROSTER, STUDIO_FALLBACK } from '../roster.js';
+
 const CLICKUP_TOKEN = process.env.CLICKUP_TOKEN;
 const WORKSPACE_ID = '9011561475';
 
@@ -98,6 +100,30 @@ async function fetchYearEntries(year, assignee) {
   return entries;
 }
 
+/* Debug view. Deliberately narrow: a raw ClickUp entry carries the logger's
+   username and email, so nothing raw is echoed. rosterCoverage is how we learn
+   somebody needs adding to roster.js. */
+function buildDebug(entries, memberIds, contributingIds, unrosteredIds, folderIdOf, taskUrlOf) {
+  const sample = entries[0] || null;
+  const rostered = contributingIds.size - unrosteredIds.length;
+  return {
+    memberIds,
+    queriedCount: memberIds.length,
+    totalEntries: entries.length,
+    unrosteredContributorIds: unrosteredIds,
+    rosterCoverage: `${rostered}/${contributingIds.size}`,
+    sampleResolved: sample
+      ? {
+          folderId: folderIdOf(sample),
+          taskUrl: taskUrlOf(sample),
+          denverMonth: denverYM(parseInt(sample.start)),
+          hasTask: Boolean(sample?.task?.id),
+          hasUser: Boolean(sample?.user?.id),
+        }
+      : null,
+  };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -137,20 +163,6 @@ export default async function handler(req, res) {
       return id ? `https://app.clickup.com/t/${id}` : null;
     };
 
-    if (req.query.debug) {
-      const sample = entries[0] || null;
-      return res.status(200).json({
-        year,
-        timezone: TIMEZONE,
-        memberCount: memberIds.length,
-        memberIds,
-        totalEntries: entries.length,
-        resolvedFolderIdOfSample: sample ? folderIdOf(sample) : null,
-        resolvedTaskUrlOfSample: sample ? taskUrlOf(sample) : null,
-        resolvedDenverMonthOfSample: sample ? denverYM(parseInt(sample.start)) : null,
-        sampleEntry: sample,
-      });
-    }
 
     // One bucket per month, each holding a per-task tally for the Creative
     // (retainer) and Non-Creative (SOW) categories. Keyed on ClickUp task id:
@@ -159,7 +171,9 @@ export default async function handler(req, res) {
     const months = Array.from({ length: 12 }, () => ({
       retainerTasks: new Map(),
       sowTasks: new Map(),
+      contributors: new Set(),
     }));
+    const contributingIds = new Set();
     let unmatchedEntries = 0;
     let unmatchedHours = 0;
     let skippedEntries = 0;
@@ -195,6 +209,15 @@ export default async function handler(req, res) {
 
       // Orphaned timers carry no task object; they collapse into one row rather
       // than one row per entry.
+      // Who logged it. Ids only: names, titles and images come from the roster,
+      // never from ClickUp, so a renamed account cannot reach the client.
+      const userId = entry?.user?.id !== undefined && entry?.user?.id !== null
+        ? String(entry.user.id) : null;
+      if (userId) {
+        months[month].contributors.add(userId);
+        contributingIds.add(userId);
+      }
+
       const taskId = entry?.task?.id ? String(entry.task.id) : null;
       const key = taskId || NO_TASK_KEY;
       const existing = bucket.get(key);
@@ -209,6 +232,39 @@ export default async function handler(req, res) {
           listId: entry?.task_location?.list_id ? String(entry.task_location.list_id) : null,
         });
       }
+    }
+
+    /* Resolve contributing ids to display metadata through ROSTER only. A
+       contributor with no roster entry collapses into a single studio entry,
+       never one per unknown person, and their real id never reaches the client
+       through `team`. Inactive people still resolve for past years so historical
+       reports stay accurate, but drop off the current year's strip. */
+    const CURRENT_YEAR = new Date().getFullYear();
+    const unrosteredIds = [...contributingIds].filter((id) => !ROSTER[id]).sort();
+    const team = [];
+    for (const id of [...contributingIds].sort()) {
+      const person = ROSTER[id];
+      if (!person) continue;
+      if (person.active === false && year === CURRENT_YEAR) continue;
+      team.push({
+        id,
+        name: person.name,
+        title: person.title || '',
+        roster: person.roster,
+        stack: person.stack,
+        isStudio: false,
+      });
+    }
+    team.sort((a, b) => a.name.localeCompare(b.name));
+    if (unrosteredIds.length) {
+      team.push({
+        id: 'studio',
+        name: STUDIO_FALLBACK.name,
+        title: STUDIO_FALLBACK.title,
+        roster: STUDIO_FALLBACK.roster,
+        stack: STUDIO_FALLBACK.stack,
+        isStudio: true,
+      });
     }
 
     const round = (n) => Math.round(n * 100) / 100;
@@ -253,6 +309,9 @@ export default async function handler(req, res) {
         sowHours: sumItems(sowItems),
         retainerItems,
         sowItems,
+        // Ids only. The frontend resolves them through the roster and collapses
+        // every unrostered id onto one studio avatar.
+        contributorIds: [...mo.contributors].sort(),
       };
     });
 
@@ -260,6 +319,16 @@ export default async function handler(req, res) {
       year,
       timezone: TIMEZONE,
       retainerBudget: RETAINER_BUDGET_HOURS,
+      /* queried is how many assignees the time_entries call covered; contributing
+         is how many of them actually logged matched time. contributing === 1
+         while queried > 1 is the exact regression that hid the team for five
+         months, and the report renders that state as broken on sight. */
+      contributors: {
+        queried: memberIds.length,
+        contributing: contributingIds.size,
+      },
+      team,
+      ...(req.query.debug ? { debug: buildDebug(entries, memberIds, contributingIds, unrosteredIds, folderIdOf, taskUrlOf) } : {}),
       // When this payload was built server-side. The report shows it as
       // "last updated" so the freshness of the data is never in question.
       generatedAt: new Date().toISOString(),

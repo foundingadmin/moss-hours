@@ -156,10 +156,55 @@ Response:
 - `timezone` is the zone months were bucketed in, `memberCount` how many
   assignees the query covered, and `skippedEntries` how many entries were
   dropped for an unusable duration.
+- `contributors.queried` is how many assignees the time-entries call covered;
+  `contributors.contributing` is how many actually logged matched time.
+  `contributing === 1` while `queried > 1` is the regression that hid the team
+  for five months, and the report renders that state as visibly broken.
+- `team[]` is one entry per contributing person, resolved through `roster.js`,
+  plus at most one collapsed studio entry. `months[].contributorIds` carries ids
+  only. No per-person hours or email addresses appear anywhere, including
+  `?debug=1`.
+- `?debug=1` adds `debug.unrosteredContributorIds` and `debug.rosterCoverage`,
+  which is how you learn somebody needs adding to the roster.
 - `unmatchedEntries` / `unmatchedHours` count time outside the four tracked
   folders (i.e. other clients in the shared workspace), a sanity check that the
   folder mapping is complete. It is deliberately **not** shown in the report,
   which is Moss-only.
+
+### Team roster
+
+`roster.js` maps ClickUp user id to the name, title and images shown for a
+person. It is **generated** by `scripts/generate-roster.js`, hand-edited for
+titles, then committed and reviewed like any other source file.
+
+```bash
+CLICKUP_TOKEN=pk_... node scripts/generate-roster.js
+```
+
+ClickUp is authoritative for exactly one thing: **which user ids logged matched
+time**. Names, titles and images come only from `roster.js`. Nothing
+ClickUp-sourced (display name, username, avatar, initials, email) ever reaches
+the client. A teammate can rename their account or change their avatar at any
+time with no notice, and this report is live in front of a client, so a wrong
+face is worse than a generic mark.
+
+That is also why discovery is a one-off script and never happens at request
+time. The generator auto-accepts only exact matches; anything looser is reported
+as an error for a human to resolve rather than guessed at. `IGNORE_SLUGS` at the
+top of the script holds images that will never match a ClickUp account.
+
+Contributors with no roster entry collapse into a **single** studio entry
+(`Founding Creative`), however many of them there are. Their real ids stay in
+each month's `contributorIds` so counts remain accurate, but the frontend
+resolves them all to one avatar.
+
+`active: false` keeps a departed teammate resolving correctly for past years
+while dropping them from the current year's header strip.
+
+The roster is **agency-wide, not per-client**: the report already filters to
+users who logged time against the configured folders, so one roster serves every
+client this app is pointed at. A per-client fork should **regenerate**
+`roster.js` rather than copy it, so a stale roster does not follow the fork.
 
 ### How entries are fetched
 
