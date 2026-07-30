@@ -79,6 +79,15 @@
     .page { max-width: 1060px; margin: 0 auto; padding: 0 28px 90px; }
     .num { font-variant-numeric: tabular-nums; }
 
+    /* Anything we scroll the reader to has to clear the sticky masthead.
+       --mh is measured from the live element, because its height changes with
+       the breakpoint and with how the clock string happens to wrap. */
+    .sec, .panel, .month-tabs, .table tbody tr {
+      scroll-margin-top: calc(var(--mh, 96px) + 16px);
+    }
+
+    @media (max-width: 560px) { .page { padding: 0 18px 64px; } }
+
     /* ── Masthead: agency × client lockup + live status bar ─────── */
     .masthead {
       position: sticky; top: 0; z-index: 20;
@@ -128,6 +137,32 @@
     }
     .clock .fetched { color: var(--dim-2); }
 
+    /* On a phone the masthead is the single most expensive element on the page:
+       it is sticky, and at three wrapped rows it was covering the top of
+       whatever the reader had just scrolled to. Below 700px it becomes an
+       explicit two-row grid, the clock collapses to one compact line (the
+       string itself is shortened in tickClock), and the lockup steps down. */
+    @media (max-width: 700px) {
+      .masthead {
+        display: grid; grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-areas: "lockup refresh export" "clock clock clock";
+        align-items: center; gap: 7px 10px;
+        padding: 11px 0 12px; margin-bottom: 26px;
+      }
+      .masthead > .lockup { grid-area: lockup; }
+      .masthead > .status { display: contents; }
+      .status > .clock { grid-area: clock; }
+      .status > #refreshBtn { grid-area: refresh; }
+      .status > .menu-wrap { grid-area: export; }
+      .lockup { --fc-h: 19px; --moss-h: 21.3px; --moss-drop: 6px; gap: 12px; }
+      .clock {
+        flex-direction: row; align-items: baseline; flex-wrap: wrap;
+        gap: 0 7px; font-size: 12.5px; text-align: left;
+      }
+      .clock .fetched::before { content: "·"; margin-right: 7px; }
+      .btn { font-size: 14px; padding: 8px 11px; }
+    }
+
     /* ── Buttons ────────────────────────────────────────────────── */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 7px;
@@ -169,6 +204,19 @@
     .pills { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-full); padding: 4px; }
     .pills.scroll { display: flex; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
     .pills.scroll::-webkit-scrollbar { display: none; }
+    /* With the scrollbar hidden, a tab clipped at the edge just looks broken.
+       Fade whichever edge still has tabs behind it, driven by the scroll
+       position so a fully-scrolled strip is not dimmed for no reason. */
+    .pills.scroll { -webkit-mask-image: var(--edge-mask, none); mask-image: var(--edge-mask, none); }
+    .pills.scroll[data-more-right="true"]:not([data-more-left="true"]) {
+      --edge-mask: linear-gradient(90deg, #000 0 86%, transparent 100%);
+    }
+    .pills.scroll[data-more-left="true"]:not([data-more-right="true"]) {
+      --edge-mask: linear-gradient(90deg, transparent 0, #000 14%);
+    }
+    .pills.scroll[data-more-left="true"][data-more-right="true"] {
+      --edge-mask: linear-gradient(90deg, transparent 0, #000 13% 87%, transparent 100%);
+    }
     .pill {
       font-family: var(--font-body); font-size: 15.5px; font-weight: 600; color: var(--dim);
       background: transparent; border: 0; cursor: pointer; padding: 9px 18px; border-radius: var(--r-full);
@@ -249,9 +297,9 @@
     .funfact {
       margin-top: 14px; min-height: 1.5em;
       font-size: 15px; line-height: 1.5; color: var(--dim-2);
-      display: flex; align-items: center; gap: 9px;
+      display: flex; align-items: flex-start; gap: 9px;
     }
-    .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; }
+    .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; margin-top: 3px; }
     .funfact .ff-icon svg { width: 15px; height: 15px; display: block; }
     .funfact .ff-text {
       opacity: 1; transform: translateY(0);
@@ -272,13 +320,19 @@
     .split { border-top: 1px solid var(--line); }
     .srow { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.5fr) auto; gap: 18px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
     .srow:last-child { border-bottom: 0; padding-bottom: 4px; }
-    .srow-label { display: flex; align-items: center; gap: 10px; font-size: 16.5px; font-weight: 700; }
+    /* Top-aligned, not centre-aligned: the label often runs to a second line on
+       a narrow screen, and a swatch floating between the two lines reads as
+       belonging to neither. */
+    .srow-label { display: flex; align-items: flex-start; gap: 10px; font-size: 16.5px; font-weight: 700; }
+    .srow-label > .swatch { margin-top: 6px; }
     .srow-label .sub { display: block; font-size: 14px; font-weight: 500; color: var(--dim-2); margin-top: 3px; letter-spacing: 0; }
     .swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
 
     /* The stat block that replaced "6h 44m used · 13% of 50h · 43h 16m remaining":
        value / allowance / percentage each get their own size, weight and color. */
     .stat { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    /* A class, not an inline style, so the narrow-viewport rule below can win. */
+    .stat.end { justify-content: flex-end; }
     .stat .used { font-family: var(--font-display); font-size: 27px; font-weight: 600; line-height: 1; letter-spacing: -0.01em; }
     .stat .of { font-size: 16px; font-weight: 500; color: var(--dim-2); }
     .pct-chip.ok { color: var(--ok); background: rgba(126, 248, 147, 0.10); }
@@ -338,12 +392,28 @@
       .team-member, .team-member img { width: 116px; }
       .team-member img { height: 116px; }
     }
+    /* Wrapping left a ragged two-per-row block; a three-column grid fills the
+       width and keeps the tiles square whatever the roster count is. */
+    @media (max-width: 560px) {
+      .team-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 12px; }
+      .team-member, .team-member img { width: 100%; }
+      .team-member img { height: auto; aspect-ratio: 1 / 1; }
+      .team-member figcaption { margin-top: 8px; }
+      .tm-name { font-size: 13px; }
+      .tm-title { font-size: 11.5px; }
+      .team-sec.is-broken .team-strip { padding: 14px; }
+    }
 
     /* ── Monthly contributor stack ──────────────────────────────── */
     .stack { display: flex; align-items: center; }
+    /* The black cut-out separating overlapping avatars also erased the studio
+       mark, which is mostly black itself: it read as a hole in the row rather
+       than a person. A hairline ring outside the cut-out gives every avatar an
+       edge, whatever its artwork does. */
     .stack img, .stack .av-more {
       width: 48px; height: 48px; border-radius: var(--r-md);
       border: 2px solid var(--n-black); background: var(--surface-2);
+      box-shadow: 0 0 0 1px var(--line);
       display: block; object-fit: cover;
     }
     .stack > * + * { margin-left: -14px; }
@@ -379,7 +449,10 @@
     .flag-note svg { width: 13px; height: 13px; flex: none; margin-top: 2px; color: var(--warn); }
     .flag-note strong { color: var(--warn); font-weight: 700; }
 
-    /* ── Chart + interactive legend ─────────────────────────────── */
+    /* ── Chart + interactive legend ─────────────────────────────────
+       Height is set inline by drawChart: fixed for the vertical layout, and
+       proportional to the month count for the horizontal one, so bar thickness
+       stays constant as the year fills up. */
     .chart-wrap { position: relative; width: 100%; height: 260px; margin-bottom: 16px; }
     .legend { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; }
     /* The legend doubles as the headline totals for each series, so the figure
@@ -491,18 +564,55 @@
       font-weight: 700; padding-top: 14px; color: var(--white);
     }
     .table-scroll { overflow-x: auto; }
+    /* Month names are carried twice so the column can shorten without a
+       re-render when the viewport crosses the breakpoint. */
+    .mo-abbr { display: none; }
+
+    /* At 390px the Total column was falling off the right edge entirely, with
+       no scrollbar to say so. Four columns do fit once the cells give up the
+       "/ 50h" suffix (already stated in the definitions and the hero), the
+       month drops to three letters, and the padding tightens. */
     @media (max-width: 680px) {
       .hide-sm { display: none; }
-      .table th, .table td { padding: 12px 9px; }
+      .table { font-size: 14px; }
+      .table th, .table td { padding: 11px 5px; }
+      .table th:first-child, .table td:first-child { padding-left: 0; }
+      .table th:last-child, .table td:last-child { padding-right: 0; }
+      .table th { font-size: 10.5px; letter-spacing: .06em; }
+      .table .mo { gap: 6px; }
+      .mo-full { display: none; }
+      .mo-abbr { display: inline; }
     }
 
-    /* Below this width the three-column stat rows can't hold their minimums,
-       so the figure + meter drop to their own full-width line. */
+    /* Below this width the three-column stat rows can't hold their minimums, so
+       the figure + meter drop to their own full-width line. The label and the
+       percentage chip are placed explicitly: left to auto-placement the chip
+       fell to a third row of its own, adrift from the row it belongs to. */
     @media (max-width: 640px) {
-      .srow { grid-template-columns: 1fr auto; gap: 12px 14px; }
-      .srow > div:nth-child(2) { grid-column: 1 / -1; }
-      .cat-head { grid-template-columns: 1fr; }
-      .cat-head .stat { justify-content: flex-start; }
+      .srow { grid-template-columns: minmax(0, 1fr) auto; gap: 12px 14px; padding: 16px 0; }
+      .srow > .srow-label { grid-column: 1; grid-row: 1; }
+      .srow > .r { grid-column: 2; grid-row: 1; align-self: start; }
+      .srow > div:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+      .srow-label { font-size: 16px; }
+      /* The cat-head keeps its two columns here: label and figure on one line
+         reads better than stacking, and the percentage chip wrapping under the
+         figure is the natural break. Only the wrapped line needs re-aligning. */
+      .cat-head .stat, .stat.end { justify-content: flex-start; }
+
+      /* Two captions under one meter, each wrapping to two lines, read as a
+         collision rather than a pair. Stack them, with the figure first. */
+      .meter-scale { flex-direction: column; align-items: flex-start; gap: 3px; }
+      .meter-scale .pace { order: -1; }
+
+      .hero { padding: 20px 18px 18px; }
+      .hero-top { gap: 12px; margin-bottom: 18px; }
+      /* Left-aligned like everything else in the column, and reserved at three
+         lines so a rotating fact does not shunt the whole panel up and down. */
+      .hero-ctx { text-align: left; font-size: 14.5px; line-height: 1.6; }
+      .funfact { font-size: 14.5px; min-height: 4.4em; margin-top: 12px; }
+
+      .sec { margin-bottom: 40px; }
+      .sec-title { font-size: 22px; }
     }
 
     /* ── Month detail panel ─────────────────────────────────────── */
@@ -532,7 +642,24 @@
     .row .link svg { width: 14px; height: 14px; }
     .row .link.placeholder { opacity: .22; pointer-events: none; }
     .empty-note { font-size: 15px; color: var(--dim-2); font-style: italic; margin: 6px 0 0; }
-    @media (max-width: 560px) { .row .track { display: none; } }
+    @media (max-width: 560px) {
+      .panel { padding: 16px 18px 20px; }
+      .panel .month-tabs { margin: 0 -6px 16px; padding-bottom: 14px; }
+      .panel-head .mname { font-size: 21px; }
+      .row .track { display: none; }
+      /* A truncated task name is the one thing on this page a client cannot
+         look up elsewhere, so it wraps instead of ending in an ellipsis. */
+      .row { align-items: flex-start; gap: 10px; padding: 11px 0; }
+      .row .name { white-space: normal; overflow: visible; line-height: 1.35; }
+      .row .hrs { flex: 0 0 auto; min-width: 60px; }
+      .cat { margin-top: 22px; }
+    }
+    /* Touch: 16px icons are legitimate targets only if their hit area is not. */
+    @media (hover: none) {
+      .flag-btn { position: relative; }
+      .flag-btn:not(.labelled)::after { content: ""; position: absolute; inset: -11px; }
+      .row .link { width: 34px; height: 34px; }
+    }
 
     /* ── States + footer ────────────────────────────────────────── */
     .state { text-align: center; padding: 80px 20px; color: var(--dim); font-size: 17px; }
@@ -744,6 +871,15 @@
     var state = { months: [], range: [], selected: null, hidden: {}, generatedAt: null,
                   team: [], teamById: {}, studio: null, contributors: null };
 
+    /* One breakpoint drives every layout decision the script makes: the chart
+       orientation, the length of the clock string, and the legend's hint copy.
+       It matches the CSS breakpoint used for the masthead. */
+    var NARROW = window.matchMedia('(max-width: 700px)');
+    function isNarrow() { return NARROW.matches; }
+    function isTouch() {
+      return window.matchMedia && window.matchMedia('(hover: none)').matches;
+    }
+
     /* ═══════════════════════════════════════════════════════════════
        Formatting helpers
        ═══════════════════════════════════════════════════════════════ */
@@ -791,11 +927,15 @@
     /* ═══════════════════════════════════════════════════════════════
        Live clock + freshness
        ═══════════════════════════════════════════════════════════════ */
-    function fmtDateTime(d) {
-      return d.toLocaleString(undefined, {
-        weekday: 'short', month: 'short', day: 'numeric',
-        hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short'
-      });
+    /* The full stamp is "Thu, Jul 30 at 11:37:12 AM MDT", which on a phone
+       wrapped the masthead onto a third row on its own. The compact form drops
+       the weekday, seconds and zone: the reader is in that zone, and a ticking
+       seconds field is noise at this size. */
+    function fmtDateTime(d, compact) {
+      return d.toLocaleString(undefined, compact
+        ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
+        : { weekday: 'short', month: 'short', day: 'numeric',
+            hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
     }
     function relTime(d) {
       var s = Math.max(0, Math.round((Date.now() - d.getTime()) / 1000));
@@ -805,16 +945,33 @@
       return Math.round(s / 3600) + 'h ago';
     }
     function tickClock() {
-      document.getElementById('clockNow').textContent = fmtDateTime(new Date());
+      var narrow = isNarrow();
+      document.getElementById('clockNow').textContent = fmtDateTime(new Date(), narrow);
       var el = document.getElementById('clockFetched');
       if (state.generatedAt) {
-        el.textContent = 'Data updated ' + relTime(state.generatedAt) +
-          ' · ' + state.generatedAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+        el.textContent = narrow
+          ? 'Updated ' + relTime(state.generatedAt)
+          : 'Data updated ' + relTime(state.generatedAt) + ' · ' +
+            state.generatedAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
       }
       var stamp = document.getElementById('footStamp');
       if (stamp && state.generatedAt) {
         stamp.textContent = 'Live from ClickUp · generated ' + fmtDateTime(state.generatedAt);
       }
+      syncMastheadHeight();
+    }
+
+    /* Publishes the sticky masthead's real height so scroll-margin-top can keep
+       jump targets clear of it. It changes with the breakpoint and with how the
+       clock string wraps, so it is measured rather than assumed. */
+    var lastMastheadH = -1;
+    function syncMastheadHeight() {
+      var el = document.querySelector('.masthead');
+      if (!el) return;
+      var h = Math.round(el.getBoundingClientRect().height);
+      if (h === lastMastheadH) return;
+      lastMastheadH = h;
+      document.documentElement.style.setProperty('--mh', h + 'px');
     }
 
     /* ═══════════════════════════════════════════════════════════════
@@ -940,6 +1097,7 @@
         detailHtml();
 
       wireLegend();
+      renderLegendHint();
       wireSummaryTable();
       wireAvatarFallbacks();
       renderMonthTabs();
@@ -1147,7 +1305,7 @@
           '<span class="lg-name"><span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>' +
           '<span class="val">' + fmtH(t[c.hours]) + '</span></button>';
       });
-      h += '<span class="legend-hint">Hover to isolate a series, click to hide it</span>';
+      h += '<span class="legend-hint" id="legendHint"></span>';
       h += '</div>';
 
       // The hatch key belongs with the legend, not in a separate warning box.
@@ -1181,8 +1339,10 @@
         var pct = pctOf(m.creative, BUDGET);
         var flag = flagFor(YEAR, m.month, 'creative');
         h += '<tr data-m="' + m.month + '" aria-current="' + (m.month === state.selected) + '">';
-        h += '<td><span class="mo">' + MONTH_NAMES[m.month] + (flag ? flagBtnHtml(flag) : '') + '</span></td>';
-        h += '<td class="r num"><span class="primary">' + fmtH(m.creative) + '</span> <span class="of">/ ' + BUDGET + 'h</span></td>';
+        h += '<td><span class="mo"><span class="mo-full">' + MONTH_NAMES[m.month] + '</span>' +
+             '<span class="mo-abbr">' + MONTH_ABBR[m.month] + '</span>' +
+             (flag ? flagBtnHtml(flag) : '') + '</span></td>';
+        h += '<td class="r num"><span class="primary">' + fmtH(m.creative) + '</span> <span class="of hide-sm">/ ' + BUDGET + 'h</span></td>';
         h += '<td class="r num hide-sm" style="color:' + pctColor(pct) + ';font-weight:700">' + pct + '%</td>';
         h += '<td class="hide-sm"><div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
              '%;background:' + usageFill(pct) + '"></div></div></td>';
@@ -1192,8 +1352,8 @@
       });
 
       h += '</tbody><tfoot><tr>';
-      h += '<td>Year to date</td>';
-      h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + ' <span class="of">/ ' + allow + 'h</span></td>';
+      h += '<td><span class="mo-full">Year to date</span><span class="mo-abbr">Total</span></td>';
+      h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + ' <span class="of hide-sm">/ ' + allow + 'h</span></td>';
       h += '<td class="r num hide-sm" style="color:' + pctColor(ytdPct) + '">' + ytdPct + '%</td>';
       h += '<td class="hide-sm"></td>';
       h += '<td class="r num" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</td>';
@@ -1228,6 +1388,29 @@
       el.querySelectorAll('button').forEach(function (b) {
         b.addEventListener('click', function () { selectMonth(parseInt(b.dataset.m)); });
       });
+      el.addEventListener('scroll', syncTabEdges, { passive: true });
+      revealSelectedTab();
+    }
+
+    /* The strip opens on the current month, which is the last one, so on a
+       narrow screen it starts scrolled off the right edge. scrollLeft is set
+       directly rather than via scrollIntoView, which would also scroll the page
+       to reach it. */
+    function revealSelectedTab() {
+      var el = document.getElementById('monthTabs');
+      var sel = el && el.querySelector('[aria-selected="true"]');
+      if (!sel) return;
+      el.scrollLeft = Math.max(0, sel.offsetLeft - (el.clientWidth - sel.offsetWidth) / 2);
+      syncTabEdges();
+    }
+
+    // Fades whichever edge still has tabs hidden behind it. See .pills.scroll.
+    function syncTabEdges() {
+      var el = document.getElementById('monthTabs');
+      if (!el) return;
+      var max = el.scrollWidth - el.clientWidth;
+      el.dataset.moreLeft = el.scrollLeft > 4 ? 'true' : 'false';
+      el.dataset.moreRight = el.scrollLeft < max - 4 ? 'true' : 'false';
     }
 
     function selectMonth(monthIdx) {
@@ -1239,13 +1422,18 @@
         r.setAttribute('aria-current', parseInt(r.dataset.m) === monthIdx);
       });
       renderMonthPanel();
+      revealSelectedTab();
     }
 
     function wireSummaryTable() {
       document.querySelectorAll('.table tbody tr').forEach(function (r) {
         r.addEventListener('click', function () {
           selectMonth(parseInt(r.dataset.m));
-          document.getElementById('monthTabs').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          /* The wrapper, not the #monthTabs scroller inside it: scroll-margin
+             has to sit on the element scrollIntoView is given. 'start' plus
+             that margin lands the strip just below the sticky masthead, where
+             'center' used to leave the panel head hidden behind it. */
+          document.querySelector('.month-tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       });
     }
@@ -1272,14 +1460,14 @@
 
         if (c.budgeted) {
           var pct = pctOf(hours, BUDGET);
-          h += '<span class="stat" style="justify-content:flex-end">' +
+          h += '<span class="stat end">' +
                '<span class="used num" style="font-size:20px;color:' + c.inkVar + '">' + fmtH(hours) + '</span>' +
                '<span class="of num">/ ' + BUDGET + 'h</span>' +
                '<span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></span>';
           h += '<div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
                '%;background:' + usageFill(pct) + '"></div></div>';
         } else {
-          h += '<span class="stat" style="justify-content:flex-end">' +
+          h += '<span class="stat end">' +
                '<span class="used num" style="font-size:20px;color:' + c.inkVar + '">' + fmtH(hours) + '</span>' +
                '<span class="of">delivered</span></span>';
         }
@@ -1360,6 +1548,16 @@
       chart.update('none');
     }
 
+    /* "Hover to isolate a series" is instructions for something a touch device
+       cannot do, on the surface most likely to be read on one. */
+    function renderLegendHint() {
+      var el = document.getElementById('legendHint');
+      if (!el) return;
+      el.textContent = isTouch()
+        ? 'Tap a total to hide that series'
+        : 'Hover to isolate a series, click to hide it';
+    }
+
     function wireLegend() {
       document.querySelectorAll('#legend .legend-item').forEach(function (b) {
         var i = parseInt(b.dataset.i);
@@ -1384,9 +1582,12 @@
       printing = isPrint;
       if (!chart) return;
       var s = chart.options.scales;
-      s.x.ticks.color = isPrint ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.62)';
-      s.y.ticks.color = isPrint ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)';
-      s.y.grid.color = isPrint ? 'rgba(0,0,0,0.13)' : 'rgba(255,255,255,0.07)';
+      // Which axis carries the months flips with the orientation.
+      var horiz = chart.options.indexAxis === 'y';
+      var cat = horiz ? s.y : s.x, val = horiz ? s.x : s.y;
+      cat.ticks.color = isPrint ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.62)';
+      val.ticks.color = isPrint ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)';
+      val.grid.color = isPrint ? 'rgba(0,0,0,0.13)' : 'rgba(255,255,255,0.07)';
       chart.update('none');
     }
     window.addEventListener('beforeprint', function () { chartTheme(true); });
@@ -1420,10 +1621,12 @@
       g.restore();
     }
 
-    // Marks flagged bars with the warning icon above the column.
+    // Marks flagged bars with the warning icon above the column. Vertical
+    // layout only: horizontal puts the same marker inline with the end label.
     var flagMarkers = {
       id: 'flagMarkers',
       afterDatasetsDraw: function (c) {
+        if (c.options.indexAxis === 'y') return;
         var g = c.ctx;
         c.data.datasets.forEach(function (ds, di) {
           if (!c.isDatasetVisible(di)) return;
@@ -1438,14 +1641,91 @@
       }
     };
 
+    /* Horizontal only. A phone has no room for a value axis worth reading, so
+       the hours are written at the end of each bar instead, in the series
+       colour, with the data flag (where there is one) leading them. That also
+       gives a touch reader the figure a hover tooltip would have given. */
+    var END_GAP = 9, FLAG_W = 20;
+    var barEndLabels = {
+      id: 'barEndLabels',
+      afterDatasetsDraw: function (c) {
+        if (c.options.indexAxis !== 'y') return;
+        var g = c.ctx;
+        var font = getComputedStyle(document.body).fontFamily;
+        c.data.datasets.forEach(function (ds, di) {
+          if (!c.isDatasetVisible(di)) return;
+          var ghosted = emphasis !== null && emphasis !== di;
+          var meta = c.getDatasetMeta(di);
+          meta.data.forEach(function (bar, bi) {
+            var m = state.range[bi];
+            if (!m) return;
+            var x = bar.x + END_GAP;
+            if (flagFor(YEAR, m.month, CATS[di].key)) {
+              drawWarnIcon(g, x + 7, bar.y, 14,
+                ghosted ? GHOST_LINE : (printing ? '#9A6512' : '#F5C26B'));
+              x += FLAG_W;
+            }
+            g.save();
+            g.font = '600 12.5px ' + font;
+            g.textAlign = 'left';
+            g.textBaseline = 'middle';
+            g.fillStyle = ghosted ? GHOST_LINE : (printing ? '#333333' : CATS[di].ink);
+            g.fillText(fmtH(ds.data[bi]), x, bar.y);
+            g.restore();
+          });
+        });
+      }
+    };
+
     function drawChart() {
       var el = document.getElementById('overviewChart');
       if (!el || typeof Chart === 'undefined') return;
       emphasis = null;
 
+      /* Seven months of paired vertical bars on a 390px screen leaves each bar
+         about 14px wide, with the figures unreadable and the flag markers
+         floating in space. Rotated, every month gets a full row: the bars are
+         thick, the month labels are horizontal, and the hours sit at the end of
+         each bar. Height grows with the range so bar thickness is constant. */
+      var horiz = isNarrow();
+      var wrap = el.parentNode;
+      wrap.style.height = horiz ? (state.range.length * 62 + 30) + 'px' : '';
+
+      /* The widest bar and whether it carries a flag, which together size the
+         right-hand gutter the end labels are written into. */
+      var peak = 0, peakFlagged = false;
+      state.range.forEach(function (m) {
+        CATS.forEach(function (c) {
+          if (m[c.hours] > peak) { peak = m[c.hours]; peakFlagged = !!flagFor(YEAR, m.month, c.key); }
+        });
+      });
+      var gutter = Math.ceil(fmtH(peak).length * 7.4) + END_GAP + 10 + (peakFlagged ? FLAG_W : 0);
+
+      var TICK = 'rgba(255,255,255,0.62)', GRID = 'rgba(255,255,255,0.07)';
+      var scales = horiz
+        ? {
+            /* Value axis: gridlines only, since the numbers are on the bars.
+               Pinned to the data rather than rounded up to a nice 150h, which
+               on a 354px canvas left a quarter of the width empty. Pinning it
+               to every series, not the visible ones, also means hiding a series
+               does not silently rescale the bars still on screen. */
+            x: { ticks: { display: false }, grid: { color: GRID },
+                 border: { display: false }, beginAtZero: true, max: peak || undefined },
+            y: { ticks: { font: { size: 13.5, weight: '600' }, color: TICK, padding: 4 },
+                 grid: { display: false }, border: { display: false } }
+          }
+        : {
+            x: { ticks: { autoSkip: false, maxRotation: 0, font: { size: 13 }, color: TICK },
+                 grid: { display: false }, border: { display: false } },
+            y: { ticks: { font: { size: 12.5 }, color: 'rgba(255,255,255,0.55)',
+                          callback: function (v) { return v + 'h'; }, padding: 6 },
+                 grid: { color: GRID }, border: { display: false },
+                 beginAtZero: true, grace: '10%' }
+          };
+
       chart = new Chart(el, {
         type: 'bar',
-        plugins: [flagMarkers],
+        plugins: [flagMarkers, barEndLabels],
         data: {
           labels: state.range.map(function (m) { return MONTH_ABBR[m.month]; }),
           datasets: CATS.map(function (c, i) {
@@ -1456,17 +1736,21 @@
               borderColor: barColors(i, 'line'),
               borderWidth: 1.5,
               borderRadius: 4,
-              borderSkipped: 'bottom',
+              // Square off the axis end, round the value end.
+              borderSkipped: horiz ? 'left' : 'bottom',
               hidden: !!state.hidden[i],
-              categoryPercentage: 0.66,
-              barPercentage: 0.86
+              categoryPercentage: horiz ? 0.74 : 0.66,
+              barPercentage: horiz ? 0.9 : 0.86
             };
           })
         },
         options: {
+          indexAxis: horiz ? 'y' : 'x',
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { top: 22 } },
+          // Right gutter holds the end labels; "113h 4m" plus a flag is the
+          // widest thing that has to fit beside the longest bar.
+          layout: { padding: horiz ? { right: gutter, top: 2, bottom: 2 } : { top: 22 } },
           /* Desktop gets the note on hover via the tooltip, but a tap on a touch
              device raises no tooltip at all, so a flagged bar is also clickable
              and opens the same modal the flag buttons use. */
@@ -1505,8 +1789,10 @@
                 },
                 label: function (c) {
                   var cat = CATS[c.datasetIndex];
-                  var txt = ' ' + cat.label + ': ' + fmtH(c.parsed.y);
-                  if (cat.budgeted) txt += '  ·  ' + pctOf(c.parsed.y, BUDGET) + '% of ' + BUDGET + 'h';
+                  // The value lives on whichever axis is not the category one.
+                  var v = c.chart.options.indexAxis === 'y' ? c.parsed.x : c.parsed.y;
+                  var txt = ' ' + cat.label + ': ' + fmtH(v);
+                  if (cat.budgeted) txt += '  ·  ' + pctOf(v, BUDGET) + '% of ' + BUDGET + 'h';
                   return txt;
                 },
                 footer: function (items) {
@@ -1521,21 +1807,24 @@
               }
             }
           },
-          scales: {
-            x: {
-              ticks: { autoSkip: false, maxRotation: 0, font: { size: 13 }, color: 'rgba(255,255,255,0.62)' },
-              grid: { display: false }, border: { display: false }
-            },
-            y: {
-              ticks: { font: { size: 12.5 }, color: 'rgba(255,255,255,0.55)', callback: function (v) { return v + 'h'; }, padding: 6 },
-              grid: { color: 'rgba(255,255,255,0.07)' },
-              border: { display: false },
-              beginAtZero: true, grace: '10%'
-            }
-          }
+          scales: scales
         }
       });
+      if (printing) chartTheme(true);
     }
+
+    /* Crossing the breakpoint changes the chart's whole geometry, which Chart.js
+       cannot do in place, so it is rebuilt. Hidden series survive because
+       drawChart reads state.hidden. */
+    function onBreakpointChange() {
+      if (!chart) return;
+      chart.destroy();
+      chart = null;
+      drawChart();
+      renderLegendHint();
+    }
+    if (NARROW.addEventListener) NARROW.addEventListener('change', onBreakpointChange);
+    else if (NARROW.addListener) NARROW.addListener(onBreakpointChange);
 
     /* ═══════════════════════════════════════════════════════════════
        Comparison line
@@ -1788,6 +2077,10 @@
     renderYears();
     tickClock();
     setInterval(tickClock, 1000);
+    window.addEventListener('resize', function () {
+      syncMastheadHeight();
+      syncTabEdges();
+    });
     load();
   </script>
 </body>
