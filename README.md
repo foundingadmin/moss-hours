@@ -19,8 +19,10 @@ Laid out high level → low level:
 1. **Masthead**: Founding Creative × Moss lockup, a live clock, the data's
    last-updated time, a manual refresh button and an export menu.
 2. **Year to date**: total hours delivered, the range and retainer terms
-   directly beneath it, a rotating comparison line alongside, and the team who
-   worked the year in the same card.
+   directly beneath it, a rotating comparison line in a labelled second column
+   beside it, and the team who worked the year in the same card. The two columns
+   share a top rail and are divided by a hairline, which becomes a horizontal one
+   when they stack under 900px.
 3. **Monthly overview**: grouped bar chart with a dashed total-hours line over
    it, and the legend floating in the plot's top-right corner. Hovering a
    legend entry ghosts every other series; clicking hides it.

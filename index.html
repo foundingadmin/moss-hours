@@ -230,9 +230,16 @@
       border: 1px solid var(--line); border-radius: var(--r-xl);
       padding: 26px 28px 24px; box-shadow: var(--shadow-xl);
     }
-    .hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px 40px; flex-wrap: wrap; margin-bottom: 26px; }
+    /* Two columns that share a top rail, so the eyebrows line up and the
+       comparison reads as a second panel rather than text parked in the gap.
+       The headline column is sized to its own content, which keeps the hairline
+       beside it instead of stranded out in the middle of the card. */
+    .hero-top {
+      display: grid; grid-template-columns: auto minmax(0, 1fr);
+      gap: 24px 38px; margin-bottom: 26px;
+    }
     .hero-total { min-width: 0; }
-    .hero-total .eyebrow { margin-bottom: 9px; }
+    .hero-total .eyebrow, .funfact .eyebrow { margin-bottom: 9px; }
     .hero-total .v {
       font-family: var(--font-display); font-size: clamp(44px, 7.5vw, 66px); font-weight: 600;
       line-height: 1; letter-spacing: -0.015em;
@@ -245,13 +252,18 @@
     }
     @keyframes sheen { to { background-position: -260% 0; } }
 
-    /* Rotating comparison line. One idea at a time, cross-faded. Given its own
-       column beside the headline figure and set large enough to be read on the
-       way past, which is the only way it ever gets read. */
+    /* Rotating comparison line. One idea at a time, cross-faded, set large
+       enough to be read on the way past, which is the only way it ever gets
+       read. Separated by the same hairline the card uses under this row. The
+       block is anchored at its top: it rewrites itself every few seconds, and
+       anchoring the bottom would shuffle the column on every change. */
     .funfact {
-      flex: 1 1 300px; max-width: 460px; min-height: 3em;
+      border-left: 1px solid var(--line); padding-left: 38px;
       font-size: 19px; line-height: 1.5; color: var(--dim);
+    }
+    .funfact .ff-body {
       display: flex; align-items: flex-start; gap: 11px;
+      min-height: 3em; max-width: 46ch;
     }
     .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; margin-top: 5px; }
     .funfact .ff-icon svg { width: 19px; height: 19px; display: block; }
@@ -270,6 +282,22 @@
     }
     .hero-ctx { font-size: 15.5px; color: var(--dim); line-height: 1.6; margin-top: 12px; }
     .hero-ctx strong { color: var(--ink-strong); font-weight: 600; }
+
+    /* Below this the two columns would fight over the same 400px, so they stack
+       and the divider turns with them. */
+    @media (max-width: 900px) {
+      .hero-top { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+      .funfact { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 20px; }
+      .funfact .ff-body { max-width: none; }
+    }
+    /* The reserved height only carries weight once the columns stack: there the
+       fact sits directly above the team divider, so a shorter one would pull the
+       whole block up every few seconds. Beside the headline figure the row is
+       taller than the fact either way. Each step is the measured worst case for
+       its band, so re-check these if the fact list grows. */
+    @media (max-width: 640px) { .funfact .ff-body { min-height: 3.1em; } }
+    @media (max-width: 464px) { .funfact .ff-body { min-height: 4.5em; } }
+    @media (max-width: 375px) { .funfact .ff-body { min-height: 6em; } }
 
     .split { border-top: 1px solid var(--line); padding-top: 22px; }
     /* Top-aligned, not centre-aligned: the label often runs to a second line on
@@ -561,9 +589,7 @@
       .hero { padding: 20px 18px 18px; }
       .hero-top { gap: 16px; margin-bottom: 20px; }
       .hero-ctx { font-size: 14.5px; }
-      /* Reserved at four lines so a rotating fact does not shunt the panel up
-         and down as it changes. */
-      .funfact { font-size: 16.5px; min-height: 4.4em; }
+      .funfact { font-size: 16.5px; padding-top: 16px; }
 
       .sec { margin-bottom: 62px; }
       .sec-title { font-size: 22px; }
@@ -1066,8 +1092,9 @@
            '<div class="hero-ctx"><strong>' + span + ' ' + YEAR + '</strong> · ' +
            months + ' ' + (months === 1 ? 'month' : 'months') + ' of retainer · ' +
            BUDGET + 'h per month</div></div>';
-      h += '<div class="funfact"><span class="ff-icon">' + ICONS.spark + '</span>' +
-           '<span class="ff-text" id="funfact"></span></div>';
+      h += '<div class="funfact"><div class="eyebrow">For scale</div>' +
+           '<div class="ff-body"><span class="ff-icon">' + ICONS.spark + '</span>' +
+           '<span class="ff-text" id="funfact"></span></div></div>';
       h += '</div>';
 
       /* The split used to carry two summary meters. Both series are already
