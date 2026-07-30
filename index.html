@@ -82,7 +82,7 @@
     /* Anything we scroll the reader to has to clear the sticky masthead.
        --mh is measured from the live element, because its height changes with
        the breakpoint and with how the clock string happens to wrap. */
-    .sec, .panel, .month-tabs, .table tbody tr {
+    .sec, .table tbody tr {
       scroll-margin-top: calc(var(--mh, 96px) + 16px);
     }
 
@@ -197,26 +197,11 @@
     }
 
     /* ── Title row + pill selectors ─────────────────────────────── */
-    .title-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+    .title-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
     .report-title { font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; }
     .report-range { font-size: 15px; color: var(--dim); margin-top: 7px; }
 
     .pills { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-full); padding: 4px; }
-    .pills.scroll { display: flex; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
-    .pills.scroll::-webkit-scrollbar { display: none; }
-    /* With the scrollbar hidden, a tab clipped at the edge just looks broken.
-       Fade whichever edge still has tabs behind it, driven by the scroll
-       position so a fully-scrolled strip is not dimmed for no reason. */
-    .pills.scroll { -webkit-mask-image: var(--edge-mask, none); mask-image: var(--edge-mask, none); }
-    .pills.scroll[data-more-right="true"]:not([data-more-left="true"]) {
-      --edge-mask: linear-gradient(90deg, #000 0 86%, transparent 100%);
-    }
-    .pills.scroll[data-more-left="true"]:not([data-more-right="true"]) {
-      --edge-mask: linear-gradient(90deg, transparent 0, #000 14%);
-    }
-    .pills.scroll[data-more-left="true"][data-more-right="true"] {
-      --edge-mask: linear-gradient(90deg, transparent 0, #000 13% 87%, transparent 100%);
-    }
     .pill {
       font-family: var(--font-body); font-size: 15.5px; font-weight: 600; color: var(--dim);
       background: transparent; border: 0; cursor: pointer; padding: 9px 18px; border-radius: var(--r-full);
@@ -224,48 +209,14 @@
     }
     .pill:hover { color: var(--white); }
     .pill[aria-pressed="true"], .pill[aria-selected="true"] { background: var(--mint); color: var(--n-black); }
-    .pill .flag-dot {
-      display: inline-block; width: 5px; height: 5px; border-radius: 50%;
-      background: var(--warn); margin-left: 6px; vertical-align: middle;
-    }
 
-    /* ── Intro ──────────────────────────────────────────────────────
-       Two columns rather than one: prose held to a comfortable measure by the
-       column itself, so it no longer wraps short in the middle of a full-width
-       page, and the definition cards stack alongside instead of below. */
-    .intro {
-      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
-      gap: 20px 44px; align-items: start; margin: 30px 0 46px;
-    }
-    .intro-copy p {
-      font-size: 17px; line-height: 1.65; color: var(--dim);
-      text-wrap: pretty; margin: 0 0 14px;
-    }
-    .intro-copy p:last-child { margin-bottom: 0; }
-    .intro-copy b { color: var(--ink-strong); font-weight: 600; }
-    @media (max-width: 860px) {
-      .intro { grid-template-columns: 1fr; gap: 26px; }
-      .intro-copy p { max-width: 62ch; }
-    }
-
-    .defs { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    /* Category identity comes from a soft wash off the top-left corner plus the
-       swatch, rather than a hard accent rule down the edge. */
-    .def {
-      background: linear-gradient(155deg, var(--def-tint, transparent), transparent 62%), var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--r-md); padding: 16px 18px;
-    }
-    .def .def-name {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 16px; font-weight: 700; margin-bottom: 8px;
-    }
-    .def .def-body { font-size: 15px; line-height: 1.65; color: var(--dim); }
-    .def .def-body b { color: var(--ink-strong); font-weight: 600; }
-
-    /* ── Section scaffolding ────────────────────────────────────── */
-    .sec { margin-bottom: 52px; }
-    .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+    /* ── Section scaffolding ────────────────────────────────────────
+       Each section is a dense visual in its own right, so the gap between them
+       has to be wide enough to read as a break rather than as spacing inside
+       one long block. */
+    .sec { margin-bottom: 92px; }
+    .sec:last-child { margin-bottom: 0; }
+    .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
     .sec-title { font-family: var(--font-display); font-size: 25px; font-weight: 600; margin: 0; }
     .sec-note { font-size: 14px; color: var(--dim-2); }
     .eyebrow {
@@ -279,7 +230,8 @@
       border: 1px solid var(--line); border-radius: var(--r-xl);
       padding: 26px 28px 24px; box-shadow: var(--shadow-xl);
     }
-    .hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+    .hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px 40px; flex-wrap: wrap; margin-bottom: 26px; }
+    .hero-total { min-width: 0; }
     .hero-total .eyebrow { margin-bottom: 9px; }
     .hero-total .v {
       font-family: var(--font-display); font-size: clamp(44px, 7.5vw, 66px); font-weight: 600;
@@ -293,14 +245,16 @@
     }
     @keyframes sheen { to { background-position: -260% 0; } }
 
-    /* Rotating comparison line. One idea at a time, cross-faded. */
+    /* Rotating comparison line. One idea at a time, cross-faded. Given its own
+       column beside the headline figure and set large enough to be read on the
+       way past, which is the only way it ever gets read. */
     .funfact {
-      margin-top: 14px; min-height: 1.5em;
-      font-size: 15px; line-height: 1.5; color: var(--dim-2);
-      display: flex; align-items: flex-start; gap: 9px;
+      flex: 1 1 300px; max-width: 460px; min-height: 3em;
+      font-size: 19px; line-height: 1.5; color: var(--dim);
+      display: flex; align-items: flex-start; gap: 11px;
     }
-    .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; margin-top: 3px; }
-    .funfact .ff-icon svg { width: 15px; height: 15px; display: block; }
+    .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; margin-top: 5px; }
+    .funfact .ff-icon svg { width: 19px; height: 19px; display: block; }
     .funfact .ff-text {
       opacity: 1; transform: translateY(0);
       transition: opacity .6s ease, transform .6s ease;
@@ -314,12 +268,10 @@
       .funfact .ff-text { transition: none; }
       .live-dot { animation: none !important; }
     }
-    .hero-ctx { font-size: 15px; color: var(--dim); text-align: right; line-height: 1.7; }
+    .hero-ctx { font-size: 15.5px; color: var(--dim); line-height: 1.6; margin-top: 12px; }
     .hero-ctx strong { color: var(--ink-strong); font-weight: 600; }
 
-    .split { border-top: 1px solid var(--line); }
-    .srow { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.5fr) auto; gap: 18px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
-    .srow:last-child { border-bottom: 0; padding-bottom: 4px; }
+    .split { border-top: 1px solid var(--line); padding-top: 22px; }
     /* Top-aligned, not centre-aligned: the label often runs to a second line on
        a narrow screen, and a swatch floating between the two lines reads as
        belonging to neither. */
@@ -343,32 +295,17 @@
     .meter .fill { height: 100%; border-radius: var(--r-full); transition: width .5s cubic-bezier(.22,.9,.3,1); }
     .meter.thin { height: 6px; }
 
-    /* Segmented meter: one tick per month of retainer, so the bar reads as
-       "N months at 50h" rather than an abstract percentage. The ticks are cut
-       in the page colour, giving the 2px gap between adjacent fills. */
-    .meter.ticked { height: 11px; border-radius: 3px; }
-    .meter.ticked .fill { border-radius: 2px 0 0 2px; }
-    .meter.ticked .ticks { position: absolute; inset: 0; display: flex; pointer-events: none; }
-    .meter.ticked .ticks span { flex: 1 1 0; border-right: 2px solid var(--tick-cut); }
-    .meter.ticked .ticks span:last-child { border-right: 0; }
-
-    .meter-scale {
-      display: flex; justify-content: space-between; align-items: baseline;
-      gap: 10px; margin-top: 8px; font-size: 13px; color: var(--dim-2);
-    }
-    .meter-scale .pace { color: var(--dim); }
-    .meter-scale .pace strong { color: var(--ink-strong); font-weight: 700; }
-
-    /* ── Team roster strip ──────────────────────────────────────── */
+    /* ── Team roster strip, inside the hero card ────────────────── */
     .team-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
     .team-caption { font-size: 12px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; color: var(--dim-2); }
     .team-strip {
       display: flex; gap: 22px; flex-wrap: wrap;
       padding-bottom: 4px;
     }
-    .team-member { margin: 0; width: 160px; }
+    /* Sized to sit inside the hero card rather than fill the page width. */
+    .team-member { margin: 0; width: 124px; }
     .team-member img {
-      display: block; width: 160px; height: 160px; object-fit: cover;
+      display: block; width: 124px; height: 124px; object-fit: cover;
       border-radius: var(--r-lg); background: var(--surface-2);
       border: 1px solid var(--line);
     }
@@ -453,8 +390,15 @@
        Height is set inline by drawChart: fixed for the vertical layout, and
        proportional to the month count for the horizontal one, so bar thickness
        stays constant as the year fills up. */
-    .chart-wrap { position: relative; width: 100%; height: 260px; margin-bottom: 16px; }
-    .legend { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; }
+    .chart-wrap { position: relative; width: 100%; height: 330px; }
+    /* The legend floats in the plot's top-right corner instead of sitting under
+       it, so the series totals read as part of the chart. drawChart reserves
+       matching padding at the top of the canvas so no bar can run behind it. */
+    .legend {
+      position: absolute; top: 0; right: 0; z-index: 2;
+      display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start;
+      max-width: 100%; pointer-events: auto;
+    }
     /* The legend doubles as the headline totals for each series, so the figure
        is the dominant element and the label sits above it. */
     .legend-item {
@@ -477,22 +421,6 @@
     .legend-item[data-off="true"] { opacity: .38; }
     .legend-item[data-off="true"] .swatch { background: var(--dim-2) !important; }
     @media (max-width: 560px) { .legend-item .val { font-size: 21px; } }
-    .legend-hint { font-size: 13.5px; color: var(--dim-2); margin: 0 0 12px 10px; }
-
-    /* Key for the hatch fill, aligned under the Creative entry it describes. */
-    .legend-key {
-      display: flex; align-items: center; gap: 9px;
-      margin: 10px 0 0 14px; font-size: 13.5px; color: var(--dim-2);
-    }
-    .legend-key b { color: var(--warn); font-weight: 700; }
-    .hatch-swatch {
-      width: 22px; height: 12px; border-radius: 3px; flex: none;
-      border: 1px solid var(--creative-ink);
-      background-color: var(--creative-fill);
-      background-image: repeating-linear-gradient(45deg,
-        rgba(255,255,255,0.42) 0 2px, transparent 2px 5px);
-    }
-    @media (max-width: 560px) { .legend-hint { margin: 4px 0 0; flex-basis: 100%; } }
 
     /* Flag button: opens the shared modal. Bare icon by default so a table cell
        is not squeezed by a box; the labelled variant takes the badge geometry. */
@@ -547,78 +475,101 @@
       color: var(--dim-2); border-bottom: 1px solid var(--line); white-space: nowrap;
     }
     .table td.r, .table th.r { text-align: right; }
-    .table tbody tr { cursor: pointer; transition: background .12s ease, box-shadow .12s ease; }
-    .table tbody tr:hover { background: rgba(255,255,255,0.085); }
-    .table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--dim-2); }
-    .table tbody tr[aria-current="true"] { background: rgba(126, 248, 147, 0.11); }
-    .table tbody tr[aria-current="true"] td { color: var(--white); }
-    .table tbody tr[aria-current="true"] td:first-child { box-shadow: inset 3px 0 0 var(--mint); }
-    .table tbody tr[aria-current="true"] .mo { font-weight: 700; }
+    .table tbody tr.mrow { cursor: pointer; transition: background .12s ease, box-shadow .12s ease; }
+    .table tbody tr.mrow:hover { background: rgba(255,255,255,0.085); }
+    .table tbody tr.mrow:hover td:first-child { box-shadow: inset 3px 0 0 var(--dim-2); }
+    .table tbody tr.mrow:focus-visible { outline: 2px solid var(--mint); outline-offset: -2px; }
+    .table tbody tr.mrow[aria-expanded="true"] { background: rgba(126, 248, 147, 0.11); }
+    .table tbody tr.mrow[aria-expanded="true"] td { color: var(--white); border-bottom-color: transparent; }
+    .table tbody tr.mrow[aria-expanded="true"] td:first-child { box-shadow: inset 3px 0 0 var(--mint); }
+    .table tbody tr.mrow[aria-expanded="true"] .mo { font-weight: 700; }
     .table .mo { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    /* The caret is the only thing saying the row opens, so it turns rather than
+       appears: the closed and open states read as the same control. */
+    .table .caret { display: inline-flex; width: 15px; height: 15px; flex: none; color: var(--dim-2); transition: transform .16s ease, color .16s ease; }
+    .table .caret svg { width: 100%; height: 100%; }
+    .table tbody tr.mrow:hover .caret { color: var(--white); }
+    .table tbody tr.mrow[aria-expanded="true"] .caret { transform: rotate(90deg); color: var(--mint); }
+
+    /* The open month's detail, sitting in a full-width row under its figures. */
+    .table tbody tr.acc > td { padding: 0 0 22px; border-bottom: 1px solid var(--line-soft); background: rgba(126, 248, 147, 0.045); }
+    .acc-inner { padding: 4px 26px 0; }
+    .acc-note { font-size: 13.5px; color: var(--dim-2); margin: 18px 0 0; }
+    @media (max-width: 680px) { .acc-inner { padding: 4px 0 0; } }
     .table .primary { font-weight: 600; color: var(--white); }
     .table .of { color: var(--dim-2); font-weight: 500; }
-    .table .meter { width: 82px; margin-left: auto; }
-    .table td.r, .table th.r { white-space: nowrap; }
-    .table tfoot td {
-      border-bottom: 0; border-top: 1px solid var(--line);
-      font-weight: 700; padding-top: 14px; color: var(--white);
+    /* The share of the retainer, reading as an annotation on the figure it
+       follows rather than as a second number of equal standing. */
+    .table .use {
+      display: inline-block; min-width: 46px; margin-left: 10px;
+      font-size: 13.5px; font-weight: 700; text-align: right;
     }
+    .table td.r, .table th.r { white-space: nowrap; }
+
+    /* The Total column and the year-to-date row are sums, not more of the same
+       data, so both are lifted out of the grid of monthly figures. */
+    .table .col-total { background: rgba(255,255,255,0.045); }
+    .table th.col-total { color: var(--ink-strong); }
+    .table tbody tr.mrow td.col-total { font-weight: 700; color: var(--white); }
+    .table tfoot td {
+      border-bottom: 0; border-top: 2px solid var(--line);
+      font-weight: 700; padding-top: 18px; padding-bottom: 16px;
+      font-size: 17px; color: var(--white);
+      background: rgba(255,255,255,0.05);
+    }
+    .table tfoot td:first-child { letter-spacing: .01em; }
+    .table tfoot td.col-total { background: rgba(255,255,255,0.10); font-size: 18px; }
+    .table-note { font-size: 13.5px; line-height: 1.6; color: var(--dim-2); margin: 14px 0 0; max-width: 76ch; }
+    .table-note b { color: var(--dim); font-weight: 700; }
     .table-scroll { overflow-x: auto; }
     /* Month names are carried twice so the column can shorten without a
        re-render when the viewport crosses the breakpoint. */
     .mo-abbr { display: none; }
 
-    /* At 390px the Total column was falling off the right edge entirely, with
-       no scrollbar to say so. Four columns do fit once the cells give up the
-       "/ 50h" suffix (already stated in the definitions and the hero), the
-       month drops to three letters, and the padding tightens. */
+    /* At 390px all four columns still fit once the month drops to three
+       letters, the padding tightens and the usage figure moves under the
+       Creative hours instead of beside them. */
     @media (max-width: 680px) {
-      .hide-sm { display: none; }
       .table { font-size: 14px; }
-      .table th, .table td { padding: 11px 5px; }
+      .table th, .table td { padding: 11px 6px; }
       .table th:first-child, .table td:first-child { padding-left: 0; }
-      .table th:last-child, .table td:last-child { padding-right: 0; }
       .table th { font-size: 10.5px; letter-spacing: .06em; }
       .table .mo { gap: 6px; }
+      .table .use { display: block; min-width: 0; margin: 2px 0 0; font-size: 12.5px; }
+      .table tfoot td { font-size: 15px; }
+      .table tfoot td.col-total { font-size: 16px; }
       .mo-full { display: none; }
       .mo-abbr { display: inline; }
     }
+    /* Small phones: the four columns plus the total column's inset were 9px
+       over the viewport, which read as a broken table rather than a scrollable
+       one. Tighten the type and the gutters rather than drop a column. */
+    @media (max-width: 430px) {
+      .table { font-size: 13px; }
+      .table th, .table td { padding: 10px 4px; }
+      .table .caret { width: 13px; height: 13px; }
+      .table .use { font-size: 12px; }
+    }
 
-    /* Below this width the three-column stat rows can't hold their minimums, so
-       the figure + meter drop to their own full-width line. The label and the
-       percentage chip are placed explicitly: left to auto-placement the chip
-       fell to a third row of its own, adrift from the row it belongs to. */
     @media (max-width: 640px) {
-      .srow { grid-template-columns: minmax(0, 1fr) auto; gap: 12px 14px; padding: 16px 0; }
-      .srow > .srow-label { grid-column: 1; grid-row: 1; }
-      .srow > .r { grid-column: 2; grid-row: 1; align-self: start; }
-      .srow > div:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
       .srow-label { font-size: 16px; }
       /* The cat-head keeps its two columns here: label and figure on one line
          reads better than stacking, and the percentage chip wrapping under the
          figure is the natural break. Only the wrapped line needs re-aligning. */
       .cat-head .stat, .stat.end { justify-content: flex-start; }
 
-      /* Two captions under one meter, each wrapping to two lines, read as a
-         collision rather than a pair. Stack them, with the figure first. */
-      .meter-scale { flex-direction: column; align-items: flex-start; gap: 3px; }
-      .meter-scale .pace { order: -1; }
-
       .hero { padding: 20px 18px 18px; }
-      .hero-top { gap: 12px; margin-bottom: 18px; }
-      /* Left-aligned like everything else in the column, and reserved at three
-         lines so a rotating fact does not shunt the whole panel up and down. */
-      .hero-ctx { text-align: left; font-size: 14.5px; line-height: 1.6; }
-      .funfact { font-size: 14.5px; min-height: 4.4em; margin-top: 12px; }
+      .hero-top { gap: 16px; margin-bottom: 20px; }
+      .hero-ctx { font-size: 14.5px; }
+      /* Reserved at four lines so a rotating fact does not shunt the panel up
+         and down as it changes. */
+      .funfact { font-size: 16.5px; min-height: 4.4em; }
 
-      .sec { margin-bottom: 40px; }
+      .sec { margin-bottom: 62px; }
       .sec-title { font-size: 22px; }
     }
 
-    /* ── Month detail panel ─────────────────────────────────────── */
-    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 18px 26px 22px; box-shadow: var(--shadow-xl); }
-    .panel .month-tabs { margin: 0 -8px 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
-    .panel .month-tabs .pills { border: 0; background: transparent; padding: 0; }
+    /* ── Month detail, inside the summary table's accordion ─────── */
     .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
     .panel-head .mname { font-family: var(--font-display); font-size: 24px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; }
     .panel-head .mtotal { font-size: 15px; color: var(--dim); }
@@ -632,7 +583,7 @@
     .row .name { flex: 1 1 0; min-width: 0; font-size: 15.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .row .track { flex: 0 0 130px; height: 6px; background: rgba(255, 255, 255, 0.14); border-radius: var(--r-full); overflow: hidden; }
     .row .track .fill { display: block; height: 100%; border-radius: var(--r-full); }
-    .row .hrs { flex: 0 0 72px; font-size: 15.5px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
+    .row .hrs { flex: none; min-width: 72px; white-space: nowrap; font-size: 15.5px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
     .row .link {
       flex: none; display: inline-flex; align-items: center; justify-content: center;
       width: 26px; height: 26px; border-radius: 6px; color: var(--dim-2);
@@ -643,8 +594,6 @@
     .row .link.placeholder { opacity: .22; pointer-events: none; }
     .empty-note { font-size: 15px; color: var(--dim-2); font-style: italic; margin: 6px 0 0; }
     @media (max-width: 560px) {
-      .panel { padding: 16px 18px 20px; }
-      .panel .month-tabs { margin: 0 -6px 16px; padding-bottom: 14px; }
       .panel-head .mname { font-size: 21px; }
       .row .track { display: none; }
       /* A truncated task name is the one thing on this page a client cannot
@@ -733,9 +682,15 @@
       .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
       .lockup img { filter: invert(1); }
       .status, .pills, .sec-note, .row .link, .menu-wrap, .flag-btn { display: none !important; }
-      .hero, .panel { background: none !important; box-shadow: none; }
+      .hero { background: none !important; box-shadow: none; }
       .sec { break-inside: avoid; margin-bottom: 26px; }
-      .table tbody tr[aria-current="true"] { background: none; }
+      .table tbody tr.mrow[aria-expanded="true"] { background: none; }
+      .table tbody tr.acc > td { background: none; }
+      .table .caret { display: none; }
+      /* The tints that separate the sums on screen are invisible on paper. */
+      .table .col-total { background: rgba(0, 0, 0, 0.045); }
+      .table tfoot td { background: rgba(0, 0, 0, 0.06); border-top-color: rgba(0, 0, 0, 0.35); }
+      .table tfoot td.col-total { background: rgba(0, 0, 0, 0.10); }
       .callout { background: var(--warn-surface); border-color: var(--warn-line); color: var(--warn-body); }
       .callout strong, .flag-note strong, .flag-note svg, .callout svg { color: #8A5A0F; }
       a { color: #111 !important; }
@@ -872,13 +827,10 @@
                   team: [], teamById: {}, studio: null, contributors: null };
 
     /* One breakpoint drives every layout decision the script makes: the chart
-       orientation, the length of the clock string, and the legend's hint copy.
-       It matches the CSS breakpoint used for the masthead. */
+       orientation and the length of the clock string. It matches the CSS
+       breakpoint used for the masthead. */
     var NARROW = window.matchMedia('(max-width: 700px)');
     function isNarrow() { return NARROW.matches; }
-    function isTouch() {
-      return window.matchMedia && window.matchMedia('(hover: none)').matches;
-    }
 
     /* ═══════════════════════════════════════════════════════════════
        Formatting helpers
@@ -908,7 +860,6 @@
       var a = 0.55 + 0.45 * Math.min(1, Math.max(0, pct / 100));
       return 'rgba(39, 172, 75, ' + a.toFixed(2) + ')';
     }
-    function repeat(s, n) { return new Array(Math.max(0, n) + 1).join(s); }
     function fmtMonths(n) { return (Math.round(n * 10) / 10).toFixed(1); }
     function pctTone(pct) { return pct > 100 ? 'over' : 'ok'; }
     function pctColor(pct) { return pct > 100 ? 'var(--over)' : 'var(--ok)'; }
@@ -922,6 +873,7 @@
       info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
       spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>',
       close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+      chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>',
     };
 
     /* ═══════════════════════════════════════════════════════════════
@@ -1089,107 +1041,40 @@
         (state.range.length === 1 ? ' month' : ' months') + ' of tracked time';
 
       content.innerHTML =
-        ledeHtml() +
         heroHtml() +
-        teamHtml() +
         overviewHtml() +
-        summaryHtml() +
-        detailHtml();
+        summaryHtml();
 
       wireLegend();
-      renderLegendHint();
       wireSummaryTable();
       wireAvatarFallbacks();
-      renderMonthTabs();
-      renderMonthPanel();
       drawChart();
       startFunFacts(totals().total);
       tickClock();
     }
 
-    /* ── Intro ──────────────────────────────────────────────────── */
-    function ledeHtml() {
-      var h = '<section class="intro"><div class="intro-copy">';
-      h += '<p>This is a live view of the hours we have delivered for Moss. Every figure is pulled ' +
-           'straight from our ClickUp time tracking when the page loads, with no manual entry and no ' +
-           'rounding in our favour. We publish it because you should be able to see exactly what you ' +
-           'are paying for, month by month and task by task.</p>';
-      h += '<p>Where a task was tracked in ClickUp, its line item links straight to it, so you can ' +
-           'open the work itself. Some time is logged against work that never got a ClickUp task, in ' +
-           'which case no link appears. Closing those gaps is what the data note is about.</p>';
-      h += '</div>';
-
-      h += '<div class="defs">';
-      h += '<div class="def" style="--def-tint:' + CATS[0].tint + '">' +
-           '<div class="def-name"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>Creative</div>' +
-           '<div class="def-body">Your monthly retainer. <b>' + BUDGET + ' hours every month</b>, covering ongoing ' +
-           'design and brand work. This is the budget the meters below measure against.</div></div>';
-      h += '<div class="def" style="--def-tint:' + CATS[1].tint + '">' +
-           '<div class="def-name"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>Other</div>' +
-           '<div class="def-body">Project work scoped and approved separately, under its own ' +
-           '<b>statement of work (SOW)</b>. It sits outside the retainer and does not draw against those hours.</div></div>';
-      h += '</div>';
-      h += '</section>';
-      return h;
-    }
-
     /* ── Year-to-date hero ──────────────────────────────────────── */
     function heroHtml() {
-      var t = totals(), allow = allowance(), pct = pctOf(t.creative, allow);
+      var t = totals();
       var span = MONTH_ABBR[state.range[0].month] + '–' + MONTH_ABBR[state.range[state.range.length - 1].month];
+      var months = allowanceMonths();
 
       var h = '<section class="sec"><div class="hero">';
       h += '<div class="hero-top">';
       h += '<div class="hero-total"><div class="eyebrow">Total hours delivered · ' + YEAR + '</div>' +
            '<div class="v num">' + fmtH(t.total) + '</div>' +
-           '<div class="funfact"><span class="ff-icon">' + ICONS.spark + '</span>' +
-           '<span class="ff-text" id="funfact"></span></div></div>';
-      h += '<div class="hero-ctx"><strong>' + span + ' ' + YEAR + '</strong><br>' +
-           allowanceMonths() + ' ' + (allowanceMonths() === 1 ? 'month' : 'months') + ' of retainer · ' +
-           BUDGET + 'h per month</div>';
+           '<div class="hero-ctx"><strong>' + span + ' ' + YEAR + '</strong> · ' +
+           months + ' ' + (months === 1 ? 'month' : 'months') + ' of retainer · ' +
+           BUDGET + 'h per month</div></div>';
+      h += '<div class="funfact"><span class="ff-icon">' + ICONS.spark + '</span>' +
+           '<span class="ff-text" id="funfact"></span></div>';
       h += '</div>';
 
-      h += '<div class="split">';
+      /* The split used to carry two summary meters. Both series are already
+         charted and tabulated below, so the space goes to the team instead. */
+      var team = teamHtml();
+      if (team) h += '<div class="split">' + team + '</div>';
 
-      // Creative is budgeted, so it gets the segmented meter and a % used.
-      var months = allowanceMonths();
-      var monthsWorth = t.creative / BUDGET;   // retainer-months actually consumed
-      h += '<div class="srow">';
-      h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>' +
-           '<span>Creative<span class="sub">' + allow + ' hours available so far this year</span></span></div>';
-      h += '<div><div class="stat"><span class="used num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + '</span>' +
-           '<span class="of num">/ ' + allow + 'h</span></div>' +
-           '<div class="meter ticked" style="margin-top:10px" role="img" aria-label="' + pct +
-             ' percent of available retainer hours used, across ' + months + ' months">' +
-           '<div class="fill" style="width:' + Math.min(100, pct) + '%;background:' + usageFill(pct) + '"></div>' +
-           '<div class="ticks" aria-hidden="true">' + repeat('<span></span>', months) + '</div></div>' +
-           '<div class="meter-scale"><span>Each segment is one month of retainer</span>' +
-           '<span class="pace"><strong>' + fmtMonths(monthsWorth) + '</strong> of ' + months + ' months used</span></div></div>';
-      h += '<div class="r"><span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></div>';
-      h += '</div>';
-
-      /* Other has no cap of its own, so instead of inventing one its bar is
-         drawn at the same hours-per-pixel as the retainer meter above. Equal
-         width means equal hours, which is what makes the two comparable. */
-      var shareOfTotal = t.total > 0 ? Math.round((t.nonCreative / t.total) * 100) : 0;
-      var otherPct = allow > 0 ? (t.nonCreative / allow) * 100 : 0;
-      var otherOver = otherPct > 100;
-      h += '<div class="srow">';
-      h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>' +
-           '<span>' + CATS[1].label + '<span class="sub">Project work, billed outside the retainer</span></span></div>';
-      h += '<div><div class="stat"><span class="used num" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</span>' +
-           '<span class="of">delivered</span></div>' +
-           '<div class="meter" style="margin-top:10px" role="img" aria-label="' + fmtH(t.nonCreative) +
-             ' of other work, drawn to the same scale as the retainer bar above">' +
-           '<div class="fill" style="width:' + Math.min(100, otherPct) + '%;background:' + CATS[1].fillVar + '"></div></div>' +
-           '<div class="meter-scale"><span>Same scale as the bar above</span>' +
-           '<span class="pace">' + (otherOver
-             ? '<strong>more</strong> than the whole retainer to date'
-             : '<strong>' + Math.round(otherPct) + '%</strong> of a retainer-sized bar') + '</span></div></div>';
-      h += '<div class="r"><span class="pct-chip neutral">' + shareOfTotal + '% of total</span></div>';
-      h += '</div>';
-
-      h += '</div>'; // .split
       h += '</div></section>';
       return h;
     }
@@ -1230,7 +1115,7 @@
       var c = state.contributors;
       var broken = !!(c && c.contributing === 1 && c.queried > 1);
 
-      var h = '<section class="sec team-sec' + (broken ? ' is-broken' : '') + '">';
+      var h = '<div class="team-sec' + (broken ? ' is-broken' : '') + '">';
       h += '<div class="team-head">';
       h += broken
         ? '<span class="team-alarm">' + ICONS.alert + 'Only one account reporting: check data source</span>'
@@ -1246,7 +1131,7 @@
           (p.isStudio || !p.title ? '' : '<span class="tm-title">' + esc(p.title) + '</span>') +
           '</figcaption></figure>';
       });
-      h += '</div></section>';
+      h += '</div></div>';
       return h;
     }
 
@@ -1298,67 +1183,66 @@
       var h = '<section class="sec"><div class="sec-head">' +
         '<h2 class="sec-title">Monthly overview</h2></div>';
       h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
-        'aria-label="Grouped bar chart of Creative and Other hours by month"></canvas></div>';
+        'aria-label="Grouped bar chart of Creative and Other hours by month, with a total hours line"></canvas>';
       h += '<div class="legend" id="legend">';
       CATS.forEach(function (c, i) {
         h += '<button class="legend-item" data-i="' + i + '" data-off="false" aria-pressed="true">' +
           '<span class="lg-name"><span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>' +
           '<span class="val">' + fmtH(t[c.hours]) + '</span></button>';
       });
-      h += '<span class="legend-hint" id="legendHint"></span>';
-      h += '</div>';
-
-      // The hatch key belongs with the legend, not in a separate warning box.
-      var flags = flagsInRange(YEAR, state.range, 'creative');
-      if (flags.length) {
-        h += '<div class="legend-key"><span class="hatch-swatch" aria-hidden="true"></span>' +
-             '<span>Hatched bars are <b>' + esc(flags[0].label.toLowerCase()) + '</b>. ' +
-             'Select one for detail.</span></div>';
-      }
+      h += '</div></div>';
       h += '</section>';
       return h;
     }
 
-    /* ── Monthly summary table (high level, moved above detail) ─── */
+    /* ── Monthly summary table, with the task detail as a per-month
+       accordion so a month's figures and its tasks read as one thing ── */
     function summaryHtml() {
       var t = totals(), allow = allowance(), ytdPct = pctOf(t.creative, allow);
 
       var h = '<section class="sec"><div class="sec-head">' +
         '<h2 class="sec-title">Summary by month</h2>' +
-        '<span class="sec-note">Select a row to jump to its detail</span></div>';
+        '<span class="sec-note">Select a month to open its task detail</span></div>';
       h += '<div class="table-scroll"><table class="table"><thead><tr>' +
         '<th>Month</th>' +
         '<th class="r">Creative</th>' +
-        '<th class="r hide-sm">Used</th>' +
-        '<th class="r hide-sm"><span class="sr-only">Creative usage meter</span></th>' +
         '<th class="r">' + CATS[1].label + '</th>' +
-        '<th class="r">Total</th>' +
+        '<th class="r col-total">Total</th>' +
         '</tr></thead><tbody>';
 
       state.range.forEach(function (m) {
         var pct = pctOf(m.creative, BUDGET);
         var flag = flagFor(YEAR, m.month, 'creative');
-        h += '<tr data-m="' + m.month + '" aria-current="' + (m.month === state.selected) + '">';
-        h += '<td><span class="mo"><span class="mo-full">' + MONTH_NAMES[m.month] + '</span>' +
+        var open = m.month === state.selected;
+        h += '<tr class="mrow" data-m="' + m.month + '" tabindex="0" aria-expanded="' + open +
+             '" aria-controls="acc-' + m.month + '">';
+        h += '<td><span class="mo"><span class="caret" aria-hidden="true">' + ICONS.chevron + '</span>' +
+             '<span class="mo-full">' + MONTH_NAMES[m.month] + '</span>' +
              '<span class="mo-abbr">' + MONTH_ABBR[m.month] + '</span>' +
              (flag ? flagBtnHtml(flag) : '') + '</span></td>';
-        h += '<td class="r num"><span class="primary">' + fmtH(m.creative) + '</span> <span class="of hide-sm">/ ' + BUDGET + 'h</span></td>';
-        h += '<td class="r num hide-sm" style="color:' + pctColor(pct) + ';font-weight:700">' + pct + '%</td>';
-        h += '<td class="hide-sm"><div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
-             '%;background:' + usageFill(pct) + '"></div></div></td>';
+        // The meter that used to sit here now lives in the expanded detail, so
+        // the closed table is figures only.
+        h += '<td class="r num"><span class="primary">' + fmtH(m.creative) + '</span>' +
+             '<span class="use" style="color:' + pctColor(pct) + '">' + pct + '%</span></td>';
         h += '<td class="r num">' + fmtH(m.nonCreative) + '</td>';
-        h += '<td class="r num primary">' + fmtH(m.total) + '</td>';
+        h += '<td class="r num primary col-total">' + fmtH(m.total) + '</td>';
         h += '</tr>';
+        h += '<tr class="acc" id="acc-' + m.month + '" data-m="' + m.month + '"' + (open ? '' : ' hidden') +
+             '><td colspan="4"><div class="acc-inner">' + monthDetailHtml(m) + '</div></td></tr>';
       });
 
       h += '</tbody><tfoot><tr>';
       h += '<td><span class="mo-full">Year to date</span><span class="mo-abbr">Total</span></td>';
-      h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + ' <span class="of hide-sm">/ ' + allow + 'h</span></td>';
-      h += '<td class="r num hide-sm" style="color:' + pctColor(ytdPct) + '">' + ytdPct + '%</td>';
-      h += '<td class="hide-sm"></td>';
+      h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) +
+           '<span class="use" style="color:' + pctColor(ytdPct) + '">' + ytdPct + '%</span></td>';
       h += '<td class="r num" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</td>';
-      h += '<td class="r num">' + fmtH(t.total) + '</td>';
+      h += '<td class="r num col-total">' + fmtH(t.total) + '</td>';
       h += '</tr></tfoot></table></div>';
+
+      h += '<p class="table-note">Creative is measured against the <b>' + BUDGET +
+           'h monthly retainer</b>, so the percentage beside each figure is that month\'s share of it. ' +
+           'Year to date runs against <b>' + allow + 'h</b>, the ' + allowanceMonths() +
+           ' months of retainer accrued so far.</p>';
 
       var flags = flagsInRange(YEAR, state.range, 'creative');
       if (flags.length) h += flagNoteHtml(flags[0], 'is flagged ⚠. Those months are under-reported and will be restated.');
@@ -1367,81 +1251,39 @@
       return h;
     }
 
-    /* ── Month detail (lowest level) ────────────────────────────── */
-    function detailHtml() {
-      return '<section class="sec"><div class="sec-head">' +
-        '<h2 class="sec-title">Task detail by month</h2>' +
-        '<span class="sec-note">Sorted by most hours. Links open the ClickUp task where one exists.</span></div>' +
-        '<div class="panel">' +
-          '<div class="month-tabs"><div class="pills scroll" id="monthTabs" role="tablist" aria-label="Select month"></div></div>' +
-          '<div id="monthPanel" role="tabpanel"></div>' +
-        '</div></section>';
-    }
-
-    function renderMonthTabs() {
-      var el = document.getElementById('monthTabs');
-      el.innerHTML = state.range.map(function (m) {
-        var flagged = !!flagFor(YEAR, m.month, 'creative');
-        return '<button class="pill" role="tab" data-m="' + m.month + '" aria-selected="' + (m.month === state.selected) + '">' +
-          MONTH_ABBR[m.month] + (flagged ? '<span class="flag-dot" title="Known data issue"></span>' : '') + '</button>';
-      }).join('');
-      el.querySelectorAll('button').forEach(function (b) {
-        b.addEventListener('click', function () { selectMonth(parseInt(b.dataset.m)); });
+    /* One month at a time: opening a row closes whichever was open, and
+       selecting the open month closes it again. */
+    function toggleMonth(monthIdx) {
+      state.selected = state.selected === monthIdx ? null : monthIdx;
+      document.querySelectorAll('.table tbody tr.mrow').forEach(function (r) {
+        r.setAttribute('aria-expanded', parseInt(r.dataset.m) === state.selected);
       });
-      el.addEventListener('scroll', syncTabEdges, { passive: true });
-      revealSelectedTab();
-    }
-
-    /* The strip opens on the current month, which is the last one, so on a
-       narrow screen it starts scrolled off the right edge. scrollLeft is set
-       directly rather than via scrollIntoView, which would also scroll the page
-       to reach it. */
-    function revealSelectedTab() {
-      var el = document.getElementById('monthTabs');
-      var sel = el && el.querySelector('[aria-selected="true"]');
-      if (!sel) return;
-      el.scrollLeft = Math.max(0, sel.offsetLeft - (el.clientWidth - sel.offsetWidth) / 2);
-      syncTabEdges();
-    }
-
-    // Fades whichever edge still has tabs hidden behind it. See .pills.scroll.
-    function syncTabEdges() {
-      var el = document.getElementById('monthTabs');
-      if (!el) return;
-      var max = el.scrollWidth - el.clientWidth;
-      el.dataset.moreLeft = el.scrollLeft > 4 ? 'true' : 'false';
-      el.dataset.moreRight = el.scrollLeft < max - 4 ? 'true' : 'false';
-    }
-
-    function selectMonth(monthIdx) {
-      state.selected = monthIdx;
-      document.querySelectorAll('#monthTabs button').forEach(function (x) {
-        x.setAttribute('aria-selected', parseInt(x.dataset.m) === monthIdx);
+      document.querySelectorAll('.table tbody tr.acc').forEach(function (r) {
+        r.hidden = parseInt(r.dataset.m) !== state.selected;
       });
-      document.querySelectorAll('.table tbody tr').forEach(function (r) {
-        r.setAttribute('aria-current', parseInt(r.dataset.m) === monthIdx);
-      });
-      renderMonthPanel();
-      revealSelectedTab();
+      if (state.selected === null) return;
+      var row = document.querySelector('.table tbody tr.mrow[data-m="' + state.selected + '"]');
+      // 'nearest' so a row already on screen does not jump under the reader.
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function wireSummaryTable() {
-      document.querySelectorAll('.table tbody tr').forEach(function (r) {
-        r.addEventListener('click', function () {
-          selectMonth(parseInt(r.dataset.m));
-          /* The wrapper, not the #monthTabs scroller inside it: scroll-margin
-             has to sit on the element scrollIntoView is given. 'start' plus
-             that margin lands the strip just below the sticky masthead, where
-             'center' used to leave the panel head hidden behind it. */
-          document.querySelector('.month-tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelectorAll('.table tbody tr.mrow').forEach(function (r) {
+        // A flag button inside the row is handled in the capture phase by
+        // wireModal, which stops the event before it reaches this listener.
+        r.addEventListener('click', function () { toggleMonth(parseInt(r.dataset.m)); });
+        r.addEventListener('keydown', function (e) {
+          // Only the row itself: Enter on the flag button it contains belongs
+          // to the button.
+          if (e.target !== r) return;
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          toggleMonth(parseInt(r.dataset.m));
         });
       });
     }
 
-    function renderMonthPanel() {
-      var m = state.months[state.selected];
-      var panel = document.getElementById('monthPanel');
-
+    function monthDetailHtml(m) {
       var monthFlag = flagFor(YEAR, m.month, 'creative') || flagFor(YEAR, m.month, 'nonCreative');
       var h = '<div class="panel-head">';
       h += '<span class="mname">' + MONTH_NAMES[m.month] + ' ' + YEAR +
@@ -1477,7 +1319,8 @@
         h += '</div>';
       });
 
-      panel.innerHTML = h;
+      h += '<p class="acc-note">Sorted by most hours. Links open the ClickUp task where one exists.</p>';
+      return h;
     }
 
     function taskRows(items, cat) {
@@ -1527,6 +1370,11 @@
     var GHOST = 'rgba(255,255,255,0.06)';
     var GHOST_LINE = 'rgba(255,255,255,0.14)';
 
+    /* The total overlay is the one series that is not a category, so it is
+       drawn in neutral ink rather than competing with Creative or Other. */
+    function totalInk() { return printing ? '#444444' : 'rgba(255,255,255,0.78)'; }
+    function isTotalSeries(i) { return !CATS[i]; }
+
     function barColors(catIdx, which) {
       var c = CATS[catIdx];
       var ghosted = emphasis !== null && emphasis !== catIdx;
@@ -1542,20 +1390,18 @@
       emphasis = next;
       if (!chart) return;
       chart.data.datasets.forEach(function (ds, i) {
+        if (isTotalSeries(i)) {
+          // Isolating a category means isolating it from the total as well.
+          var ink = emphasis === null ? totalInk() : GHOST_LINE;
+          ds.borderColor = ink;
+          ds.pointBackgroundColor = ink;
+          ds.pointBorderColor = ink;
+          return;
+        }
         ds.backgroundColor = barColors(i, 'fill');
         ds.borderColor = barColors(i, 'line');
       });
       chart.update('none');
-    }
-
-    /* "Hover to isolate a series" is instructions for something a touch device
-       cannot do, on the surface most likely to be read on one. */
-    function renderLegendHint() {
-      var el = document.getElementById('legendHint');
-      if (!el) return;
-      el.textContent = isTouch()
-        ? 'Tap a total to hide that series'
-        : 'Hover to isolate a series, click to hide it';
     }
 
     function wireLegend() {
@@ -1588,6 +1434,10 @@
       cat.ticks.color = isPrint ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.62)';
       val.ticks.color = isPrint ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)';
       val.grid.color = isPrint ? 'rgba(0,0,0,0.13)' : 'rgba(255,255,255,0.07)';
+      chart.data.datasets.forEach(function (ds, i) {
+        if (!isTotalSeries(i)) return;
+        ds.borderColor = ds.pointBackgroundColor = ds.pointBorderColor = totalInk();
+      });
       chart.update('none');
     }
     window.addEventListener('beforeprint', function () { chartTheme(true); });
@@ -1629,7 +1479,7 @@
         if (c.options.indexAxis === 'y') return;
         var g = c.ctx;
         c.data.datasets.forEach(function (ds, di) {
-          if (!c.isDatasetVisible(di)) return;
+          if (isTotalSeries(di) || !c.isDatasetVisible(di)) return;
           if (emphasis !== null && emphasis !== di) return;
           var meta = c.getDatasetMeta(di);
           meta.data.forEach(function (bar, bi) {
@@ -1653,7 +1503,7 @@
         var g = c.ctx;
         var font = getComputedStyle(document.body).fontFamily;
         c.data.datasets.forEach(function (ds, di) {
-          if (!c.isDatasetVisible(di)) return;
+          if (isTotalSeries(di) || !c.isDatasetVisible(di)) return;
           var ghosted = emphasis !== null && emphasis !== di;
           var meta = c.getDatasetMeta(di);
           meta.data.forEach(function (bar, bi) {
@@ -1677,6 +1527,31 @@
       }
     };
 
+    /* Total hours per month, drawn over the paired bars so the shape of the
+       month-to-month workload reads without adding the two bars up by eye.
+       Vertical layout only: the horizontal one pins its value axis to the
+       largest single bar, and a line of totals would run off the end of it. */
+    function totalLineDataset() {
+      var ink = totalInk();
+      return {
+        type: 'line',
+        label: 'Total',
+        data: state.range.map(function (m) { return m.total; }),
+        borderColor: ink,
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [5, 4],
+        tension: 0.32,
+        pointRadius: 3.5,
+        pointHoverRadius: 6,
+        pointBackgroundColor: ink,
+        pointBorderColor: ink,
+        fill: false,
+        // Lower order draws on top of the bars.
+        order: 0
+      };
+    }
+
     function drawChart() {
       var el = document.getElementById('overviewChart');
       if (!el || typeof Chart === 'undefined') return;
@@ -1689,7 +1564,10 @@
          each bar. Height grows with the range so bar thickness is constant. */
       var horiz = isNarrow();
       var wrap = el.parentNode;
-      wrap.style.height = horiz ? (state.range.length * 62 + 30) + 'px' : '';
+      // Height of the floating legend, reserved at the top of the plot area so
+      // the tallest bar or the total line can never run underneath it.
+      var LEGEND_H = 78;
+      wrap.style.height = horiz ? (state.range.length * 62 + 30 + LEGEND_H) + 'px' : '';
 
       /* The widest bar and whether it carries a flag, which together size the
          right-hand gutter the end labels are written into. */
@@ -1740,9 +1618,10 @@
               borderSkipped: horiz ? 'left' : 'bottom',
               hidden: !!state.hidden[i],
               categoryPercentage: horiz ? 0.74 : 0.66,
-              barPercentage: horiz ? 0.9 : 0.86
+              barPercentage: horiz ? 0.9 : 0.86,
+              order: 1
             };
-          })
+          }).concat(horiz ? [] : [totalLineDataset()])
         },
         options: {
           indexAxis: horiz ? 'y' : 'x',
@@ -1750,7 +1629,9 @@
           maintainAspectRatio: false,
           // Right gutter holds the end labels; "113h 4m" plus a flag is the
           // widest thing that has to fit beside the longest bar.
-          layout: { padding: horiz ? { right: gutter, top: 2, bottom: 2 } : { top: 22 } },
+          layout: { padding: horiz
+            ? { right: gutter, top: LEGEND_H, bottom: 2 }
+            : { top: LEGEND_H } },
           /* Desktop gets the note on hover via the tooltip, but a tap on a touch
              device raises no tooltip at all, so a flagged bar is also clickable
              and opens the same modal the flag buttons use. */
@@ -1758,14 +1639,14 @@
             if (!elements.length) return;
             var el = elements[0];
             var m = state.range[el.index];
-            if (!m) return;
+            if (!m || isTotalSeries(el.datasetIndex)) return;
             var f = flagFor(YEAR, m.month, CATS[el.datasetIndex].key);
             if (f) openFlagModal(f.id);
           },
           onHover: function (evt, elements) {
             var over = elements.length && (function () {
-              var m = state.range[elements[0].index];
-              return m && flagFor(YEAR, m.month, CATS[elements[0].datasetIndex].key);
+              var e = elements[0], m = state.range[e.index];
+              return m && !isTotalSeries(e.datasetIndex) && flagFor(YEAR, m.month, CATS[e.datasetIndex].key);
             })();
             evt.native.target.style.cursor = over ? 'pointer' : 'default';
           },
@@ -1788,9 +1669,10 @@
                   return MONTH_NAMES[m.month] + ' ' + YEAR;
                 },
                 label: function (c) {
-                  var cat = CATS[c.datasetIndex];
                   // The value lives on whichever axis is not the category one.
                   var v = c.chart.options.indexAxis === 'y' ? c.parsed.x : c.parsed.y;
+                  var cat = CATS[c.datasetIndex];
+                  if (!cat) return ' Total: ' + fmtH(v);
                   var txt = ' ' + cat.label + ': ' + fmtH(v);
                   if (cat.budgeted) txt += '  ·  ' + pctOf(v, BUDGET) + '% of ' + BUDGET + 'h';
                   return txt;
@@ -1798,6 +1680,7 @@
                 footer: function (items) {
                   var notes = [];
                   items.forEach(function (it) {
+                    if (isTotalSeries(it.datasetIndex)) return;
                     var m = state.range[it.dataIndex];
                     var f = flagFor(YEAR, m.month, CATS[it.datasetIndex].key);
                     if (f && notes.indexOf(f.label) === -1) notes.push(f.label);
@@ -1821,7 +1704,6 @@
       chart.destroy();
       chart = null;
       drawChart();
-      renderLegendHint();
     }
     if (NARROW.addEventListener) NARROW.addEventListener('change', onBreakpointChange);
     else if (NARROW.addListener) NARROW.addListener(onBreakpointChange);
@@ -2077,10 +1959,7 @@
     renderYears();
     tickClock();
     setInterval(tickClock, 1000);
-    window.addEventListener('resize', function () {
-      syncMastheadHeight();
-      syncTabEdges();
-    });
+    window.addEventListener('resize', syncMastheadHeight);
     load();
   </script>
 </body>
