@@ -8,27 +8,37 @@ A tiny Vercel project that surfaces Moss client hours from ClickUp:
   ClickUp permalink, and returns clean JSON (CORS enabled).
 - **`index.html`**: a self-contained, client-facing hours **report** (no build
   step) styled with the [Founding Creative brand system](https://brand.foundingcreative.com).
-- **`assets/`**: the Founding Creative and Moss logo files used in the header
-  lockup, vendored so the report never depends on a third-party host at render
-  time.
+- **`assets/`**: the Founding Creative wordmark used in the masthead and the
+  client wordmark used in the report title, vendored so the report never depends
+  on a third-party host at render time.
 
 ## The report
 
 Laid out high level → low level:
 
-1. **Masthead**: Founding Creative × Moss lockup, a live clock, the data's
-   last-updated time, a manual refresh button and an export menu.
-2. **Year to date**: total hours delivered, the range and retainer terms
-   directly beneath it, a rotating comparison line in a labelled second column
-   beside it, and the team who worked the year in the same card. The two columns
-   share a top rail and are divided by a hairline, which becomes a horizontal one
-   when they stack under 900px.
-3. **Monthly overview**: grouped bar chart with a dashed total-hours line over
-   it, and the legend floating in the plot's top-right corner. Hovering a
-   legend entry ghosts every other series; clicking hides it.
-4. **Summary by month**: per-month table (hours plus that month's *% used*),
-   where each row expands in place into that month's task detail: one row per
-   ClickUp task with a permalink out to the task itself.
+1. **Masthead**: the Founding Creative wordmark, a live clock, the data's
+   last-updated time and a manual refresh button. The clock is set in the
+   platform monospace face, because Manrope ships no tabular-figure feature and
+   a proportional seconds field twitched the whole bar once a second.
+2. **Title**: the client wordmark set on the report title's own baseline, so it
+   reads as "Moss Hours Report", plus the year selector and the export link.
+   Export sits here rather than in the masthead so it reads as "this report, as
+   it stands", which is what it does. Only the agency mark is chrome, which
+   makes the template reusable for any retainer client.
+3. **Year to date**: total hours delivered, the range beneath it, a rotating
+   comparison line in a labelled second column beside it (the two columns share
+   a top rail and are divided by a hairline, which turns horizontal when they
+   stack under 900px), and underneath, the two categories named and explained.
+   That is the one place the retainer terms are stated.
+4. **Monthly overview**: the chart and the table under one heading, because they
+   are the same year drawn and then written out. A grouped bar chart with a
+   dashed total-hours line over it and the legend floating in the plot's
+   top-right corner; hovering a legend entry ghosts every other series, clicking
+   hides it. Then a per-month table (hours plus that month's *% used*, each
+   figure in its series colour), where each row expands in place into that
+   month's task detail: the two categories side by side on desktop, each one
+   task per row with a permalink out to ClickUp, plus the people who worked
+   the month.
 
 ### Categories
 
@@ -51,8 +61,9 @@ now. A quiet August still adds 50h to the denominator.
 
 Per-month pace lives in the summary table, as the percentage beside each
 month's Creative figure. The monthly budget it measures against is stated once,
-in the note under the table, rather than repeated in every cell. The year-to-date
-row runs against the full accrued allowance, not against 50h.
+in the Creative definition at the top of the report, rather than repeated in
+every cell. The year-to-date row runs against the full accrued allowance, not
+against 50h.
 
 ### Freshness
 
@@ -86,10 +97,11 @@ var DATA_FLAGS = [
 ];
 ```
 
-One entry drives every surface at once: a hatched fill and a ▾ marker on the
-chart, a warning tag in the summary table, a note in the tooltip, a labelled tag
-in the affected month's expanded detail, a line under the table, and a
-`Data note` column in both CSV exports.
+One entry drives every surface at once: a hatched fill and a warning marker on
+the chart, a note in that bar's tooltip, a labelled tag at the top of the
+affected month's expanded detail, and a `Data note` column in both CSV exports.
+The closed table row carries no mark of its own: the flag is stated in full one
+click away, and the chart already shows it at a glance.
 
 **Delete the entry once the underlying data is repaired.** Nothing else needs
 to change.
@@ -196,14 +208,18 @@ each month's `contributorIds` so counts remain accurate, but the frontend
 resolves them all to one avatar.
 
 `active: false` keeps a departed teammate resolving correctly for past years
-while dropping them from the current year's roster strip.
+while dropping them from the current year's contributors.
 
-Images live at `team/roster/<slug>.webp` (160px source, shown in the hero card's roster strip) and
-`team/stack/<slug>.webp` (48px head crop, shown in the monthly avatar stacks).
-Never use a roster image in a stack: it is four times the weight and the face is
-unreadable at that size. `team/roster/fc-mark.svg` and `team/stack/fc-mark.svg`
-are the studio mark, used for unrostered contributors and as the `onerror`
-fallback for any avatar that fails to load.
+Images live at `team/roster/<slug>.webp` (160px source) and
+`team/stack/<slug>.webp` (48px head crop). The report renders only the stack
+crop, in the avatar row inside each month's expanded detail, where the name and
+job title are the tooltip. Never use a roster image there: it is four times the
+weight and the face is unreadable at that size. The API still returns both, so
+a future surface can use the larger one.
+
+The studio mark is deliberately never rendered as an avatar. Among faces it read
+as a person nobody could name, so unrostered contributors are simply not shown
+and an avatar whose file fails to load is dropped rather than replaced with it.
 
 `blake`, `diggy` and `stacey` have images but no matching ClickUp account, so
 they are stored but unreferenced. The generator reports them rather than
