@@ -160,10 +160,12 @@
     .intro b { color: var(--ink-strong); font-weight: 600; }
 
     .defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 22px; }
+    /* Category identity comes from a soft wash off the top-left corner plus the
+       swatch, rather than a hard accent rule down the edge. */
     .def {
-      background: var(--surface); border: 1px solid var(--line);
-      border-radius: var(--r-md); padding: 15px 17px;
-      border-left: 3px solid var(--def-accent, var(--line));
+      background: linear-gradient(155deg, var(--def-tint, transparent), transparent 62%), var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md); padding: 16px 18px;
     }
     .def .def-name {
       display: flex; align-items: center; gap: 9px;
@@ -273,18 +275,30 @@
 
     /* ── Chart + interactive legend ─────────────────────────────── */
     .chart-wrap { position: relative; width: 100%; height: 260px; margin-bottom: 16px; }
-    .legend { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .legend { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; }
+    /* The legend doubles as the headline totals for each series, so the figure
+       is the dominant element and the label sits above it. */
     .legend-item {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-family: var(--font-body); font-size: 13.5px; font-weight: 600; color: var(--dim);
-      background: transparent; border: 1px solid transparent; border-radius: var(--r-full);
-      padding: 6px 12px 6px 10px; cursor: pointer; transition: all .14s ease;
+      display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px;
+      font-family: var(--font-body); text-align: left;
+      background: transparent; border: 1px solid transparent; border-radius: var(--r-md);
+      padding: 9px 14px; cursor: pointer; transition: all .14s ease;
     }
-    .legend-item:hover, .legend-item:focus-visible { color: var(--white); background: var(--surface); border-color: var(--line); outline: none; }
-    .legend-item[data-off="true"] { opacity: .4; }
+    .legend-item:hover, .legend-item:focus-visible { background: var(--surface); border-color: var(--line); outline: none; }
+    .legend-item .lg-name {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--dim); transition: color .14s ease;
+    }
+    .legend-item:hover .lg-name, .legend-item:focus-visible .lg-name { color: var(--white); }
+    .legend-item .val {
+      font-family: var(--font-display); font-size: 25px; font-weight: 600; line-height: 1.05;
+      letter-spacing: -0.01em; color: var(--white); font-variant-numeric: tabular-nums;
+      padding-left: 19px;
+    }
+    .legend-item[data-off="true"] { opacity: .38; }
     .legend-item[data-off="true"] .swatch { background: var(--dim-2) !important; }
-    .legend-item .val { color: var(--dim-2); font-weight: 500; font-variant-numeric: tabular-nums; }
-    .legend-hint { font-size: 12.5px; color: var(--dim-2); margin-left: 2px; }
+    @media (max-width: 560px) { .legend-item .val { font-size: 21px; } }
+    .legend-hint { font-size: 12.5px; color: var(--dim-2); margin: 0 0 12px 10px; }
     @media (max-width: 560px) { .legend-hint { margin: 4px 0 0; flex-basis: 100%; } }
 
     /* Flag button: opens the shared modal instead of pushing a callout inline. */
@@ -546,10 +560,12 @@
       { key: 'creative',    label: 'Creative',     budgeted: true,
         fill: '#27AC4B', ink: '#7EF893',                                 // literals: Chart.js canvas
         fillVar: 'var(--creative-fill)', inkVar: 'var(--creative-ink)',  // DOM: re-pointable per media
+        tint: 'rgba(126, 248, 147, 0.10)',
         items: 'creativeItems', hours: 'creative' },
       { key: 'nonCreative', label: 'Other', budgeted: false,
         fill: '#9B77D0', ink: '#C6A2FF',
         fillVar: 'var(--noncreative-fill)', inkVar: 'var(--noncreative-ink)',
+        tint: 'rgba(198, 162, 255, 0.10)',
         items: 'nonCreativeItems', hours: 'nonCreative' }
     ];
 
@@ -784,11 +800,11 @@
       h += '<p>Work falls into two buckets:</p>';
 
       h += '<div class="defs">';
-      h += '<div class="def" style="--def-accent:' + CATS[0].inkVar + '">' +
+      h += '<div class="def" style="--def-tint:' + CATS[0].tint + '">' +
            '<div class="def-name"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>Creative</div>' +
            '<div class="def-body">Your monthly retainer. <b>' + BUDGET + ' hours every month</b>, covering ongoing ' +
            'design and brand work. This is the budget the meters below measure against.</div></div>';
-      h += '<div class="def" style="--def-accent:' + CATS[1].inkVar + '">' +
+      h += '<div class="def" style="--def-tint:' + CATS[1].tint + '">' +
            '<div class="def-name"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>Other</div>' +
            '<div class="def-body">Project work scoped and approved separately, under its own ' +
            '<b>statement of work (SOW)</b>. It sits outside the retainer and does not draw against those hours.</div></div>';
@@ -881,7 +897,7 @@
       h += '<div class="legend" id="legend">';
       CATS.forEach(function (c, i) {
         h += '<button class="legend-item" data-i="' + i + '" data-off="false" aria-pressed="true">' +
-          '<span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label +
+          '<span class="lg-name"><span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>' +
           '<span class="val">' + fmtH(t[c.hours]) + '</span></button>';
       });
       h += '<span class="legend-hint">Hover to isolate a series, click to hide it</span>';
@@ -1122,7 +1138,35 @@
     window.addEventListener('beforeprint', function () { chartTheme(true); });
     window.addEventListener('afterprint', function () { chartTheme(false); });
 
-    // Marks flagged bars with a small warning caret above the column.
+    /* The same warning triangle as ICONS.alert, drawn onto the canvas so the
+       chart marker matches the flag buttons and callouts elsewhere. Path2D
+       takes the icon's own path data; a plain triangle stands in if the browser
+       cannot parse it. */
+    var ALERT_PATH = 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z';
+    var alertPath2D = null;
+    try { alertPath2D = new Path2D(ALERT_PATH); } catch (e) { alertPath2D = null; }
+
+    function drawWarnIcon(g, cx, cy, size, color) {
+      g.save();
+      g.translate(cx - size / 2, cy - size / 2);
+      g.scale(size / 24, size / 24);
+      g.strokeStyle = color;
+      g.lineWidth = 2.2;
+      g.lineJoin = 'round';
+      g.lineCap = 'round';
+      if (alertPath2D) {
+        g.stroke(alertPath2D);
+      } else {
+        g.beginPath();
+        g.moveTo(12, 3); g.lineTo(22.5, 21); g.lineTo(1.5, 21); g.closePath();
+        g.stroke();
+      }
+      g.beginPath(); g.moveTo(12, 9); g.lineTo(12, 13.5); g.stroke();
+      g.beginPath(); g.moveTo(12, 17); g.lineTo(12.01, 17); g.stroke();
+      g.restore();
+    }
+
+    // Marks flagged bars with the warning icon above the column.
     var flagMarkers = {
       id: 'flagMarkers',
       afterDatasetsDraw: function (c) {
@@ -1134,13 +1178,7 @@
           meta.data.forEach(function (bar, bi) {
             var m = state.range[bi];
             if (!m || !flagFor(YEAR, m.month, CATS[di].key)) return;
-            var x = bar.x, y = bar.y - 9;
-            g.save();
-            g.fillStyle = printing ? '#9A6512' : '#F5C26B';
-            g.beginPath();
-            g.moveTo(x, y + 6); g.lineTo(x - 4.5, y - 1.5); g.lineTo(x + 4.5, y - 1.5);
-            g.closePath(); g.fill();
-            g.restore();
+            drawWarnIcon(g, bar.x, bar.y - 11, 15, printing ? '#9A6512' : '#F5C26B');
           });
         });
       }
@@ -1174,7 +1212,25 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { top: 14 } },
+          layout: { padding: { top: 22 } },
+          /* Desktop gets the note on hover via the tooltip, but a tap on a touch
+             device raises no tooltip at all, so a flagged bar is also clickable
+             and opens the same modal the flag buttons use. */
+          onClick: function (evt, elements) {
+            if (!elements.length) return;
+            var el = elements[0];
+            var m = state.range[el.index];
+            if (!m) return;
+            var f = flagFor(YEAR, m.month, CATS[el.datasetIndex].key);
+            if (f) openFlagModal(f.id);
+          },
+          onHover: function (evt, elements) {
+            var over = elements.length && (function () {
+              var m = state.range[elements[0].index];
+              return m && flagFor(YEAR, m.month, CATS[elements[0].datasetIndex].key);
+            })();
+            evt.native.target.style.cursor = over ? 'pointer' : 'default';
+          },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -1206,7 +1262,7 @@
                     var f = flagFor(YEAR, m.month, CATS[it.datasetIndex].key);
                     if (f && notes.indexOf(f.label) === -1) notes.push(f.label);
                   });
-                  return notes.length ? '⚠ ' + notes.join(', ') + ', see note below' : '';
+                  return notes.length ? '⚠ ' + notes.join(', ') + '. Select for detail.' : '';
                 }
               }
             }
