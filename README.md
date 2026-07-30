@@ -201,6 +201,17 @@ resolves them all to one avatar.
 `active: false` keeps a departed teammate resolving correctly for past years
 while dropping them from the current year's header strip.
 
+Images live at `team/roster/<slug>.webp` (160px, shown in the header strip) and
+`team/stack/<slug>.webp` (48px head crop, shown in the monthly avatar stacks).
+Never use a roster image in a stack: it is four times the weight and the face is
+unreadable at that size. `team/roster/fc-mark.svg` and `team/stack/fc-mark.svg`
+are the studio mark, used for unrostered contributors and as the `onerror`
+fallback for any avatar that fails to load.
+
+`blake`, `diggy` and `stacey` have images but no matching ClickUp account, so
+they are stored but unreferenced. The generator reports them rather than
+guessing; wire them up by adding a roster entry once the right user id is known.
+
 The roster is **agency-wide, not per-client**: the report already filters to
 users who logged time against the configured folders, so one roster serves every
 client this app is pointed at. A per-client fork should **regenerate**
