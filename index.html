@@ -1027,11 +1027,16 @@
       var max = items.reduce(function (a, t) { return Math.max(a, t.hours); }, 0);
       return '<div style="margin-top:6px">' + sortItems(items).map(function (t) {
         var w = max > 0 ? Math.round((t.hours / max) * 100) : 0;
+        // Short tasks arrive rolled up into one row so the lines still sum to
+        // the header; show how many were folded in.
+        var name = t.aggregated
+          ? t.name + ' (' + t.count + (t.count === 1 ? ' task' : ' tasks') + ')'
+          : t.name;
         var link = t.url
           ? '<a class="link" href="' + esc(t.url) + '" target="_blank" rel="noopener" title="Open “' + esc(t.name) + '” in ClickUp" aria-label="Open ' + esc(t.name) + ' in ClickUp">' + ICONS.external + '</a>'
           : '<span class="link placeholder" title="No ClickUp link available" aria-hidden="true">' + ICONS.external + '</span>';
         return '<div class="row">' +
-          '<span class="name" title="' + esc(t.name) + '">' + esc(t.name) + '</span>' +
+          '<span class="name" title="' + esc(name) + '">' + esc(name) + '</span>' +
           '<span class="track"><span class="fill" style="width:' + w + '%;background:' + cat.fillVar + '"></span></span>' +
           '<span class="hrs">' + fmtH(t.hours) + '</span>' +
           link +

@@ -150,10 +150,57 @@ Response:
   it as "Data updated …".
 - `retainerBudget` is the assumed monthly retainer budget (hours) used for the
   `% used` figures.
+- An item with `aggregated: true` is the rolled-up tail of short tasks; `count`
+  is how many were folded in. The report renders it as
+  "Other retainer support (13 tasks)".
+- `timezone` is the zone months were bucketed in, `memberCount` how many
+  assignees the query covered, and `skippedEntries` how many entries were
+  dropped for an unusable duration.
 - `unmatchedEntries` / `unmatchedHours` count time outside the four tracked
   folders (i.e. other clients in the shared workspace), a sanity check that the
   folder mapping is complete. It is deliberately **not** shown in the report,
   which is Moss-only.
+
+### How entries are fetched
+
+Three things about the fetch are load-bearing:
+
+1. **`assignee` is always passed.** ClickUp's `/team/{id}/time_entries` silently
+   scopes to the token holder unless `assignee` is supplied. Without it the
+   report showed one person's hours and hid the rest of the team. Member IDs are
+   resolved per request from `GET /team` rather than hardcoded, so staffing
+   changes need no code change.
+2. **The year is walked one month at a time.** A single call is capped in how
+   many entries it returns, and with every member included the payload is large
+   enough to hit that cap and under-report silently. Twelve sequential calls are
+   merged and de-duplicated by entry id.
+3. **Months resolve in `America/Denver`, not UTC.** Vercel runs in UTC, so
+   late-evening work landed on the following day and anything near a month
+   boundary landed in the wrong month. Each fetch window is padded by 48 hours on
+   both sides and `denverYM()` decides which month an entry belongs to; anything
+   resolving outside the requested year is discarded.
+
+Entries with a negative or unparseable duration are skipped (a running timer
+reports negative) and counted in `skippedEntries`.
+
+### Line items and the aggregate row
+
+Tasks are keyed on **ClickUp task id**, not name. This workspace has several
+distinct tasks sharing a name, which keying on name merged into one row, and a
+rename split a single task's history in two. Entries with no task at all are
+grouped under one `(no task)` row.
+
+`toItems()` keeps every task in the total. Anything under **0.25h** is rolled
+into a single trailing row, `Other retainer support` or `Other project support`,
+carrying a `count` and `aggregated: true`. The row is omitted when the sum is
+zero. This replaced an earlier filter that dropped sub-0.005h tasks from the
+list while still counting them in the total, so the rows could not sum to the
+header.
+
+`retainerHours` / `sowHours` are derived from the emitted items, so a month's
+rows always reconcile against its header exactly. The tradeoff is that the
+header can differ from the raw unrounded sum by a few hundredths of an hour;
+reconciliation is the property that matters to a client reading the table.
 
 ### Folder mapping
 
@@ -177,8 +224,10 @@ from production:
 GET /api/time?year=2026&debug=1
 ```
 
-This returns the first raw ClickUp entry plus the folder ID and task URL
-resolved from it, so you can verify the mapping without redeploying.
+This returns the first raw ClickUp entry plus the folder ID, task URL and
+Denver month resolved from it, along with the member IDs the query covered, so
+you can verify the mapping without redeploying. If `memberCount` is 1, the
+`assignee` fix is not reaching ClickUp.
 
 ## Deploy (Vercel)
 

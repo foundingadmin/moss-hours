@@ -9,6 +9,95 @@ const FOLDER_IDS = {
   sow: ['90117343728', '90117412643'],
 };
 
+// The agency works out of Denver. Vercel runs in UTC, so months have to be
+// resolved against Denver's offset or late-evening work lands on the next day
+// and anything near a month boundary lands in the wrong month.
+const TIMEZONE = 'America/Denver';
+
+// Entries can start just outside the requested year in UTC yet still resolve
+// into it in Denver, so each fetch window is padded and denverYM decides.
+const BOUNDARY_PAD_MS = 48 * 60 * 60 * 1000;
+
+// Tasks below this are rolled into a single aggregated row rather than filling
+// the report with one and two minute entries.
+const AGGREGATE_THRESHOLD_HOURS = 0.25;
+
+const NO_TASK_KEY = '__no_task__';
+const NO_TASK_NAME = '(no task)';
+
+const DENVER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TIMEZONE,
+  year: 'numeric',
+  month: '2-digit',
+});
+
+// Built from a parts map rather than formatToParts array order, which is not
+// guaranteed across engines.
+function denverYM(ms) {
+  const p = Object.fromEntries(
+    DENVER.formatToParts(new Date(ms)).map((x) => [x.type, x.value])
+  );
+  return { year: +p.year, month: +p.month - 1 };
+}
+
+async function clickup(path) {
+  const res = await fetch(`https://api.clickup.com/api/v2${path}`, {
+    headers: {
+      Authorization: CLICKUP_TOKEN,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) {
+    const err = new Error(`ClickUp API error ${res.status}`);
+    err.status = res.status;
+    err.detail = await res.text();
+    throw err;
+  }
+  return res.json();
+}
+
+// /team/{id}/time_entries silently scopes to the token holder unless assignee
+// is supplied, which hid every other team member's hours. Resolved per request
+// rather than hardcoded, so people joining or leaving need no code change.
+async function fetchMemberIds() {
+  const { teams } = await clickup('/team');
+  const team = (teams || []).find((t) => String(t.id) === WORKSPACE_ID);
+  if (!team) throw new Error(`Workspace ${WORKSPACE_ID} not visible to this token`);
+  const ids = (team.members || [])
+    // `members[].user.id` is the documented v2 shape; the bare `id` fallback
+    // guards against the flattened variant some responses use.
+    .map((m) => m?.user?.id ?? m?.id)
+    .filter((id) => id !== null && id !== undefined)
+    .map(String);
+  return [...new Set(ids)];
+}
+
+// ClickUp caps how many entries one time_entries call returns. With every
+// member included the payload roughly triples, so the year is walked a month at
+// a time and the results merged. Windows overlap by the boundary pad, hence the
+// de-duplication by entry id.
+async function fetchYearEntries(year, assignee) {
+  const seen = new Set();
+  const entries = [];
+  for (let m = 0; m < 12; m++) {
+    const start = Date.UTC(year, m, 1) - BOUNDARY_PAD_MS;
+    const end = Date.UTC(year, m + 1, 1) - 1 + BOUNDARY_PAD_MS;
+    // An empty assignee list would scope the query back to the token holder,
+    // which is the bug this parameter exists to fix, so omit it instead.
+    const scope = assignee ? `&assignee=${assignee}` : '';
+    const { data } = await clickup(
+      `/team/${WORKSPACE_ID}/time_entries?start_date=${start}&end_date=${end}${scope}`
+    );
+    for (const entry of data || []) {
+      const id = String(entry?.id ?? '');
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      entries.push(entry);
+    }
+  }
+  return entries;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -20,24 +109,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const year = parseInt(req.query.year) || new Date().getFullYear();
-  const startMs = new Date(`${year}-01-01T00:00:00Z`).getTime();
-  const endMs = new Date(`${year}-12-31T23:59:59Z`).getTime();
 
   try {
-    const url = `https://api.clickup.com/api/v2/team/${WORKSPACE_ID}/time_entries?start_date=${startMs}&end_date=${endMs}`;
-    const cuRes = await fetch(url, {
-      headers: {
-        Authorization: CLICKUP_TOKEN,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!cuRes.ok) {
-      const errText = await cuRes.text();
-      return res.status(502).json({ error: `ClickUp API error ${cuRes.status}`, detail: errText });
-    }
-
-    const { data: entries } = await cuRes.json();
+    const memberIds = await fetchMemberIds();
+    const assignee = memberIds.join(',');
+    const entries = await fetchYearEntries(year, assignee);
 
     // ClickUp's v2 /team/{id}/time_entries returns each entry with a
     // `task_location: { list_id, folder_id, space_id }` object, so
@@ -62,89 +138,127 @@ export default async function handler(req, res) {
     };
 
     if (req.query.debug) {
-      const sample = (entries || [])[0] || null;
+      const sample = entries[0] || null;
       return res.status(200).json({
         year,
-        totalEntries: (entries || []).length,
+        timezone: TIMEZONE,
+        memberCount: memberIds.length,
+        memberIds,
+        totalEntries: entries.length,
         resolvedFolderIdOfSample: sample ? folderIdOf(sample) : null,
         resolvedTaskUrlOfSample: sample ? taskUrlOf(sample) : null,
+        resolvedDenverMonthOfSample: sample ? denverYM(parseInt(sample.start)) : null,
         sampleEntry: sample,
       });
     }
 
-    // One bucket per month, each tracking total hours plus a per-task tally for
-    // the Creative (retainer) and Non-Creative (SOW) categories. Tasks are keyed
-    // by ClickUp task id where available so a renamed task stays one line item.
+    // One bucket per month, each holding a per-task tally for the Creative
+    // (retainer) and Non-Creative (SOW) categories. Keyed on ClickUp task id:
+    // this workspace has several distinct tasks sharing a name, which keying on
+    // name silently merged, and a rename split one task's history in two.
     const months = Array.from({ length: 12 }, () => ({
-      retainerHours: 0,
-      sowHours: 0,
       retainerTasks: new Map(),
       sowTasks: new Map(),
     }));
     let unmatchedEntries = 0;
     let unmatchedHours = 0;
+    let skippedEntries = 0;
 
-    for (const entry of entries || []) {
+    for (const entry of entries) {
       const startTs = parseInt(entry.start);
-      if (isNaN(startTs)) continue;
+      if (!Number.isFinite(startTs)) {
+        skippedEntries += 1;
+        continue;
+      }
 
-      const d = new Date(startTs);
-      if (d.getFullYear() !== year) continue;
+      // Running timers report a negative duration; they are not elapsed work.
+      const durationMs = parseInt(entry.duration);
+      if (!Number.isFinite(durationMs) || durationMs < 0) {
+        skippedEntries += 1;
+        continue;
+      }
 
-      const month = d.getMonth();
-      const hours = (parseInt(entry.duration) || 0) / 3600000;
+      const { year: entryYear, month } = denverYM(startTs);
+      if (entryYear !== year) continue;
+
+      const hours = durationMs / 3600000;
       const fid = folderIdOf(entry);
-      const taskName = entry?.task?.name || '(untitled task)';
-      const taskId = entry?.task?.id ? String(entry.task.id) : null;
 
-      let bucket, isRetainer;
-      if (FOLDER_IDS.retainer.includes(fid)) {
-        bucket = months[month].retainerTasks;
-        isRetainer = true;
-      } else if (FOLDER_IDS.sow.includes(fid)) {
-        bucket = months[month].sowTasks;
-        isRetainer = false;
-      } else {
+      let bucket;
+      if (FOLDER_IDS.retainer.includes(fid)) bucket = months[month].retainerTasks;
+      else if (FOLDER_IDS.sow.includes(fid)) bucket = months[month].sowTasks;
+      else {
         unmatchedEntries += 1;
         unmatchedHours += hours;
         continue;
       }
 
-      const key = taskId || `name:${taskName}`;
+      // Orphaned timers carry no task object; they collapse into one row rather
+      // than one row per entry.
+      const taskId = entry?.task?.id ? String(entry.task.id) : null;
+      const key = taskId || NO_TASK_KEY;
       const existing = bucket.get(key);
       if (existing) {
         existing.hours += hours;
       } else {
         bucket.set(key, {
           id: taskId,
-          name: taskName,
+          name: taskId ? entry?.task?.name || '(untitled task)' : NO_TASK_NAME,
           hours,
-          url: taskUrlOf(entry),
+          url: taskId ? taskUrlOf(entry) : null,
           listId: entry?.task_location?.list_id ? String(entry.task_location.list_id) : null,
         });
       }
-
-      if (isRetainer) months[month].retainerHours += hours;
-      else months[month].sowHours += hours;
     }
 
     const round = (n) => Math.round(n * 100) / 100;
-    const toItems = (map) =>
-      [...map.values()]
-        .map((t) => ({ ...t, hours: round(t.hours) }))
-        .filter((t) => t.hours > 0) // drop tasks that round to 0h (milestones, sub-second timers)
+
+    // Every task stays in the total. Anything under the threshold is rolled into
+    // one trailing row, so the visible rows always sum to the header rather than
+    // quietly dropping short entries as the old filter did.
+    const toItems = (map, aggregateName) => {
+      const all = [...map.values()].map((t) => ({ ...t, hours: round(t.hours) }));
+
+      const items = all
+        .filter((t) => t.hours >= AGGREGATE_THRESHOLD_HOURS)
         .sort((a, b) => b.hours - a.hours);
 
-    const monthsOut = months.map((mo, i) => ({
-      month: i,
-      retainerHours: round(mo.retainerHours),
-      sowHours: round(mo.sowHours),
-      retainerItems: toItems(mo.retainerTasks),
-      sowItems: toItems(mo.sowTasks),
-    }));
+      const small = all.filter((t) => t.hours < AGGREGATE_THRESHOLD_HOURS && t.hours > 0);
+      const aggregateHours = round(small.reduce((sum, t) => sum + t.hours, 0));
+
+      if (aggregateHours > 0) {
+        items.push({
+          id: null,
+          name: aggregateName,
+          hours: aggregateHours,
+          url: null,
+          listId: null,
+          count: small.length,
+          aggregated: true,
+        });
+      }
+      return items;
+    };
+
+    // The header is the sum of what is actually listed, so a month's rows always
+    // reconcile against its total instead of drifting by rounding.
+    const sumItems = (items) => round(items.reduce((sum, t) => sum + t.hours, 0));
+
+    const monthsOut = months.map((mo, i) => {
+      const retainerItems = toItems(mo.retainerTasks, 'Other retainer support');
+      const sowItems = toItems(mo.sowTasks, 'Other project support');
+      return {
+        month: i,
+        retainerHours: sumItems(retainerItems),
+        sowHours: sumItems(sowItems),
+        retainerItems,
+        sowItems,
+      };
+    });
 
     return res.status(200).json({
       year,
+      timezone: TIMEZONE,
       retainerBudget: RETAINER_BUDGET_HOURS,
       // When this payload was built server-side. The report shows it as
       // "last updated" so the freshness of the data is never in question.
@@ -153,11 +267,14 @@ export default async function handler(req, res) {
       // Flat aggregates kept for convenience / back-compat.
       retainer: monthsOut.map((m) => m.retainerHours),
       sow: monthsOut.map((m) => m.sowHours),
-      totalEntries: (entries || []).length,
+      memberCount: memberIds.length,
+      totalEntries: entries.length,
+      skippedEntries,
       unmatchedEntries,
       unmatchedHours: round(unmatchedHours),
     });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    const status = e.status && e.status >= 400 ? 502 : 500;
+    return res.status(status).json({ error: e.message, detail: e.detail });
   }
 }
