@@ -31,7 +31,6 @@
          for data integrity, never for utilisation. */
       --ok: var(--mint);
       --over: #FF8A80;
-      --over-surface: rgba(255, 138, 128, 0.12);
 
       --warn: #F5C26B;              /* base: icons, rules */
       --warn-strong: #FFD68F;       /* titles on a warn surface */
@@ -59,14 +58,14 @@
     }
 
     /* One badge geometry, shared by every chip and tag in the report. */
-    .badge, .pct-chip, .flag-tag, .flag-btn.labelled {
+    .badge, .flag-tag, .flag-btn.labelled {
       display: inline-flex; align-items: center; gap: 6px;
       font-family: var(--font-body); font-size: var(--badge-size);
       font-weight: var(--badge-weight); letter-spacing: .01em; line-height: 1.35;
       padding: var(--badge-pad); border-radius: var(--r-full);
       border: 1px solid currentColor; white-space: nowrap;
     }
-    .badge svg, .pct-chip svg, .flag-tag svg { width: 13px; height: 13px; flex: none; }
+    .badge svg, .flag-tag svg { width: 13px; height: 13px; flex: none; }
 
     body {
       background:
@@ -98,31 +97,23 @@
       background: rgba(0, 0, 0, 0.72);
       backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     }
-    /* The two wordmarks are balanced optically, not by box height. Measured
-       from the artwork: Founding's F is 84.4% of its artboard with the baseline
-       at 83.6%; Moss's caps are 55.7% with the baseline at 56.8% (the spear
-       descender eats the rest). So the boxes are bottom-aligned and Moss is
-       pulled down by --moss-drop to put both baselines on the same line, then
-       set to ~0.74x Founding's cap height, because matching cap heights lets
-       Moss's heavy sans overpower Founding's light serif. The spear overhangs
-       into the masthead's bottom padding. */
-    .lockup {
-      --fc-h: 22px; --moss-h: 24.6px; --moss-drop: 7px;
-      display: flex; align-items: flex-end; gap: 15px; height: var(--fc-h);
-    }
-    .lockup img { display: block; width: auto; }
-    .lockup img.fc { height: var(--fc-h); }
-    .lockup img.moss { height: var(--moss-h); margin-bottom: calc(var(--moss-drop) * -1); }
-    .lockup .x { width: 1px; height: var(--fc-h); background: var(--line); display: block; flex: none; }
-    .lockup .role {
-      font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-      color: var(--dim-2); padding-left: 3px; line-height: var(--fc-h);
-    }
+    /* Only the agency mark sits up here now. The client's mark leads the report
+       title instead, where it reads as the subject of the page rather than as
+       half of a co-branded lockup, which also makes this template reusable for
+       any retainer client without re-balancing two wordmarks. */
+    .lockup { --fc-h: 22px; display: flex; align-items: center; height: var(--fc-h); }
+    .lockup img { display: block; width: auto; height: var(--fc-h); }
 
     .status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    /* A ticking seconds field in Manrope twitched the whole masthead once a
+       second: measured, its digits run 7.47px to 8.00px wide, and it ships no
+       tnum feature to even them out. So the readout is set in the platform's
+       monospace face, where every digit is one advance by definition. It also
+       suits what this is: a live instrument reading, not report copy. */
     .clock {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
-      font-size: 13px; line-height: 1.35; text-align: right;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 12px; line-height: 1.35; text-align: right; letter-spacing: -0.01em;
     }
     .clock .now { color: var(--white); font-weight: 600; }
     .clock .now .live-dot {
@@ -144,8 +135,8 @@
        string itself is shortened in tickClock), and the lockup steps down. */
     @media (max-width: 700px) {
       .masthead {
-        display: grid; grid-template-columns: minmax(0, 1fr) auto auto;
-        grid-template-areas: "lockup refresh export" "clock clock clock";
+        display: grid; grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "lockup refresh" "clock clock";
         align-items: center; gap: 7px 10px;
         padding: 11px 0 12px; margin-bottom: 26px;
       }
@@ -153,11 +144,10 @@
       .masthead > .status { display: contents; }
       .status > .clock { grid-area: clock; }
       .status > #refreshBtn { grid-area: refresh; }
-      .status > .menu-wrap { grid-area: export; }
-      .lockup { --fc-h: 19px; --moss-h: 21.3px; --moss-drop: 6px; gap: 12px; }
+      .lockup { --fc-h: 19px; }
       .clock {
         flex-direction: row; align-items: baseline; flex-wrap: wrap;
-        gap: 0 7px; font-size: 12.5px; text-align: left;
+        gap: 0 7px; font-size: 11.5px; text-align: left;
       }
       .clock .fetched::before { content: "·"; margin-right: 7px; }
       .btn { font-size: 14px; padding: 8px 11px; }
@@ -198,8 +188,38 @@
 
     /* ── Title row + pill selectors ─────────────────────────────── */
     .title-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
-    .report-title { font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; }
+    /* The client mark reads as the first word of the title, so it is set on the
+       title's own baseline. Moss's spear descends well below its artboard's
+       cap line, so the mark is dropped by the measured share of its height to
+       put the two baselines on one line. */
+    .report-title {
+      display: flex; align-items: baseline; gap: 15px;
+      font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 600;
+      letter-spacing: -0.01em; line-height: 1.05;
+    }
+    .report-title .client-mark { height: 0.78em; width: auto; margin-bottom: -0.222em; flex: none; }
     .report-range { font-size: 15px; color: var(--dim); margin-top: 7px; }
+
+    /* Export lives beside the title, not in the masthead: from here it reads as
+       "export this report", which is what it does, rather than as a global
+       action that would follow you around the app. */
+    .title-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+    .export-link {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-family: var(--font-body); font-size: 14.5px; font-weight: 600; color: var(--dim);
+      background: transparent; border: 0; padding: 0; cursor: pointer;
+      text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px;
+      text-decoration-color: rgba(255, 255, 255, 0.3); white-space: nowrap;
+      transition: color .14s ease, text-decoration-color .14s ease;
+    }
+    .export-link:hover { color: var(--white); text-decoration-color: var(--white); }
+    .export-link:focus-visible { outline: 2px solid var(--holo-cyan); outline-offset: 3px; border-radius: 2px; }
+    .export-link svg { width: 14px; height: 14px; flex: none; }
+    @media (max-width: 560px) {
+      .title-row { margin-bottom: 24px; }
+      .title-actions { flex-direction: row; align-items: center; gap: 16px; }
+    }
+    @media (max-width: 430px) { .export-link .x-long { display: none; } }
 
     .pills { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-full); padding: 4px; }
     .pill {
@@ -230,9 +250,16 @@
       border: 1px solid var(--line); border-radius: var(--r-xl);
       padding: 26px 28px 24px; box-shadow: var(--shadow-xl);
     }
-    .hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px 40px; flex-wrap: wrap; margin-bottom: 26px; }
+    /* Two columns that share a top rail, so the eyebrows line up and the
+       comparison reads as a second panel rather than text parked in the gap.
+       The headline column is sized to its own content, which keeps the hairline
+       beside it instead of stranded out in the middle of the card. */
+    .hero-top {
+      display: grid; grid-template-columns: auto minmax(0, 1fr);
+      gap: 24px 38px; margin-bottom: 26px;
+    }
     .hero-total { min-width: 0; }
-    .hero-total .eyebrow { margin-bottom: 9px; }
+    .hero-total .eyebrow, .funfact .eyebrow { margin-bottom: 9px; }
     .hero-total .v {
       font-family: var(--font-display); font-size: clamp(44px, 7.5vw, 66px); font-weight: 600;
       line-height: 1; letter-spacing: -0.015em;
@@ -245,13 +272,18 @@
     }
     @keyframes sheen { to { background-position: -260% 0; } }
 
-    /* Rotating comparison line. One idea at a time, cross-faded. Given its own
-       column beside the headline figure and set large enough to be read on the
-       way past, which is the only way it ever gets read. */
+    /* Rotating comparison line. One idea at a time, cross-faded, set large
+       enough to be read on the way past, which is the only way it ever gets
+       read. Separated by the same hairline the card uses under this row. The
+       block is anchored at its top: it rewrites itself every few seconds, and
+       anchoring the bottom would shuffle the column on every change. */
     .funfact {
-      flex: 1 1 300px; max-width: 460px; min-height: 3em;
+      border-left: 1px solid var(--line); padding-left: 38px;
       font-size: 19px; line-height: 1.5; color: var(--dim);
+    }
+    .funfact .ff-body {
       display: flex; align-items: flex-start; gap: 11px;
+      min-height: 3em; max-width: 46ch;
     }
     .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; margin-top: 5px; }
     .funfact .ff-icon svg { width: 19px; height: 19px; display: block; }
@@ -271,86 +303,71 @@
     .hero-ctx { font-size: 15.5px; color: var(--dim); line-height: 1.6; margin-top: 12px; }
     .hero-ctx strong { color: var(--ink-strong); font-weight: 600; }
 
+    /* Below this the two columns would fight over the same 400px, so they stack
+       and the divider turns with them. */
+    @media (max-width: 900px) {
+      .hero-top { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+      .funfact { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 20px; }
+      .funfact .ff-body { max-width: none; }
+    }
+    /* The reserved height only carries weight once the columns stack: there the
+       fact sits directly above the team divider, so a shorter one would pull the
+       whole block up every few seconds. Beside the headline figure the row is
+       taller than the fact either way. Each step is the measured worst case for
+       its band, so re-check these if the fact list grows. */
+    @media (max-width: 640px) { .funfact .ff-body { min-height: 3.1em; } }
+    @media (max-width: 464px) { .funfact .ff-body { min-height: 4.5em; } }
+    @media (max-width: 375px) { .funfact .ff-body { min-height: 6em; } }
+
     .split { border-top: 1px solid var(--line); padding-top: 22px; }
     /* Top-aligned, not centre-aligned: the label often runs to a second line on
        a narrow screen, and a swatch floating between the two lines reads as
        belonging to neither. */
     .srow-label { display: flex; align-items: flex-start; gap: 10px; font-size: 16.5px; font-weight: 700; }
     .srow-label > .swatch { margin-top: 6px; }
-    .srow-label .sub { display: block; font-size: 14px; font-weight: 500; color: var(--dim-2); margin-top: 3px; letter-spacing: 0; }
     .swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
 
-    /* The stat block that replaced "6h 44m used · 13% of 50h · 43h 16m remaining":
-       value / allowance / percentage each get their own size, weight and color. */
-    .stat { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-    /* A class, not an inline style, so the narrow-viewport rule below can win. */
-    .stat.end { justify-content: flex-end; }
-    .stat .used { font-family: var(--font-display); font-size: 27px; font-weight: 600; line-height: 1; letter-spacing: -0.01em; }
-    .stat .of { font-size: 16px; font-weight: 500; color: var(--dim-2); }
-    .pct-chip.ok { color: var(--ok); background: rgba(126, 248, 147, 0.10); }
-    .pct-chip.over { color: var(--over); background: var(--over-surface); }
-    .pct-chip.neutral { color: var(--dim); background: var(--surface); border-color: var(--line); }
 
-    .meter { position: relative; height: 8px; background: rgba(255, 255, 255, 0.16); border-radius: var(--r-full); overflow: hidden; min-width: 120px; }
-    .meter .fill { height: 100%; border-radius: var(--r-full); transition: width .5s cubic-bezier(.22,.9,.3,1); }
-    .meter.thin { height: 6px; }
-
-    /* ── Team roster strip, inside the hero card ────────────────── */
-    .team-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
-    .team-caption { font-size: 12px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; color: var(--dim-2); }
-    .team-strip {
-      display: flex; gap: 22px; flex-wrap: wrap;
-      padding-bottom: 4px;
+    /* ── Category definitions, inside the hero card ──────────────────
+       Answers "why is there a green series and a purple one?" and states the
+       retainer terms once, in the place the reader meets the two colours. Kept
+       deliberately light: the figures themselves are charted below, and a full
+       roster of tiles here never filled its row on a small team. */
+    .defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 36px; }
+    .def { display: flex; gap: 12px; align-items: flex-start; }
+    .def > .swatch { margin-top: 7px; }
+    .def-body { min-width: 0; }
+    .def-name {
+      display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+      font-size: 16.5px; font-weight: 700; color: var(--white);
     }
-    /* Sized to sit inside the hero card rather than fill the page width. */
-    .team-member { margin: 0; width: 124px; }
-    .team-member img {
-      display: block; width: 124px; height: 124px; object-fit: cover;
-      border-radius: var(--r-lg); background: var(--surface-2);
-      border: 1px solid var(--line);
+    .def-terms {
+      font-size: 12.5px; font-weight: 700; color: var(--dim);
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--r-full); padding: 3px 9px; white-space: nowrap;
     }
-    .team-member figcaption { margin-top: 11px; }
-    .tm-name { display: block; font-size: 15px; font-weight: 700; color: var(--white); line-height: 1.3; }
-    .tm-title { display: block; font-size: 13.5px; color: var(--dim-2); line-height: 1.4; margin-top: 2px; }
+    .def-text { font-size: 14.5px; line-height: 1.55; color: var(--dim-2); margin: 5px 0 0; text-wrap: pretty; }
+    @media (max-width: 700px) { .defs { grid-template-columns: minmax(0, 1fr); gap: 18px; } }
 
     /* The regression this exists to catch: one account reporting while many
        were queried. It has to look broken on sight, not read as a footnote. */
-    .team-sec.is-broken .team-caption { color: var(--warn); }
-    .team-sec.is-broken .team-strip {
+    .data-alarm {
+      display: flex; align-items: center; gap: 8px; margin: 0 0 18px;
+      font-size: 14px; font-weight: 700; color: var(--warn);
       background: var(--warn-surface); border: 1px solid var(--warn-line);
-      border-radius: var(--r-lg); padding: 20px;
+      border-radius: var(--r-md); padding: 10px 13px;
     }
-    .team-sec.is-broken .team-member img { border-color: var(--warn-line); }
-    .team-alarm { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--warn); }
-    .team-alarm svg { width: 16px; height: 16px; flex: none; }
-
-    @media (max-width: 640px) {
-      .team-strip { gap: 16px; }
-      .team-member, .team-member img { width: 116px; }
-      .team-member img { height: 116px; }
-    }
-    /* Wrapping left a ragged two-per-row block; a three-column grid fills the
-       width and keeps the tiles square whatever the roster count is. */
-    @media (max-width: 560px) {
-      .team-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 12px; }
-      .team-member, .team-member img { width: 100%; }
-      .team-member img { height: auto; aspect-ratio: 1 / 1; }
-      .team-member figcaption { margin-top: 8px; }
-      .tm-name { font-size: 13px; }
-      .tm-title { font-size: 11.5px; }
-      .team-sec.is-broken .team-strip { padding: 14px; }
-    }
+    .data-alarm svg { width: 16px; height: 16px; flex: none; }
 
     /* ── Monthly contributor stack ──────────────────────────────── */
     .stack { display: flex; align-items: center; }
-    /* The black cut-out separating overlapping avatars also erased the studio
-       mark, which is mostly black itself: it read as a hole in the row rather
-       than a person. A hairline ring outside the cut-out gives every avatar an
-       edge, whatever its artwork does. */
+    /* The cut-out between overlapping avatars is the only edge they need. It
+       used to carry a hairline ring outside it as well, because the studio mark
+       is mostly black and read as a hole in the row; that mark no longer
+       appears here, and the second edge read as a stray white stroke. */
     .stack img, .stack .av-more {
       width: 48px; height: 48px; border-radius: var(--r-md);
       border: 2px solid var(--n-black); background: var(--surface-2);
-      box-shadow: 0 0 0 1px var(--line);
       display: block; object-fit: cover;
     }
     .stack > * + * { margin-left: -14px; }
@@ -364,27 +381,10 @@
     .stack-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .stack-label { font-size: 13px; color: var(--dim-2); }
 
-    /* ── Data-integrity callout (annotation component) ──────────── */
-    .callout {
-      display: flex; gap: 11px; align-items: flex-start;
-      background: rgba(245, 194, 107, 0.075);
-      border: 1px solid rgba(245, 194, 107, 0.3);
-      border-radius: var(--r-md); padding: 12px 14px;
-      font-size: 15px; line-height: 1.65; color: var(--ink-strong);
-    }
-    .callout svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--warn); }
-    .callout strong { color: var(--warn); font-weight: 700; }
-    .callout.inline { margin-top: 14px; }
-
-    /* Compact inline flag: pill in tables, superscript beside a figure. */
+    /* ── Data-integrity flag ────────────────────────────────────────
+       Compact inline flag: pill in tables, superscript beside a figure. */
     .flag-tag { color: var(--warn); background: var(--warn-surface); border-color: var(--warn-line); cursor: help; }
 
-    .flag-note {
-      display: flex; gap: 9px; align-items: flex-start;
-      font-size: 13.5px; line-height: 1.6; color: var(--dim-2); margin: 14px 0 0;
-    }
-    .flag-note svg { width: 13px; height: 13px; flex: none; margin-top: 2px; color: var(--warn); }
-    .flag-note strong { color: var(--warn); font-weight: 700; }
 
     /* ── Chart + interactive legend ─────────────────────────────────
        Height is set inline by drawChart: fixed for the vertical layout, and
@@ -475,27 +475,53 @@
       color: var(--dim-2); border-bottom: 1px solid var(--line); white-space: nowrap;
     }
     .table td.r, .table th.r { text-align: right; }
+    /* Selection is cyan, not mint. Mint means Creative everywhere else in the
+       report, so using it for "this row is open" made a UI state look like a
+       data category. Cyan is the brand's neutral action colour and belongs to
+       neither series. */
+    .table { --sel: var(--holo-cyan); --sel-row: rgba(105, 238, 255, 0.10); --sel-body: rgba(105, 238, 255, 0.045); }
     .table tbody tr.mrow { cursor: pointer; transition: background .12s ease, box-shadow .12s ease; }
     .table tbody tr.mrow:hover { background: rgba(255,255,255,0.085); }
     .table tbody tr.mrow:hover td:first-child { box-shadow: inset 3px 0 0 var(--dim-2); }
-    .table tbody tr.mrow:focus-visible { outline: 2px solid var(--mint); outline-offset: -2px; }
-    .table tbody tr.mrow[aria-expanded="true"] { background: rgba(126, 248, 147, 0.11); }
-    .table tbody tr.mrow[aria-expanded="true"] td { color: var(--white); border-bottom-color: transparent; }
-    .table tbody tr.mrow[aria-expanded="true"] td:first-child { box-shadow: inset 3px 0 0 var(--mint); }
-    .table tbody tr.mrow[aria-expanded="true"] .mo { font-weight: 700; }
+    .table tbody tr.mrow:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
+    .table tbody tr.mrow[aria-expanded="true"] { background: var(--sel-row); }
+    .table tbody tr.mrow[aria-expanded="true"] td { border-bottom-color: transparent; }
+    /* The total column paints its own tint over the row's, which cut the open
+       row in two. Give it a stronger step of the same hue instead, so the band
+       stays one band and the column is still lifted. */
+    .table tbody tr.mrow[aria-expanded="true"] td.col-total { background: rgba(105, 238, 255, 0.13); }
+    .table tbody tr.mrow[aria-expanded="true"] td:first-child { box-shadow: inset 3px 0 0 var(--sel); }
+    .table tbody tr.mrow[aria-expanded="true"] .mo { font-weight: 700; color: var(--white); }
     .table .mo { font-weight: 600; display: flex; align-items: center; gap: 8px; }
     /* The caret is the only thing saying the row opens, so it turns rather than
        appears: the closed and open states read as the same control. */
     .table .caret { display: inline-flex; width: 15px; height: 15px; flex: none; color: var(--dim-2); transition: transform .16s ease, color .16s ease; }
     .table .caret svg { width: 100%; height: 100%; }
     .table tbody tr.mrow:hover .caret { color: var(--white); }
-    .table tbody tr.mrow[aria-expanded="true"] .caret { transform: rotate(90deg); color: var(--mint); }
+    .table tbody tr.mrow[aria-expanded="true"] .caret { transform: rotate(90deg); color: var(--sel); }
 
-    /* The open month's detail, sitting in a full-width row under its figures. */
-    .table tbody tr.acc > td { padding: 0 0 22px; border-bottom: 1px solid var(--line-soft); background: rgba(126, 248, 147, 0.045); }
-    .acc-inner { padding: 4px 26px 0; }
-    .acc-note { font-size: 13.5px; color: var(--dim-2); margin: 18px 0 0; }
-    @media (max-width: 680px) { .acc-inner { padding: 4px 0 0; } }
+    /* The open month's detail. It is drawn as a panel hanging off the bottom of
+       its own row, sharing the row's tint and continuing its left marker, so
+       the block is unmistakably part of the row above it and the next month's
+       row is the next thing with a full-width rule under it. */
+    .table tbody tr.acc > td { padding: 0 0 26px; border-bottom: 1px solid var(--line); background: var(--sel-row); }
+    .acc-inner {
+      box-shadow: inset 3px 0 0 var(--sel);
+      background: rgba(255, 255, 255, 0.028);
+      border-bottom-left-radius: var(--r-lg); border-bottom-right-radius: var(--r-lg);
+      padding: 20px 24px 22px;
+    }
+    .acc-note { font-size: 13.5px; color: var(--dim-2); margin: 20px 0 0; }
+    /* The month's own flag, which no longer marks the closed row. */
+    .acc-flag { margin-bottom: 16px; }
+    @media (max-width: 680px) { .acc-inner { padding: 16px 14px 18px; } }
+
+    /* Both categories side by side, so the two task lists that add up to the
+       row's total are visible at once instead of one scrolling past the other.
+       They stack below 860px, where two columns of task names would truncate to
+       nothing useful. */
+    .cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 34px; align-items: start; }
+    @media (max-width: 860px) { .cat-grid { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
     .table .primary { font-weight: 600; color: var(--white); }
     .table .of { color: var(--dim-2); font-weight: 500; }
     /* The share of the retainer, reading as an annotation on the figure it
@@ -507,7 +533,10 @@
     .table td.r, .table th.r { white-space: nowrap; }
 
     /* The Total column and the year-to-date row are sums, not more of the same
-       data, so both are lifted out of the grid of monthly figures. */
+       data, so both are lifted out of the grid of monthly figures. The column
+       before it keeps a wider gutter, so its figures are not pressed up against
+       the tinted edge. */
+    .table .col-gap { padding-right: 24px; }
     .table .col-total { background: rgba(255,255,255,0.045); }
     .table th.col-total { color: var(--ink-strong); }
     .table tbody tr.mrow td.col-total { font-weight: 700; color: var(--white); }
@@ -519,9 +548,10 @@
     }
     .table tfoot td:first-child { letter-spacing: .01em; }
     .table tfoot td.col-total { background: rgba(255,255,255,0.10); font-size: 18px; }
-    .table-note { font-size: 13.5px; line-height: 1.6; color: var(--dim-2); margin: 14px 0 0; max-width: 76ch; }
-    .table-note b { color: var(--dim); font-weight: 700; }
-    .table-scroll { overflow-x: auto; }
+    /* The chart and the table are one unit: the chart is the shape of the year,
+       the table is the same year in figures with its detail folded inside. A
+       section-sized gap here made them read as two separate exhibits. */
+    .table-scroll { overflow-x: auto; margin-top: 20px; }
     /* Month names are carried twice so the column can shorten without a
        re-render when the viewport crosses the breakpoint. */
     .mo-abbr { display: none; }
@@ -532,6 +562,7 @@
     @media (max-width: 680px) {
       .table { font-size: 14px; }
       .table th, .table td { padding: 11px 6px; }
+      .table .col-gap { padding-right: 12px; }
       .table th:first-child, .table td:first-child { padding-left: 0; }
       .table th { font-size: 10.5px; letter-spacing: .06em; }
       .table .mo { gap: 6px; }
@@ -547,37 +578,28 @@
     @media (max-width: 430px) {
       .table { font-size: 13px; }
       .table th, .table td { padding: 10px 4px; }
+      .table .col-gap { padding-right: 9px; }
       .table .caret { width: 13px; height: 13px; }
       .table .use { font-size: 12px; }
     }
 
     @media (max-width: 640px) {
       .srow-label { font-size: 16px; }
-      /* The cat-head keeps its two columns here: label and figure on one line
-         reads better than stacking, and the percentage chip wrapping under the
-         figure is the natural break. Only the wrapped line needs re-aligning. */
-      .cat-head .stat, .stat.end { justify-content: flex-start; }
-
       .hero { padding: 20px 18px 18px; }
       .hero-top { gap: 16px; margin-bottom: 20px; }
       .hero-ctx { font-size: 14.5px; }
-      /* Reserved at four lines so a rotating fact does not shunt the panel up
-         and down as it changes. */
-      .funfact { font-size: 16.5px; min-height: 4.4em; }
+      .funfact { font-size: 16.5px; padding-top: 16px; }
 
       .sec { margin-bottom: 62px; }
       .sec-title { font-size: 22px; }
     }
 
-    /* ── Month detail, inside the summary table's accordion ─────── */
-    .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
-    .panel-head .mname { font-family: var(--font-display); font-size: 24px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; }
-    .panel-head .mtotal { font-size: 15px; color: var(--dim); }
-    .panel-head .mtotal strong { color: var(--white); font-weight: 700; font-size: 16.5px; }
-
-    .cat { margin-top: 26px; }
-    .cat-head { display: grid; grid-template-columns: minmax(140px, 1fr) auto; gap: 14px 18px; align-items: center; margin-bottom: 6px; }
-    .cat-head .meter { grid-column: 1 / -1; }
+    /* ── Month detail, inside the summary table's accordion ──────────
+       The month, its total and its split are all in the row this hangs from,
+       so none of them are repeated here. What is left is the thing the row
+       cannot show: which tasks the hours went to, and who worked them. */
+    .cat { margin-top: 18px; }
+    .cat-head { margin-bottom: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
     .row { display: flex; align-items: center; gap: 13px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
     .row:last-child { border-bottom: 0; }
     .row .name { flex: 1 1 0; min-width: 0; font-size: 15.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -592,9 +614,11 @@
     .row .link:hover { color: var(--mint); background: var(--surface-2); border-color: var(--line); }
     .row .link svg { width: 14px; height: 14px; }
     .row .link.placeholder { opacity: .22; pointer-events: none; }
-    .empty-note { font-size: 15px; color: var(--dim-2); font-style: italic; margin: 6px 0 0; }
+    .empty-note { font-size: 15px; color: var(--dim-2); font-style: italic; margin: 10px 0 0; }
+    /* Half the width means half the room for a task name, which is the one
+       thing here worth protecting. The mini-bar is the first thing to go. */
+    @media (min-width: 861px) { .cat-grid .row .track { flex: 0 0 76px; } }
     @media (max-width: 560px) {
-      .panel-head .mname { font-size: 21px; }
       .row .track { display: none; }
       /* A truncated task name is the one thing on this page a client cannot
          look up elsewhere, so it wraps instead of ending in an ellipsis. */
@@ -676,23 +700,26 @@
       .hero-total .v {
         background: none; -webkit-text-fill-color: #111; color: #111; animation: none;
       }
-      .meter { background: rgba(0, 0, 0, 0.12); }
       body { background: #fff !important; color: #111; font-size: 10.5pt; }
       .page { max-width: none; padding: 0; }
       .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
-      .lockup img { filter: invert(1); }
+      .lockup img, .report-title .client-mark { filter: invert(1); }
       .status, .pills, .sec-note, .row .link, .menu-wrap, .flag-btn { display: none !important; }
       .hero { background: none !important; box-shadow: none; }
       .sec { break-inside: avoid; margin-bottom: 26px; }
+      /* Selection is a screen state. On paper the open month is simply the one
+         with its detail printed under it, so the cyan goes and the nesting is
+         carried by rules instead. */
       .table tbody tr.mrow[aria-expanded="true"] { background: none; }
+      .table tbody tr.mrow[aria-expanded="true"] td:first-child { box-shadow: inset 3px 0 0 rgba(0, 0, 0, 0.45); }
+      .table tbody tr.mrow[aria-expanded="true"] td.col-total { background: rgba(0, 0, 0, 0.045); }
       .table tbody tr.acc > td { background: none; }
+      .acc-inner { box-shadow: none; background: none; border-left: 2px solid rgba(0, 0, 0, 0.3); padding: 12px 0 4px 16px; }
       .table .caret { display: none; }
       /* The tints that separate the sums on screen are invisible on paper. */
       .table .col-total { background: rgba(0, 0, 0, 0.045); }
       .table tfoot td { background: rgba(0, 0, 0, 0.06); border-top-color: rgba(0, 0, 0, 0.35); }
       .table tfoot td.col-total { background: rgba(0, 0, 0, 0.10); }
-      .callout { background: var(--warn-surface); border-color: var(--warn-line); color: var(--warn-body); }
-      .callout strong, .flag-note strong, .flag-note svg, .callout svg { color: #8A5A0F; }
       a { color: #111 !important; }
     }
   </style>
@@ -704,8 +731,6 @@
     <header class="masthead">
       <div class="lockup">
         <img class="fc" src="assets/fc-wordmark-white.svg" alt="Founding Creative" />
-        <span class="x" aria-hidden="true"></span>
-        <img class="moss" src="assets/moss-wordmark-white.svg" alt="Moss" />
       </div>
 
       <div class="status">
@@ -714,19 +739,24 @@
           <span class="fetched" id="clockFetched">Loading data…</span>
         </div>
         <button class="btn icon-only" id="refreshBtn" title="Refresh data from ClickUp" aria-label="Refresh data from ClickUp"></button>
-        <div class="menu-wrap">
-          <button class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>
-          <div class="menu" id="exportMenu" role="menu"></div>
-        </div>
       </div>
     </header>
 
     <div class="title-row">
       <div>
-        <h1 class="report-title">Hours Report</h1>
+        <h1 class="report-title">
+          <img class="client-mark" src="assets/moss-wordmark-white.svg" alt="Moss" />
+          <span>Hours Report</span>
+        </h1>
         <div class="report-range" id="range"></div>
       </div>
-      <div class="pills" id="years" role="group" aria-label="Select year"></div>
+      <div class="title-actions">
+        <div class="pills" id="years" role="group" aria-label="Select year"></div>
+        <div class="menu-wrap">
+          <button class="export-link" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>
+          <div class="menu" id="exportMenu" role="menu"></div>
+        </div>
+      </div>
     </div>
 
     <div id="content"></div>
@@ -738,13 +768,12 @@
           <span>foundingcreative.com</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
         </a>
-        <p class="foot-fine">
-          Happy to walk through any line item with you.
-          <a class="foot-link" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ05BDuPiNgyfpK6HRFzchDUrBoX2SjOj_dGFp47_xWtYoovrxOv1kLTSdDIoXCudPLii9WVIFpX" target="_blank" rel="noopener">Book a meeting</a>
-          or <a class="foot-link" href="https://foundingcreative.com/contact-us/" target="_blank" rel="noopener">send us a message</a>.
-        </p>
+        <p class="foot-fine">Happy to walk through any line item with you.</p>
       </div>
-      <span id="footStamp"></span>
+      <a class="foot-link primary" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ05BDuPiNgyfpK6HRFzchDUrBoX2SjOj_dGFp47_xWtYoovrxOv1kLTSdDIoXCudPLii9WVIFpX" target="_blank" rel="noopener">
+        <span>Book a meeting</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </a>
     </footer>
 
     <!-- Reusable detail modal: used by the data-integrity flags, and available
@@ -791,8 +820,9 @@
 
     /* Data-integrity annotations. Each entry flags a (year, months, series)
        slice as not fully trustworthy, and surfaces as: a hatched bar + marker
-       on the chart, a tag in the summary table and month tabs, and a callout
-       in the month detail panel. Remove an entry once its data is repaired. */
+       on the chart, a note in its tooltip, a labelled tag at the top of the
+       month's expanded detail, and a Data note row in the CSV exports. Remove
+       an entry once its data is repaired. */
     var DATA_FLAGS = [
       {
         id: 'moss-2026-creative-jan-may',
@@ -824,7 +854,7 @@
 
     var chart = null;
     var state = { months: [], range: [], selected: null, hidden: {}, generatedAt: null,
-                  team: [], teamById: {}, studio: null, contributors: null };
+                  team: [], teamById: {}, contributors: null };
 
     /* One breakpoint drives every layout decision the script makes: the chart
        orientation and the length of the clock string. It matches the CSS
@@ -851,17 +881,10 @@
     }
     function pctOf(used, budget) { return budget > 0 ? Math.round((used / budget) * 100) : 0; }
 
-    /* Using the retainer is the point, so 90% is not a warning state. Green
-       holds to the cap and only going over turns red. Fullness is carried by
-       opacity instead, so a nearly-spent month still reads as more emphatic
-       than a quiet one. Yellow stays reserved for data integrity. */
-    function usageFill(pct) {
-      if (pct > 100) return 'var(--over)';
-      var a = 0.55 + 0.45 * Math.min(1, Math.max(0, pct / 100));
-      return 'rgba(39, 172, 75, ' + a.toFixed(2) + ')';
-    }
     function fmtMonths(n) { return (Math.round(n * 10) / 10).toFixed(1); }
-    function pctTone(pct) { return pct > 100 ? 'over' : 'ok'; }
+    /* Using the retainer is the point, so 90% is not a warning state. Green
+       holds to the cap and only going over turns red. Yellow stays reserved for
+       data integrity. */
     function pctColor(pct) { return pct > 100 ? 'var(--over)' : 'var(--ok)'; }
 
     var ICONS = {
@@ -905,10 +928,6 @@
           ? 'Updated ' + relTime(state.generatedAt)
           : 'Data updated ' + relTime(state.generatedAt) + ' · ' +
             state.generatedAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-      }
-      var stamp = document.getElementById('footStamp');
-      if (stamp && state.generatedAt) {
-        stamp.textContent = 'Live from ClickUp · generated ' + fmtDateTime(state.generatedAt);
       }
       syncMastheadHeight();
     }
@@ -1017,7 +1036,7 @@
       state.months = normalize(data);
       state.team = data.team || [];
       state.contributors = data.contributors || null;
-      state.studio = state.team.filter(function (p) { return p.isStudio; })[0] || null;
+      // The studio entry is skipped rather than stored: its mark is not shown.
       state.teamById = {};
       state.team.forEach(function (p) { if (!p.isStudio) state.teamById[p.id] = p; });
 
@@ -1040,10 +1059,8 @@
         MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR + ' · ' + state.range.length +
         (state.range.length === 1 ? ' month' : ' months') + ' of tracked time';
 
-      content.innerHTML =
-        heroHtml() +
-        overviewHtml() +
-        summaryHtml();
+      // The table is part of the overview section now, not a section of its own.
+      content.innerHTML = heroHtml() + overviewHtml();
 
       wireLegend();
       wireSummaryTable();
@@ -1056,38 +1073,52 @@
     /* ── Year-to-date hero ──────────────────────────────────────── */
     function heroHtml() {
       var t = totals();
-      var span = MONTH_ABBR[state.range[0].month] + '–' + MONTH_ABBR[state.range[state.range.length - 1].month];
       var months = allowanceMonths();
 
       var h = '<section class="sec"><div class="hero">';
       h += '<div class="hero-top">';
       h += '<div class="hero-total"><div class="eyebrow">Total hours delivered · ' + YEAR + '</div>' +
            '<div class="v num">' + fmtH(t.total) + '</div>' +
-           '<div class="hero-ctx"><strong>' + span + ' ' + YEAR + '</strong> · ' +
-           months + ' ' + (months === 1 ? 'month' : 'months') + ' of retainer · ' +
-           BUDGET + 'h per month</div></div>';
-      h += '<div class="funfact"><span class="ff-icon">' + ICONS.spark + '</span>' +
-           '<span class="ff-text" id="funfact"></span></div>';
+           '<div class="hero-ctx"><strong>Year to date</strong> · ' +
+           months + ' ' + (months === 1 ? 'month' : 'months') + '</div></div>';
+      h += '<div class="funfact"><div class="eyebrow">For scale</div>' +
+           '<div class="ff-body"><span class="ff-icon">' + ICONS.spark + '</span>' +
+           '<span class="ff-text" id="funfact"></span></div></div>';
       h += '</div>';
 
-      /* The split used to carry two summary meters. Both series are already
-         charted and tabulated below, so the space goes to the team instead. */
-      var team = teamHtml();
-      if (team) h += '<div class="split">' + team + '</div>';
+      /* This space has held the two summary meters and then the team roster.
+         Both were repeats of what is charted below. The one thing the reader
+         cannot get anywhere else is what the two colours mean and what the
+         Creative series is measured against, so that is what sits here. */
+      h += '<div class="split">' + defsHtml() + '</div>';
 
       h += '</div></section>';
       return h;
     }
 
-    function calloutHtml(flag, inline) {
-      return '<div class="callout' + (inline ? ' inline' : '') + '">' + ICONS.alert +
-        '<span><strong>' + esc(flag.label) + ' · ' + monthSpanLabel(flag) + '.</strong> ' + esc(flag.detail) + '</span></div>';
+    /* The two series, named and explained once, where the reader first meets
+       them. Also the only place the retainer terms are stated. */
+    function defsHtml() {
+      var h = '';
+      var c = state.contributors;
+      if (c && c.contributing === 1 && c.queried > 1) {
+        h += '<p class="data-alarm">' + ICONS.alert +
+             'Only one account reporting: check data source</p>';
+      }
+      h += '<div class="defs">';
+      h += '<div class="def"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>' +
+           '<div class="def-body"><div class="def-name">' + CATS[0].label +
+           '<span class="def-terms">' + BUDGET + 'h per month</span></div>' +
+           '<p class="def-text">Retainer work, drawn against your monthly allowance. Every percentage ' +
+           'in this report is the share of that allowance used.</p></div></div>';
+      h += '<div class="def"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>' +
+           '<div class="def-body"><div class="def-name">' + CATS[1].label + '</div>' +
+           '<p class="def-text">Project work, scoped and billed separately. It sits outside the ' +
+           'retainer and does not draw against it.</p></div></div>';
+      h += '</div>';
+      return h;
     }
-    // Compact one-liner used where the full callout would be a third repeat.
-    function flagNoteHtml(flag, text) {
-      return '<p class="flag-note">' + ICONS.alert + '<span><strong>' + esc(monthSpanLabel(flag)) +
-        '</strong> ' + esc(text) + '</span></p>';
-    }
+
     function monthSpanLabel(flag) {
       var ms = flag.months.slice().sort(function (a, b) { return a - b; });
       var label = ms.length > 1 ? MONTH_ABBR[ms[0]] + '–' + MONTH_ABBR[ms[ms.length - 1]] : MONTH_ABBR[ms[0]];
@@ -1101,52 +1132,19 @@
         ICONS.alert + (labelled ? esc(flag.label) : '') + '</button>';
     }
 
-    /* ── Team roster ────────────────────────────────────────────────
+    /* ── Monthly contributors ───────────────────────────────────────
        Built from the team the API resolved through roster.js, so it shows who
-       actually worked this year rather than a static brochure list. Names,
-       titles and images never come from ClickUp. */
-    var FC_MARK = '/team/roster/fc-mark.svg';
+       actually worked a month rather than a static brochure list. Names, titles
+       and images never come from ClickUp.
 
-    function teamHtml() {
-      if (!state.team.length) return '';
-
-      // queried > 1 while only one account reported is the regression that hid
-      // the team for five months. Make it unmistakable rather than subtle.
-      var c = state.contributors;
-      var broken = !!(c && c.contributing === 1 && c.queried > 1);
-
-      var h = '<div class="team-sec' + (broken ? ' is-broken' : '') + '">';
-      h += '<div class="team-head">';
-      h += broken
-        ? '<span class="team-alarm">' + ICONS.alert + 'Only one account reporting: check data source</span>'
-        : '<span class="team-caption">Your team this year</span>';
-      h += '</div>';
-
-      h += '<div class="team-strip">';
-      state.team.forEach(function (p) {
-        h += '<figure class="team-member">' +
-          '<img src="' + esc(p.roster) + '" alt="' + esc(p.name) + '" ' +
-            'width="160" height="160" loading="lazy" data-fallback="1">' +
-          '<figcaption><span class="tm-name">' + esc(p.name) + '</span>' +
-          (p.isStudio || !p.title ? '' : '<span class="tm-title">' + esc(p.title) + '</span>') +
-          '</figcaption></figure>';
-      });
-      h += '</div></div>';
-      return h;
-    }
-
-    /* Resolve a month's contributor ids to avatars. Every unrostered id maps to
-       the one studio entry and is de-duplicated, so two unknown people in a
-       month produce one avatar, not two. Real ids are never rendered. */
+       The studio mark is deliberately not rendered: as an avatar among faces it
+       read as a person nobody could name. Unrostered ids are simply not shown,
+       which is also why nothing here claims to be a count of the team. */
     function stackFor(ids) {
-      var out = [], seenStudio = false;
+      var out = [];
       (ids || []).forEach(function (id) {
         var p = state.teamById[id];
-        if (p) { out.push({ img: p.stack, name: p.name }); return; }
-        if (seenStudio) return;
-        seenStudio = true;
-        out.push({ img: (state.studio && state.studio.stack) || FC_MARK,
-                   name: (state.studio && state.studio.name) || 'Founding Creative' });
+        if (p) out.push({ img: p.stack, name: p.name, title: p.title });
       });
       return out;
     }
@@ -1157,27 +1155,30 @@
       var shown = people.slice(0, 6), extra = people.length - shown.length;
       var h = '<div class="stack-wrap"><div class="stack">';
       shown.forEach(function (p) {
-        h += '<img src="' + esc(p.img) + '" alt="' + esc(p.name) + '" title="' + esc(p.name) + '" ' +
+        // The roster's job titles left the page with the roster; they come back
+        // here, where the face is the thing that raises the question.
+        var label = p.name + (p.title ? ' · ' + p.title : '');
+        h += '<img src="' + esc(p.img) + '" alt="' + esc(label) + '" title="' + esc(label) + '" ' +
              'width="48" height="48" loading="lazy" data-fallback="1">';
       });
       if (extra > 0) h += '<span class="av-more" title="' + extra + ' more">+' + extra + '</span>';
-      h += '</div><span class="stack-label">' + people.length +
-           (people.length === 1 ? ' person' : ' people') + ' on this month</span></div>';
+      h += '</div><span class="stack-label">Your team this month</span></div>';
       return h;
     }
 
-    // A missing file should degrade to the studio mark, never a broken image.
+    /* A missing file used to fall back to the studio mark, which is exactly the
+       artwork we no longer show. An avatar that cannot load is dropped instead:
+       the name is already on the tooltip of the ones that did. */
     function wireAvatarFallbacks() {
       document.querySelectorAll('img[data-fallback]').forEach(function (img) {
-        img.addEventListener('error', function () {
-          if (img.dataset.fellBack) return;
-          img.dataset.fellBack = '1';
-          img.src = FC_MARK;
-        });
+        img.addEventListener('error', function () { img.style.display = 'none'; });
       });
     }
 
-    /* ── Monthly overview ───────────────────────────────────────── */
+    /* ── Monthly overview ────────────────────────────────────────────
+       The chart and the table are one section under one heading: the same year
+       drawn, then written out, with each month's task detail folded into its
+       own row. Two headings made them read as two separate exhibits. */
     function overviewHtml() {
       var t = totals();
       var h = '<section class="sec"><div class="sec-head">' +
@@ -1191,6 +1192,7 @@
           '<span class="val">' + fmtH(t[c.hours]) + '</span></button>';
       });
       h += '</div></div>';
+      h += summaryHtml();
       h += '</section>';
       return h;
     }
@@ -1198,33 +1200,31 @@
     /* ── Monthly summary table, with the task detail as a per-month
        accordion so a month's figures and its tasks read as one thing ── */
     function summaryHtml() {
-      var t = totals(), allow = allowance(), ytdPct = pctOf(t.creative, allow);
+      var t = totals(), ytdPct = pctOf(t.creative, allowance());
 
-      var h = '<section class="sec"><div class="sec-head">' +
-        '<h2 class="sec-title">Summary by month</h2>' +
-        '<span class="sec-note">Select a month to open its task detail</span></div>';
-      h += '<div class="table-scroll"><table class="table"><thead><tr>' +
+      var h = '<div class="table-scroll"><table class="table"><thead><tr>' +
         '<th>Month</th>' +
         '<th class="r">Creative</th>' +
-        '<th class="r">' + CATS[1].label + '</th>' +
+        '<th class="r col-gap">' + CATS[1].label + '</th>' +
         '<th class="r col-total">Total</th>' +
         '</tr></thead><tbody>';
 
       state.range.forEach(function (m) {
         var pct = pctOf(m.creative, BUDGET);
-        var flag = flagFor(YEAR, m.month, 'creative');
         var open = m.month === state.selected;
         h += '<tr class="mrow" data-m="' + m.month + '" tabindex="0" aria-expanded="' + open +
              '" aria-controls="acc-' + m.month + '">';
+        // The data flag used to sit beside the month name here as well. It is
+        // stated in full when the row opens, which is both stronger and only
+        // one place.
         h += '<td><span class="mo"><span class="caret" aria-hidden="true">' + ICONS.chevron + '</span>' +
              '<span class="mo-full">' + MONTH_NAMES[m.month] + '</span>' +
-             '<span class="mo-abbr">' + MONTH_ABBR[m.month] + '</span>' +
-             (flag ? flagBtnHtml(flag) : '') + '</span></td>';
-        // The meter that used to sit here now lives in the expanded detail, so
-        // the closed table is figures only.
-        h += '<td class="r num"><span class="primary">' + fmtH(m.creative) + '</span>' +
+             '<span class="mo-abbr">' + MONTH_ABBR[m.month] + '</span></span></td>';
+        // Each figure carries its series colour, so a row's numbers and the
+        // colour-coded task lists it opens onto are read as the same thing.
+        h += '<td class="r num"><span style="color:' + CATS[0].inkVar + ';font-weight:600">' + fmtH(m.creative) + '</span>' +
              '<span class="use" style="color:' + pctColor(pct) + '">' + pct + '%</span></td>';
-        h += '<td class="r num">' + fmtH(m.nonCreative) + '</td>';
+        h += '<td class="r num col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(m.nonCreative) + '</td>';
         h += '<td class="r num primary col-total">' + fmtH(m.total) + '</td>';
         h += '</tr>';
         h += '<tr class="acc" id="acc-' + m.month + '" data-m="' + m.month + '"' + (open ? '' : ' hidden') +
@@ -1235,19 +1235,9 @@
       h += '<td><span class="mo-full">Year to date</span><span class="mo-abbr">Total</span></td>';
       h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) +
            '<span class="use" style="color:' + pctColor(ytdPct) + '">' + ytdPct + '%</span></td>';
-      h += '<td class="r num" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</td>';
+      h += '<td class="r num col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</td>';
       h += '<td class="r num col-total">' + fmtH(t.total) + '</td>';
       h += '</tr></tfoot></table></div>';
-
-      h += '<p class="table-note">Creative is measured against the <b>' + BUDGET +
-           'h monthly retainer</b>, so the percentage beside each figure is that month\'s share of it. ' +
-           'Year to date runs against <b>' + allow + 'h</b>, the ' + allowanceMonths() +
-           ' months of retainer accrued so far.</p>';
-
-      var flags = flagsInRange(YEAR, state.range, 'creative');
-      if (flags.length) h += flagNoteHtml(flags[0], 'is flagged ⚠. Those months are under-reported and will be restated.');
-
-      h += '</section>';
       return h;
     }
 
@@ -1283,41 +1273,27 @@
       });
     }
 
+    /* What the row itself cannot show: where the hours went, and who worked
+       them. The month, its total and its Creative / Other split are all in the
+       row this hangs from, so none of them are repeated here. */
     function monthDetailHtml(m) {
       var monthFlag = flagFor(YEAR, m.month, 'creative') || flagFor(YEAR, m.month, 'nonCreative');
-      var h = '<div class="panel-head">';
-      h += '<span class="mname">' + MONTH_NAMES[m.month] + ' ' + YEAR +
-           (monthFlag ? flagBtnHtml(monthFlag, true) : '') + '</span>';
-      h += '<span class="mtotal">Total <strong class="num">' + fmtH(m.total) + '</strong></span>';
-      h += '</div>';
+      var h = '';
+      if (monthFlag) h += '<div class="acc-flag">' + flagBtnHtml(monthFlag, true) + '</div>';
+
       var stack = stackHtml(m.contributorIds);
-      if (stack) h += '<div style="margin:14px 0 4px">' + stack + '</div>';
+      if (stack) h += '<div style="margin:0 0 6px">' + stack + '</div>';
 
+      h += '<div class="cat-grid">';
       CATS.forEach(function (c) {
-        var hours = m[c.hours], items = m[c.items] || [];
-
+        var items = m[c.items] || [];
         h += '<div class="cat">';
-        h += '<div class="cat-head">';
-        h += '<span class="srow-label"><span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>';
-
-        if (c.budgeted) {
-          var pct = pctOf(hours, BUDGET);
-          h += '<span class="stat end">' +
-               '<span class="used num" style="font-size:20px;color:' + c.inkVar + '">' + fmtH(hours) + '</span>' +
-               '<span class="of num">/ ' + BUDGET + 'h</span>' +
-               '<span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></span>';
-          h += '<div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
-               '%;background:' + usageFill(pct) + '"></div></div>';
-        } else {
-          h += '<span class="stat end">' +
-               '<span class="used num" style="font-size:20px;color:' + c.inkVar + '">' + fmtH(hours) + '</span>' +
-               '<span class="of">delivered</span></span>';
-        }
-        h += '</div>';
-
+        h += '<div class="cat-head"><span class="srow-label">' +
+             '<span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span></div>';
         h += taskRows(items, c) || '<p class="empty-note">No ' + c.label.toLowerCase() + ' time tracked this month.</p>';
         h += '</div>';
       });
+      h += '</div>';
 
       h += '<p class="acc-note">Sorted by most hours. Links open the ClickUp task where one exists.</p>';
       return h;
@@ -1433,7 +1409,9 @@
       var cat = horiz ? s.y : s.x, val = horiz ? s.x : s.y;
       cat.ticks.color = isPrint ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.62)';
       val.ticks.color = isPrint ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)';
-      val.grid.color = isPrint ? 'rgba(0,0,0,0.13)' : 'rgba(255,255,255,0.07)';
+      val.grid.color = isPrint ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.13)';
+      // The floor the bars stand on, which is on the category axis.
+      cat.border.color = isPrint ? 'rgba(0,0,0,0.42)' : 'rgba(255,255,255,0.34)';
       chart.data.datasets.forEach(function (ds, i) {
         if (!isTotalSeries(i)) return;
         ds.borderColor = ds.pointBackgroundColor = ds.pointBorderColor = totalInk();
@@ -1444,7 +1422,7 @@
     window.addEventListener('afterprint', function () { chartTheme(false); });
 
     /* The same warning triangle as ICONS.alert, drawn onto the canvas so the
-       chart marker matches the flag buttons and callouts elsewhere. Path2D
+       chart marker matches the flag buttons elsewhere. Path2D
        takes the icon's own path data; a plain triangle stands in if the browser
        cannot parse it. */
     var ALERT_PATH = 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z';
@@ -1579,7 +1557,12 @@
       });
       var gutter = Math.ceil(fmtH(peak).length * 7.4) + END_GAP + 10 + (peakFlagged ? FLAG_W : 0);
 
-      var TICK = 'rgba(255,255,255,0.62)', GRID = 'rgba(255,255,255,0.07)';
+      /* A bar squared off against nothing reads as cropped rather than as
+         finished, so the plot is given a floor: gridlines heavy enough to
+         register as ruled lines, and a distinctly stronger one on the axis
+         itself for the bars to stand on. */
+      var TICK = 'rgba(255,255,255,0.62)', GRID = 'rgba(255,255,255,0.13)';
+      var AXIS = 'rgba(255,255,255,0.34)';
       var scales = horiz
         ? {
             /* Value axis: gridlines only, since the numbers are on the bars.
@@ -1590,11 +1573,11 @@
             x: { ticks: { display: false }, grid: { color: GRID },
                  border: { display: false }, beginAtZero: true, max: peak || undefined },
             y: { ticks: { font: { size: 13.5, weight: '600' }, color: TICK, padding: 4 },
-                 grid: { display: false }, border: { display: false } }
+                 grid: { display: false }, border: { display: true, color: AXIS, width: 1 } }
           }
         : {
             x: { ticks: { autoSkip: false, maxRotation: 0, font: { size: 13 }, color: TICK },
-                 grid: { display: false }, border: { display: false } },
+                 grid: { display: false }, border: { display: true, color: AXIS, width: 1 } },
             y: { ticks: { font: { size: 12.5 }, color: 'rgba(255,255,255,0.55)',
                           callback: function (v) { return v + 'h'; }, padding: 6 },
                  grid: { color: GRID }, border: { display: false },
@@ -1922,7 +1905,9 @@
 
       var menu = document.getElementById('exportMenu');
       var btn = document.getElementById('exportBtn');
-      btn.innerHTML = ICONS.download + 'Export';
+      // The qualifier is what makes this read as "this page, as it stands", so
+      // it is only dropped where it will not fit beside the year pills.
+      btn.innerHTML = ICONS.download + 'Export<span class="x-long"> this report</span>';
       menu.innerHTML =
         '<div class="menu-label">Download</div>' +
         '<button data-a="year">' + ICONS.download + 'Year summary (CSV)</button>' +
