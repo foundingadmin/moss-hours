@@ -260,9 +260,10 @@
     }
     .hero-total { min-width: 0; }
     .hero-total .eyebrow, .funfact .eyebrow { margin-bottom: 9px; }
-    .hero-total .v {
-      font-family: var(--font-display); font-size: clamp(44px, 7.5vw, 66px); font-weight: 600;
-      line-height: 1; letter-spacing: -0.015em;
+    /* The report's one piece of ornament, shared by the headline total and by
+       the figure inside each comparison, so the two read as the same kind of
+       number rather than as two unrelated highlights. */
+    .grad {
       background: linear-gradient(100deg, #FFFFFF 0%, var(--mint) 26%, var(--holo-cyan) 45%,
                                   var(--holo-lavender) 64%, #FFFFFF 88%, var(--mint) 100%);
       background-size: 260% 100%;
@@ -270,34 +271,69 @@
       -webkit-text-fill-color: transparent; color: transparent;
       animation: sheen 14s linear infinite;
     }
+    .hero-total .v {
+      font-family: var(--font-display); font-size: clamp(44px, 7.5vw, 66px); font-weight: 600;
+      line-height: 1; letter-spacing: -0.015em;
+    }
     @keyframes sheen { to { background-position: -260% 0; } }
 
-    /* Rotating comparison line. One idea at a time, cross-faded, set large
-       enough to be read on the way past, which is the only way it ever gets
-       read. Separated by the same hairline the card uses under this row. The
-       block is anchored at its top: it rewrites itself every few seconds, and
-       anchoring the bottom would shuffle the column on every change. */
+    /* Rotating comparison line, separated by the same hairline the card uses
+       under this row.
+
+       Every fact is in the DOM at once, stacked in one grid cell with only one
+       shown, so the block is always as tall as the longest fact it could show
+       and rotating cannot move anything under it. That replaced a reserved
+       height that had to be re-measured per breakpoint whenever the copy or the
+       type size changed. */
     .funfact {
       border-left: 1px solid var(--line); padding-left: 38px;
-      font-size: 19px; line-height: 1.5; color: var(--dim);
+      line-height: 1.45; color: var(--dim);
     }
-    .funfact .ff-body {
-      display: flex; align-items: flex-start; gap: 11px;
-      min-height: 3em; max-width: 46ch;
+    .funfact .ff-body { display: flex; align-items: flex-start; gap: 14px; }
+    .ff-stack { display: grid; min-width: 0; }
+    .ff-line {
+      grid-area: 1 / 1; text-wrap: pretty;
+      opacity: 0; visibility: hidden; transform: translateY(4px);
+      transition: opacity .55s ease, transform .55s ease;
     }
-    .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; margin-top: 5px; }
-    .funfact .ff-icon svg { width: 19px; height: 19px; display: block; }
-    .funfact .ff-text {
-      opacity: 1; transform: translateY(0);
-      transition: opacity .6s ease, transform .6s ease;
-      text-wrap: pretty;
+    .ff-line[data-on="true"] { opacity: 1; visibility: visible; transform: none; }
+    /* The figure and the subject: the only two things emphasised, and they are
+       emphasised differently on purpose. */
+    .ff-n { font-weight: 700; }
+    .ff-s { color: var(--white); font-weight: 700; }
+    .ff-icon { color: var(--mint); flex: none; display: block; }
+    .ff-icon svg { display: block; width: 100%; height: 100%; }
+
+    /* Option 1: no icon. The eyebrow already says what this column is. */
+    .ff-opt-1 { font-size: 23px; }
+    .ff-opt-1 .ff-icon { display: none; }
+
+    /* Option 2: the icon gets a tile, so the slot is a fixed object whatever
+       the artwork inside it does. */
+    .ff-opt-2 { font-size: 21px; }
+    .ff-opt-2 .ff-icon {
+      width: 46px; height: 46px; padding: 11px; margin-top: 1px;
+      border: 1px solid var(--line); border-radius: var(--r-md);
+      background: var(--surface);
     }
-    .funfact .ff-text[data-out="true"] { opacity: 0; transform: translateY(-5px); }
-    .funfact b { color: var(--ink-strong); font-weight: 600; }
+    .ff-opt-2 .ff-body { gap: 16px; }
+
+    /* Option 3: the icon at size with no container, sitting on the first line. */
+    .ff-opt-3 { font-size: 21px; }
+    .ff-opt-3 .ff-icon { width: 34px; height: 34px; margin-top: -2px; opacity: .9; }
+    .ff-opt-3 .ff-body { gap: 15px; }
+
+    /* TEMPORARY: labels for the three stacked options. */
+    .opt-label { display: flex; align-items: baseline; gap: 12px; margin: 0 0 12px; font-size: 14px; color: var(--dim-2); }
+    .opt-n {
+      font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--n-black); background: var(--holo-cyan); border-radius: var(--r-full); padding: 4px 11px;
+    }
+    .opt-label + .sec { margin-bottom: 44px; }
 
     @media (prefers-reduced-motion: reduce) {
-      .hero-total .v { animation: none; }
-      .funfact .ff-text { transition: none; }
+      .grad { animation: none; }
+      .ff-line { transition: none; }
       .live-dot { animation: none !important; }
     }
     .hero-ctx { font-size: 15.5px; color: var(--dim); line-height: 1.6; margin-top: 12px; }
@@ -308,16 +344,8 @@
     @media (max-width: 900px) {
       .hero-top { grid-template-columns: minmax(0, 1fr); gap: 20px; }
       .funfact { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 20px; }
-      .funfact .ff-body { max-width: none; }
+      .funfact .ff-body { max-width: 46ch; }
     }
-    /* The reserved height only carries weight once the columns stack: there the
-       fact sits directly above the team divider, so a shorter one would pull the
-       whole block up every few seconds. Beside the headline figure the row is
-       taller than the fact either way. Each step is the measured worst case for
-       its band, so re-check these if the fact list grows. */
-    @media (max-width: 640px) { .funfact .ff-body { min-height: 3.1em; } }
-    @media (max-width: 464px) { .funfact .ff-body { min-height: 4.5em; } }
-    @media (max-width: 375px) { .funfact .ff-body { min-height: 6em; } }
 
     .split { border-top: 1px solid var(--line); padding-top: 22px; }
     /* Top-aligned, not centre-aligned: the label often runs to a second line on
@@ -592,7 +620,11 @@
       .hero { padding: 20px 18px 18px; }
       .hero-top { gap: 16px; margin-bottom: 20px; }
       .hero-ctx { font-size: 14.5px; }
-      .funfact { font-size: 16.5px; padding-top: 16px; }
+      .funfact { padding-top: 16px; }
+      .ff-opt-1 { font-size: 19px; }
+      .ff-opt-2, .ff-opt-3 { font-size: 17.5px; }
+      .ff-opt-2 .ff-icon { width: 40px; height: 40px; padding: 9px; }
+      .ff-opt-3 .ff-icon { width: 29px; height: 29px; }
 
       .sec { margin-bottom: 62px; }
       .sec-title { font-size: 22px; }
@@ -701,9 +733,14 @@
         --warn-line: #D9B676;
       }
       /* Gradient text does not print; fall back to solid ink. */
-      .hero-total .v {
+      .grad {
         background: none; -webkit-text-fill-color: #111; color: #111; animation: none;
       }
+      /* Hidden facts are laid on top of the shown one, and visibility is not
+         enough on paper in every engine: collapse them out of flow instead. */
+      .ff-line { display: none; }
+      .ff-line[data-on="true"] { display: block; }
+      .ff-stack { display: block; }
       body { background: #fff !important; color: #111; font-size: 10.5pt; }
       .page { max-width: none; padding: 0; }
       .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
@@ -903,6 +940,28 @@
       chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>',
     };
 
+    /* One icon per comparison, so the mark says something about the fact rather
+       than just marking the slot. Same 24-box stroke drawing as ICONS, at the
+       weight the larger slot wants. */
+    function fico(body) {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+        'stroke-linecap="round" stroke-linejoin="round">' + body + '</svg>';
+    }
+    var FACT_ICONS = {
+      clock:  fico('<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>'),
+      film:   fico('<rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M7.5 4.5v15M16.5 4.5v15M2.5 9.5h5M2.5 14.5h5M16.5 9.5h5M16.5 14.5h5"/>'),
+      orbit:  fico('<circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="12" rx="10" ry="4.4" transform="rotate(-28 12 12)"/>'),
+      plane:  fico('<path d="M21.5 2.5 10.9 13.1"/><path d="M21.5 2.5 14.8 21.5l-3.9-8.4-8.4-3.9 19-6.7z"/>'),
+      leaf:   fico('<path d="M11 20.5a7 7 0 0 1-1.2-13.9C15.5 5.5 17 5 19 2.5c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2.5 21.5c0-3 1.9-5.4 5.1-6"/>'),
+      sun:    fico('<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.4 5.4l1.9 1.9M16.7 16.7l1.9 1.9M18.6 5.4l-1.9 1.9M7.3 16.7l-1.9 1.9"/>'),
+      moon:   fico('<path d="M20.5 13.3A8.6 8.6 0 1 1 10.7 3.5a6.7 6.7 0 0 0 9.8 9.8z"/>'),
+      medal:  fico('<circle cx="12" cy="9" r="5.5"/><path d="M8.6 13.9 7.5 21.5l4.5-2.6 4.5 2.6-1.1-7.6"/>'),
+      music:  fico('<path d="M9.5 17.5V5.2l11-2v11.3"/><circle cx="6.5" cy="17.5" r="3"/><circle cx="17.5" cy="14.5" r="3"/>'),
+      case:   fico('<rect x="2.5" y="7.5" width="19" height="13" rx="2"/><path d="M15.5 20.5v-14a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14"/>'),
+      wing:   fico('<path d="M20 12.2A6 6 0 1 0 11.5 3.7L5 10.2v8.3h8.3z"/><path d="M16 8 3.5 20.5M17 15H9.5"/>'),
+      kettle: fico('<path d="M18 8.5h1a3.5 3.5 0 0 1 0 7h-1"/><path d="M3 8.5h15v8.5a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M7 2v3M11 2v3M15 2v3"/>')
+    };
+
     /* ═══════════════════════════════════════════════════════════════
        Live clock + freshness
        ═══════════════════════════════════════════════════════════════ */
@@ -1064,7 +1123,7 @@
         (state.range.length === 1 ? ' month' : ' months') + ' of tracked time';
 
       // The table is part of the overview section now, not a section of its own.
-      content.innerHTML = heroHtml() + overviewHtml();
+      content.innerHTML = heroesHtml() + overviewHtml();
 
       wireLegend();
       wireSummaryTable();
@@ -1074,20 +1133,37 @@
       tickClock();
     }
 
+    /* TEMPORARY, for choosing the comparison-line treatment. The card is
+       rendered once per option so the three can be read side by side on the
+       preview deploy. Once one is picked, delete FACT_OPTIONS, the label, and
+       the two .ff-opt-* rules that lose. */
+    var FACT_OPTIONS = [
+      { id: 1, css: 'ff-opt-1', label: 'No icon, text carries it' },
+      { id: 2, css: 'ff-opt-2', label: 'Icon in a tile, one per fact' },
+      { id: 3, css: 'ff-opt-3', label: 'Large bare icon, one per fact' }
+    ];
+
+    function heroesHtml() {
+      return FACT_OPTIONS.map(function (o) {
+        return '<div class="opt-label"><span class="opt-n">Option ' + o.id + '</span>' +
+               esc(o.label) + '</div>' + heroHtml(o);
+      }).join('');
+    }
+
     /* ── Year-to-date hero ──────────────────────────────────────── */
-    function heroHtml() {
+    function heroHtml(opt) {
       var t = totals();
       var months = allowanceMonths();
 
       var h = '<section class="sec"><div class="hero">';
       h += '<div class="hero-top">';
       h += '<div class="hero-total"><div class="eyebrow">Total hours delivered · ' + YEAR + '</div>' +
-           '<div class="v num">' + fmtH(t.total) + '</div>' +
+           '<div class="v grad num">' + fmtH(t.total) + '</div>' +
            '<div class="hero-ctx"><strong>Year to date</strong> · ' +
            months + ' ' + (months === 1 ? 'month' : 'months') + '</div></div>';
-      h += '<div class="funfact"><div class="eyebrow">For scale</div>' +
-           '<div class="ff-body"><span class="ff-icon">' + ICONS.spark + '</span>' +
-           '<span class="ff-text" id="funfact"></span></div></div>';
+      h += '<div class="funfact ' + (opt ? opt.css : '') + '"><div class="eyebrow">For scale</div>' +
+           '<div class="ff-body"><span class="ff-icon" aria-hidden="true"></span>' +
+           factStackHtml(t.total) + '</div></div>';
       h += '</div>';
 
       /* This space has held the two summary meters and then the team roster.
@@ -1703,52 +1779,60 @@
        the page has one small moving part. Every figure is computed from the
        real total, so they stay true as the number grows.
        ═══════════════════════════════════════════════════════════════ */
+    /* Two kinds of emphasis, and only two: the figure, which carries the same
+       animated gradient as the headline total so the two read as the same kind
+       of number, and the subject being compared against, in plain bold. */
+    function ffN(s) { return '<span class="ff-n grad num">' + s + '</span>'; }
+    function ffS(s) { return '<b class="ff-s">' + s + '</b>'; }
+
     var FUN_FACTS = [
-      function (h) {
-        return 'That is <b>' + fmt1(h / 24) + ' full days</b> of round-the-clock work, without stopping to sleep.';
-      },
-      function (h) {
-        return 'Long enough to watch the extended Lord of the Rings trilogy <b>' + fmt1(h / 11.4) + ' times</b> back to back.';
-      },
-      function (h) {
-        return 'The International Space Station would circle the Earth <b>' + Math.round(h / 1.533) + ' times</b> in that span.';
-      },
-      function (h) {
-        return 'Enough time to fly <b>' + fmt1(h / 7.5) + ' round trips</b> between New York and London.';
-      },
-      function (h) {
-        return 'A three-toed sloth, moving flat out, would cover <b>' + fmt1(h * 0.15) + ' miles</b>.';
-      },
-      function (h) {
-        return 'That is <b>' + Math.round(h / 1.5) + ' sleep cycles</b>, if anyone were getting any.';
-      },
-      function (h) {
-        return 'Sunlight takes 8 minutes 20 seconds to reach us. This is <b>' + Math.round(h * 60 / 8.33) + ' of those journeys</b>.';
-      },
-      function (h) {
-        return 'Roughly <b>' + Math.round(h / 2.01) + ' marathons</b> at world-record pace.';
-      },
-      function (h) {
-        return 'You could listen to every Beatles studio album <b>' + fmt1(h / 10.2) + ' times</b> through.';
-      },
-      function (h) {
-        return 'About <b>' + fmt1(h / 8) + ' standard working days</b>, or ' + fmt1(h / 40) + ' working weeks.';
-      },
-      function (h) {
-        return 'A hummingbird would beat its wings about <b>' + Math.round(h * 3600 * 53 / 1e6) + ' million times</b>.';
-      },
-      function (h) {
-        return 'Long enough to boil <b>' + Math.round(h * 60 / 4) + ' kettles</b>, one after another.';
-      }
+      { icon: 'clock', line: function (h) {
+        return 'That is ' + ffN(fmt1(h / 24) + ' full days') + ' of ' + ffS('round-the-clock work') + ', without stopping to sleep.'; } },
+      { icon: 'film', line: function (h) {
+        return 'Long enough to watch the extended ' + ffS('Lord of the Rings') + ' trilogy ' + ffN(fmt1(h / 11.4) + ' times') + ' back to back.'; } },
+      { icon: 'orbit', line: function (h) {
+        return 'The ' + ffS('International Space Station') + ' would circle the Earth ' + ffN(Math.round(h / 1.533) + ' times') + ' in that span.'; } },
+      { icon: 'plane', line: function (h) {
+        return 'Enough time to fly ' + ffN(fmt1(h / 7.5) + ' round trips') + ' between ' + ffS('New York and London') + '.'; } },
+      { icon: 'leaf', line: function (h) {
+        return 'A ' + ffS('three-toed sloth') + ', moving flat out, would cover ' + ffN(fmt1(h * 0.15) + ' miles') + '.'; } },
+      { icon: 'moon', line: function (h) {
+        return 'That is ' + ffN(Math.round(h / 1.5) + ' sleep cycles') + ' worth of ' + ffS('sleep') + ', if anyone were getting any.'; } },
+      { icon: 'sun', line: function (h) {
+        return ffS('Sunlight') + ' takes 8 minutes 20 seconds to reach us. This is ' + ffN(Math.round(h * 60 / 8.33) + ' of those journeys') + '.'; } },
+      { icon: 'medal', line: function (h) {
+        return 'Roughly ' + ffN(Math.round(h / 2.01) + ' marathons') + ' at ' + ffS('world-record pace') + '.'; } },
+      { icon: 'music', line: function (h) {
+        return 'You could listen to every ' + ffS('Beatles') + ' studio album ' + ffN(fmt1(h / 10.2) + ' times') + ' through.'; } },
+      // One gradient figure per fact: two of them side by side read as a colour
+      // effect rather than as the number carrying the point.
+      { icon: 'case', line: function (h) {
+        return 'About ' + ffN(fmt1(h / 8) + ' standard working days') + ', or ' + fmt1(h / 40) + ' ' + ffS('working weeks') + '.'; } },
+      { icon: 'wing', line: function (h) {
+        return 'A ' + ffS('hummingbird') + ' would beat its wings about ' + ffN(Math.round(h * 3600 * 53 / 1e6) + ' million times') + '.'; } },
+      { icon: 'kettle', line: function (h) {
+        return 'Long enough to put the ' + ffS('kettle') + ' on ' + ffN(Math.round(h * 60 / 4) + ' times') + ', one after another.'; } }
     ];
     function fmt1(n) {
       return (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 });
     }
 
+    /* Every fact is rendered at once, stacked in a single grid cell, with only
+       one visible. The block is therefore always as tall as the longest fact it
+       could ever show, at any width, and rotating cannot move anything under
+       it. The old approach reserved a height per breakpoint, which had to be
+       re-measured whenever the copy or the type size changed. */
+    function factStackHtml(totalHours) {
+      return '<span class="ff-stack">' + FUN_FACTS.map(function (f, i) {
+        return '<span class="ff-line" data-i="' + i + '" data-on="false" aria-hidden="true">' +
+          f.line(totalHours) + '</span>';
+      }).join('') + '</span>';
+    }
+
     var factTimer = null, factIdx = 0, factOrder = [];
     function startFunFacts(totalHours) {
-      var el = document.getElementById('funfact');
-      if (!el || !(totalHours > 0)) return;
+      var lines = document.querySelectorAll('.ff-line');
+      if (!lines.length || !(totalHours > 0)) return;
       if (factTimer) clearInterval(factTimer);
 
       // Shuffled once per render so a reload does not always open the same way.
@@ -1758,19 +1842,25 @@
         var tmp = factOrder[i]; factOrder[i] = factOrder[j]; factOrder[j] = tmp;
       }
       factIdx = 0;
-      el.innerHTML = FUN_FACTS[factOrder[0]](totalHours);
+      showFact(factOrder[0]);
 
-      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       factTimer = setInterval(function () {
         factIdx = (factIdx + 1) % factOrder.length;
-        var next = FUN_FACTS[factOrder[factIdx]](totalHours);
-        if (reduce) { el.innerHTML = next; return; }
-        el.dataset.out = 'true';
-        setTimeout(function () {
-          el.innerHTML = next;
-          el.dataset.out = 'false';
-        }, 600);
+        showFact(factOrder[factIdx]);
       }, 9000);
+    }
+
+    function showFact(idx) {
+      document.querySelectorAll('.ff-line').forEach(function (el) {
+        var on = parseInt(el.dataset.i) === idx;
+        el.dataset.on = on ? 'true' : 'false';
+        // Hidden lines are real text in the DOM, so they are taken out of the
+        // accessibility tree rather than left to be read as one long run-on.
+        el.setAttribute('aria-hidden', on ? 'false' : 'true');
+      });
+      document.querySelectorAll('.ff-icon').forEach(function (el) {
+        el.innerHTML = FACT_ICONS[FUN_FACTS[idx].icon] || FACT_ICONS.sun;
+      });
     }
 
     /* ═══════════════════════════════════════════════════════════════
