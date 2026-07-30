@@ -333,9 +333,13 @@
        retainer terms once, in the place the reader meets the two colours. Kept
        deliberately light: the figures themselves are charted below, and a full
        roster of tiles here never filled its row on a small team. */
-    .defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 36px; }
-    .def { display: flex; gap: 12px; align-items: flex-start; }
-    .def > .swatch { margin-top: 7px; }
+    /* Each definition is sized to its own text rather than to the taller of the
+       two, so its colour bar measures that definition and not the row. */
+    .defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 36px; align-items: start; }
+    .def { display: flex; gap: 14px; align-items: stretch; }
+    /* The swatch runs the full height of the text beside it: at this size the
+       colour is the label, so it is given enough of itself to read as one. */
+    .def > .swatch { align-self: stretch; height: auto; border-radius: var(--r-full); }
     .def-body { min-width: 0; }
     .def-name {
       display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
