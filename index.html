@@ -18,24 +18,55 @@
        brand values kept for strokes, swatches and text accents.
        ───────────────────────────────────────────────────────────── */
     :root {
+      /* Series fills sit at matched lightness gaps below their brand ink, so the
+         outline reads against the fill with the same weight in both colours:
+         mint 0.884 over 0.654, lavender 0.779 over 0.549. */
       --creative-fill: #27AC4B;
       --creative-ink: var(--mint);                  /* #7EF893 */
-      --noncreative-fill: #9B77D0;
+      --noncreative-fill: #7F5CB2;
       --noncreative-ink: var(--holo-lavender);      /* #C6A2FF */
 
+      /* Semantic status. Green means the retainer is being used, which is good
+         all the way to 100%; only going over is a warning. Yellow is reserved
+         for data integrity, never for utilisation. */
       --ok: var(--mint);
-      --warn: #F5C26B;
       --over: #FF8A80;
+      --over-surface: rgba(255, 138, 128, 0.12);
 
-      --surface: rgba(255, 255, 255, 0.045);
-      --surface-2: rgba(255, 255, 255, 0.08);
-      --line: rgba(255, 255, 255, 0.12);
-      --line-soft: rgba(255, 255, 255, 0.07);
-      --ink-strong: rgba(255, 255, 255, 0.88);
+      --warn: #F5C26B;              /* base: icons, rules */
+      --warn-strong: #FFD68F;       /* titles on a warn surface */
+      --warn-body: #EBD3AE;         /* body copy on a warn surface */
+      --warn-surface: rgba(245, 194, 107, 0.09);
+      --warn-surface-2: rgba(245, 194, 107, 0.16);
+      --warn-line: rgba(245, 194, 107, 0.38);
+
+      --surface: rgba(255, 255, 255, 0.05);
+      --surface-2: rgba(255, 255, 255, 0.10);
+      --line: rgba(255, 255, 255, 0.14);
+      --line-soft: rgba(255, 255, 255, 0.08);
+
+      /* Text ramp. --dim-2 was 0.45, which measured 4.6:1 and was doing real
+         work at 11 to 13px; the whole ramp is lifted for legibility. */
+      --ink-strong: rgba(255, 255, 255, 0.92);
+      --dim: rgba(255, 255, 255, 0.78);
+      --dim-2: rgba(255, 255, 255, 0.62);
       --tick-cut: var(--n-black);   /* meter segment gaps: always the page surface */
-      --dim: rgba(255, 255, 255, 0.66);
-      --dim-2: rgba(255, 255, 255, 0.45);
+
+      /* One badge geometry for every chip, tag and pill in the report. */
+      --badge-size: 12.5px;
+      --badge-pad: 4px 10px;
+      --badge-weight: 700;
     }
+
+    /* One badge geometry, shared by every chip and tag in the report. */
+    .badge, .pct-chip, .flag-tag, .flag-btn.labelled {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-body); font-size: var(--badge-size);
+      font-weight: var(--badge-weight); letter-spacing: .01em; line-height: 1.35;
+      padding: var(--badge-pad); border-radius: var(--r-full);
+      border: 1px solid currentColor; white-space: nowrap;
+    }
+    .badge svg, .pct-chip svg, .flag-tag svg { width: 13px; height: 13px; flex: none; }
 
     body {
       background:
@@ -43,9 +74,9 @@
         radial-gradient(820px 460px at -10% 6%, rgba(198, 162, 255, 0.08), transparent 55%),
         var(--n-black);
       background-attachment: fixed;
-      font-size: 16px;
+      font-size: 17px;
     }
-    .page { max-width: 980px; margin: 0 auto; padding: 0 28px 90px; }
+    .page { max-width: 1060px; margin: 0 auto; padding: 0 28px 90px; }
     .num { font-variant-numeric: tabular-nums; }
 
     /* ── Masthead: agency × client lockup + live status bar ─────── */
@@ -75,14 +106,14 @@
     .lockup img.moss { height: var(--moss-h); margin-bottom: calc(var(--moss-drop) * -1); }
     .lockup .x { width: 1px; height: var(--fc-h); background: var(--line); display: block; flex: none; }
     .lockup .role {
-      font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
       color: var(--dim-2); padding-left: 3px; line-height: var(--fc-h);
     }
 
     .status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .clock {
       display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
-      font-size: 12px; line-height: 1.35; text-align: right;
+      font-size: 13px; line-height: 1.35; text-align: right;
     }
     .clock .now { color: var(--white); font-weight: 600; }
     .clock .now .live-dot {
@@ -100,7 +131,7 @@
     /* ── Buttons ────────────────────────────────────────────────── */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-      font-family: var(--font-body); font-size: 13.5px; font-weight: 600; color: var(--dim);
+      font-family: var(--font-body); font-size: 14.5px; font-weight: 600; color: var(--dim);
       background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
       padding: 8px 12px; cursor: pointer; transition: all .14s ease; white-space: nowrap;
     }
@@ -120,27 +151,27 @@
     .menu[data-open="true"] { display: block; }
     .menu button {
       display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
-      font-family: var(--font-body); font-size: 13.5px; font-weight: 500; color: var(--dim);
+      font-family: var(--font-body); font-size: 14.5px; font-weight: 500; color: var(--dim);
       background: transparent; border: 0; border-radius: var(--r-xs); padding: 9px 10px; cursor: pointer;
     }
     .menu button:hover { background: var(--surface-2); color: var(--white); }
     .menu button svg { width: 14px; height: 14px; flex: none; opacity: .8; }
     .menu .menu-label {
-      font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
-      color: var(--dim-2); padding: 8px 10px 5px;
+      font-size: 11.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--dim-2); padding: 9px 10px 6px;
     }
 
     /* ── Title row + pill selectors ─────────────────────────────── */
     .title-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
     .report-title { font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; }
-    .report-range { font-size: 14px; color: var(--dim); margin-top: 7px; }
+    .report-range { font-size: 15px; color: var(--dim); margin-top: 7px; }
 
     .pills { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-full); padding: 4px; }
     .pills.scroll { display: flex; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
     .pills.scroll::-webkit-scrollbar { display: none; }
     .pill {
-      font-family: var(--font-body); font-size: 14.5px; font-weight: 600; color: var(--dim);
-      background: transparent; border: 0; cursor: pointer; padding: 8px 17px; border-radius: var(--r-full);
+      font-family: var(--font-body); font-size: 15.5px; font-weight: 600; color: var(--dim);
+      background: transparent; border: 0; cursor: pointer; padding: 9px 18px; border-radius: var(--r-full);
       transition: all .14s ease; white-space: nowrap;
     }
     .pill:hover { color: var(--white); }
@@ -150,16 +181,26 @@
       background: var(--warn); margin-left: 6px; vertical-align: middle;
     }
 
-    /* ── Intro: body copy plus the two category definitions ─────── */
-    .intro { margin: 26px 0 40px; }
-    .intro p {
-      font-size: 15.5px; line-height: 1.7; color: var(--dim);
-      max-width: 68ch; text-wrap: pretty; margin: 0 0 10px;
+    /* ── Intro ──────────────────────────────────────────────────────
+       Two columns rather than one: prose held to a comfortable measure by the
+       column itself, so it no longer wraps short in the middle of a full-width
+       page, and the definition cards stack alongside instead of below. */
+    .intro {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+      gap: 20px 44px; align-items: start; margin: 30px 0 46px;
     }
-    .intro p:last-of-type { margin-bottom: 0; }
-    .intro b { color: var(--ink-strong); font-weight: 600; }
+    .intro-copy p {
+      font-size: 17px; line-height: 1.65; color: var(--dim);
+      text-wrap: pretty; margin: 0 0 14px;
+    }
+    .intro-copy p:last-child { margin-bottom: 0; }
+    .intro-copy b { color: var(--ink-strong); font-weight: 600; }
+    @media (max-width: 860px) {
+      .intro { grid-template-columns: 1fr; gap: 26px; }
+      .intro-copy p { max-width: 62ch; }
+    }
 
-    .defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 22px; }
+    .defs { display: grid; grid-template-columns: 1fr; gap: 12px; }
     /* Category identity comes from a soft wash off the top-left corner plus the
        swatch, rather than a hard accent rule down the edge. */
     .def {
@@ -168,19 +209,19 @@
       border-radius: var(--r-md); padding: 16px 18px;
     }
     .def .def-name {
-      display: flex; align-items: center; gap: 9px;
-      font-size: 14.5px; font-weight: 700; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 16px; font-weight: 700; margin-bottom: 8px;
     }
-    .def .def-body { font-size: 13.5px; line-height: 1.6; color: var(--dim); }
+    .def .def-body { font-size: 15px; line-height: 1.65; color: var(--dim); }
     .def .def-body b { color: var(--ink-strong); font-weight: 600; }
 
     /* ── Section scaffolding ────────────────────────────────────── */
     .sec { margin-bottom: 52px; }
     .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
-    .sec-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; margin: 0; }
-    .sec-note { font-size: 13px; color: var(--dim-2); }
+    .sec-title { font-family: var(--font-display); font-size: 25px; font-weight: 600; margin: 0; }
+    .sec-note { font-size: 14px; color: var(--dim-2); }
     .eyebrow {
-      font-size: 11px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+      font-size: 12px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
       color: var(--dim-2);
     }
 
@@ -193,35 +234,58 @@
     .hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
     .hero-total .eyebrow { margin-bottom: 9px; }
     .hero-total .v {
-      font-family: var(--font-display); font-size: clamp(40px, 7vw, 58px); font-weight: 600;
+      font-family: var(--font-display); font-size: clamp(44px, 7.5vw, 66px); font-weight: 600;
       line-height: 1; letter-spacing: -0.015em;
+      background: linear-gradient(100deg, #FFFFFF 0%, var(--mint) 26%, var(--holo-cyan) 45%,
+                                  var(--holo-lavender) 64%, #FFFFFF 88%, var(--mint) 100%);
+      background-size: 260% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: sheen 14s linear infinite;
     }
-    .hero-ctx { font-size: 13.5px; color: var(--dim); text-align: right; line-height: 1.7; }
+    @keyframes sheen { to { background-position: -260% 0; } }
+
+    /* Rotating comparison line. One idea at a time, cross-faded. */
+    .funfact {
+      margin-top: 14px; min-height: 1.5em;
+      font-size: 15px; line-height: 1.5; color: var(--dim-2);
+      display: flex; align-items: center; gap: 9px;
+    }
+    .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; }
+    .funfact .ff-icon svg { width: 15px; height: 15px; display: block; }
+    .funfact .ff-text {
+      opacity: 1; transform: translateY(0);
+      transition: opacity .6s ease, transform .6s ease;
+      text-wrap: pretty;
+    }
+    .funfact .ff-text[data-out="true"] { opacity: 0; transform: translateY(-5px); }
+    .funfact b { color: var(--ink-strong); font-weight: 600; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-total .v { animation: none; }
+      .funfact .ff-text { transition: none; }
+      .live-dot { animation: none !important; }
+    }
+    .hero-ctx { font-size: 15px; color: var(--dim); text-align: right; line-height: 1.7; }
     .hero-ctx strong { color: var(--ink-strong); font-weight: 600; }
 
     .split { border-top: 1px solid var(--line); }
     .srow { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.5fr) auto; gap: 18px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
     .srow:last-child { border-bottom: 0; padding-bottom: 4px; }
-    .srow-label { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 700; }
-    .srow-label .sub { display: block; font-size: 12.5px; font-weight: 500; color: var(--dim-2); margin-top: 3px; letter-spacing: 0; }
+    .srow-label { display: flex; align-items: center; gap: 10px; font-size: 16.5px; font-weight: 700; }
+    .srow-label .sub { display: block; font-size: 14px; font-weight: 500; color: var(--dim-2); margin-top: 3px; letter-spacing: 0; }
     .swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
 
     /* The stat block that replaced "6h 44m used · 13% of 50h · 43h 16m remaining":
        value / allowance / percentage each get their own size, weight and color. */
     .stat { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
     .stat .used { font-family: var(--font-display); font-size: 27px; font-weight: 600; line-height: 1; letter-spacing: -0.01em; }
-    .stat .of { font-size: 15px; font-weight: 500; color: var(--dim-2); }
-    .pct-chip {
-      font-size: 12px; font-weight: 700; letter-spacing: .02em;
-      padding: 4px 9px; border-radius: var(--r-full); white-space: nowrap;
-      border: 1px solid currentColor;
-    }
-    .pct-chip.ok { color: var(--ok); background: rgba(126, 248, 147, 0.1); }
-    .pct-chip.warn { color: var(--warn); background: rgba(245, 194, 107, 0.1); }
-    .pct-chip.over { color: var(--over); background: rgba(255, 138, 128, 0.12); }
-    .pct-chip.neutral { color: var(--dim); background: rgba(255,255,255,0.05); border-color: var(--line); }
+    .stat .of { font-size: 16px; font-weight: 500; color: var(--dim-2); }
+    .pct-chip.ok { color: var(--ok); background: rgba(126, 248, 147, 0.10); }
+    .pct-chip.over { color: var(--over); background: var(--over-surface); }
+    .pct-chip.neutral { color: var(--dim); background: var(--surface); border-color: var(--line); }
 
-    .meter { position: relative; height: 8px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; min-width: 120px; }
+    .meter { position: relative; height: 8px; background: rgba(255, 255, 255, 0.16); border-radius: var(--r-full); overflow: hidden; min-width: 120px; }
     .meter .fill { height: 100%; border-radius: var(--r-full); transition: width .5s cubic-bezier(.22,.9,.3,1); }
     .meter.thin { height: 6px; }
 
@@ -236,7 +300,7 @@
 
     .meter-scale {
       display: flex; justify-content: space-between; align-items: baseline;
-      gap: 10px; margin-top: 7px; font-size: 12px; color: var(--dim-2);
+      gap: 10px; margin-top: 8px; font-size: 13px; color: var(--dim-2);
     }
     .meter-scale .pace { color: var(--dim); }
     .meter-scale .pace strong { color: var(--ink-strong); font-weight: 700; }
@@ -247,28 +311,18 @@
       background: rgba(245, 194, 107, 0.075);
       border: 1px solid rgba(245, 194, 107, 0.3);
       border-radius: var(--r-md); padding: 12px 14px;
-      font-size: 13.5px; line-height: 1.6; color: var(--ink-strong);
+      font-size: 15px; line-height: 1.65; color: var(--ink-strong);
     }
     .callout svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--warn); }
     .callout strong { color: var(--warn); font-weight: 700; }
     .callout.inline { margin-top: 14px; }
 
     /* Compact inline flag: pill in tables, superscript beside a figure. */
-    .flag-tag {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 11px; font-weight: 700; letter-spacing: .02em;
-      color: var(--warn); background: rgba(245, 194, 107, 0.11);
-      border: 1px solid rgba(245, 194, 107, 0.3); border-radius: var(--r-full);
-      padding: 2px 8px; white-space: nowrap; cursor: help;
-    }
-    .flag-tag svg { width: 11px; height: 11px; }
-    /* Icon-only variant for repeated table rows, where the section callout
-       already spells the note out in full. */
-    .flag-tag.compact { padding: 3px; border-radius: 5px; }
+    .flag-tag { color: var(--warn); background: var(--warn-surface); border-color: var(--warn-line); cursor: help; }
 
     .flag-note {
-      display: flex; gap: 8px; align-items: flex-start;
-      font-size: 12.5px; line-height: 1.6; color: var(--dim-2); margin: 14px 0 0;
+      display: flex; gap: 9px; align-items: flex-start;
+      font-size: 13.5px; line-height: 1.6; color: var(--dim-2); margin: 14px 0 0;
     }
     .flag-note svg { width: 13px; height: 13px; flex: none; margin-top: 2px; color: var(--warn); }
     .flag-note strong { color: var(--warn); font-weight: 700; }
@@ -287,7 +341,7 @@
     .legend-item:hover, .legend-item:focus-visible { background: var(--surface); border-color: var(--line); outline: none; }
     .legend-item .lg-name {
       display: flex; align-items: center; gap: 8px;
-      font-size: 13px; font-weight: 600; color: var(--dim); transition: color .14s ease;
+      font-size: 14px; font-weight: 600; color: var(--dim); transition: color .14s ease;
     }
     .legend-item:hover .lg-name, .legend-item:focus-visible .lg-name { color: var(--white); }
     .legend-item .val {
@@ -298,21 +352,41 @@
     .legend-item[data-off="true"] { opacity: .38; }
     .legend-item[data-off="true"] .swatch { background: var(--dim-2) !important; }
     @media (max-width: 560px) { .legend-item .val { font-size: 21px; } }
-    .legend-hint { font-size: 12.5px; color: var(--dim-2); margin: 0 0 12px 10px; }
+    .legend-hint { font-size: 13.5px; color: var(--dim-2); margin: 0 0 12px 10px; }
+
+    /* Key for the hatch fill, aligned under the Creative entry it describes. */
+    .legend-key {
+      display: flex; align-items: center; gap: 9px;
+      margin: 10px 0 0 14px; font-size: 13.5px; color: var(--dim-2);
+    }
+    .legend-key b { color: var(--warn); font-weight: 700; }
+    .hatch-swatch {
+      width: 22px; height: 12px; border-radius: 3px; flex: none;
+      border: 1px solid var(--creative-ink);
+      background-color: var(--creative-fill);
+      background-image: repeating-linear-gradient(45deg,
+        rgba(255,255,255,0.42) 0 2px, transparent 2px 5px);
+    }
     @media (max-width: 560px) { .legend-hint { margin: 4px 0 0; flex-basis: 100%; } }
 
-    /* Flag button: opens the shared modal instead of pushing a callout inline. */
+    /* Flag button: opens the shared modal. Bare icon by default so a table cell
+       is not squeezed by a box; the labelled variant takes the badge geometry. */
     .flag-btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-      font-family: var(--font-body); font-size: 11px; font-weight: 700;
-      color: var(--warn); background: rgba(245, 194, 107, 0.11);
-      border: 1px solid rgba(245, 194, 107, 0.32); border-radius: var(--r-full);
-      padding: 3px 4px; cursor: pointer; transition: all .14s ease; vertical-align: middle;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: var(--font-body); color: var(--warn);
+      background: none; border: 0; padding: 0; cursor: pointer;
+      transition: color .14s ease, transform .14s ease; vertical-align: middle;
     }
-    .flag-btn:hover { background: rgba(245, 194, 107, 0.22); border-color: var(--warn); }
-    .flag-btn:focus-visible { outline: 2px solid var(--warn); outline-offset: 2px; }
-    .flag-btn svg { width: 12px; height: 12px; }
-    .flag-btn.labelled { padding: 3px 9px 3px 7px; }
+    .flag-btn svg { width: 16px; height: 16px; display: block; }
+    .flag-btn:hover { color: var(--warn-strong); transform: scale(1.12); }
+    .flag-btn:focus-visible { outline: 2px solid var(--warn); outline-offset: 3px; border-radius: 3px; }
+    .flag-btn.labelled {
+      gap: 6px; font-size: var(--badge-size); font-weight: var(--badge-weight);
+      padding: var(--badge-pad); border: 1px solid var(--warn-line);
+      background: var(--warn-surface); border-radius: var(--r-full);
+    }
+    .flag-btn.labelled:hover { transform: none; background: var(--warn-surface-2); border-color: var(--warn); }
+    .flag-btn.labelled svg { width: 13px; height: 13px; }
 
     /* ── Modal ──────────────────────────────────────────────────── */
     .modal-backdrop {
@@ -322,8 +396,9 @@
     }
     .modal-backdrop[hidden] { display: none; }
     .modal {
-      width: min(520px, 100%); background: #0E0E0E;
-      border: 1px solid var(--line); border-radius: var(--r-lg);
+      width: min(540px, 100%);
+      background: linear-gradient(165deg, var(--warn-surface-2), var(--warn-surface)), #0E0C08;
+      border: 1px solid var(--warn-line); border-radius: var(--r-lg);
       box-shadow: var(--shadow-2xl); padding: 22px 24px 24px;
     }
     .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
@@ -332,16 +407,18 @@
       display: flex; align-items: center; gap: 10px;
     }
     .modal-title svg { width: 18px; height: 18px; flex: none; color: var(--warn); }
-    .modal-body { font-size: 14.5px; line-height: 1.7; color: var(--dim); }
-    .modal-body p { margin: 0 0 11px; }
+    .modal-body { font-size: 15.5px; line-height: 1.7; color: var(--warn-body); }
+    .modal-body p { margin: 0 0 12px; }
     .modal-body p:last-child { margin-bottom: 0; }
-    .modal-body b { color: var(--ink-strong); font-weight: 600; }
+    .modal-body b { color: var(--warn-strong); font-weight: 700; }
+    .modal .btn { color: var(--warn-body); border-color: var(--warn-line); background: var(--warn-surface); }
+    .modal .btn:hover { color: var(--warn-strong); background: var(--warn-surface-2); border-color: var(--warn); }
 
     /* ── Monthly summary table ──────────────────────────────────── */
-    .table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+    .table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
     .table th, .table td { padding: 12px 12px; border-bottom: 1px solid var(--line-soft); text-align: left; }
     .table th {
-      font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
       color: var(--dim-2); border-bottom: 1px solid var(--line); white-space: nowrap;
     }
     .table td.r, .table th.r { text-align: right; }
@@ -382,18 +459,18 @@
     .panel .month-tabs .pills { border: 0; background: transparent; padding: 0; }
     .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
     .panel-head .mname { font-family: var(--font-display); font-size: 24px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; }
-    .panel-head .mtotal { font-size: 14px; color: var(--dim); }
-    .panel-head .mtotal strong { color: var(--white); font-weight: 700; font-size: 15px; }
+    .panel-head .mtotal { font-size: 15px; color: var(--dim); }
+    .panel-head .mtotal strong { color: var(--white); font-weight: 700; font-size: 16.5px; }
 
     .cat { margin-top: 26px; }
     .cat-head { display: grid; grid-template-columns: minmax(140px, 1fr) auto; gap: 14px 18px; align-items: center; margin-bottom: 6px; }
     .cat-head .meter { grid-column: 1 / -1; }
     .row { display: flex; align-items: center; gap: 13px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
     .row:last-child { border-bottom: 0; }
-    .row .name { flex: 1 1 0; min-width: 0; font-size: 14.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .row .track { flex: 0 0 130px; height: 6px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; }
+    .row .name { flex: 1 1 0; min-width: 0; font-size: 15.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row .track { flex: 0 0 130px; height: 6px; background: rgba(255, 255, 255, 0.14); border-radius: var(--r-full); overflow: hidden; }
     .row .track .fill { display: block; height: 100%; border-radius: var(--r-full); }
-    .row .hrs { flex: 0 0 64px; font-size: 14.5px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
+    .row .hrs { flex: 0 0 72px; font-size: 15.5px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
     .row .link {
       flex: none; display: inline-flex; align-items: center; justify-content: center;
       width: 26px; height: 26px; border-radius: 6px; color: var(--dim-2);
@@ -402,22 +479,22 @@
     .row .link:hover { color: var(--mint); background: var(--surface-2); border-color: var(--line); }
     .row .link svg { width: 14px; height: 14px; }
     .row .link.placeholder { opacity: .22; pointer-events: none; }
-    .empty-note { font-size: 14px; color: var(--dim-2); font-style: italic; margin: 6px 0 0; }
+    .empty-note { font-size: 15px; color: var(--dim-2); font-style: italic; margin: 6px 0 0; }
     @media (max-width: 560px) { .row .track { display: none; } }
 
     /* ── States + footer ────────────────────────────────────────── */
-    .state { text-align: center; padding: 80px 20px; color: var(--dim); font-size: 16px; }
+    .state { text-align: center; padding: 80px 20px; color: var(--dim); font-size: 17px; }
     .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--mint); animation: spin 1s linear infinite; margin: 0 auto 18px; }
     .err { color: var(--over); }
-    .err code { display: block; margin-top: 12px; color: var(--dim); font-size: 13.5px; word-break: break-word; }
+    .err code { display: block; margin-top: 12px; color: var(--dim); font-size: 14.5px; word-break: break-word; }
 
     .foot {
-      margin-top: 60px; padding-top: 26px; border-top: 1px solid var(--line);
+      margin-top: 64px; padding-top: 8px;
       display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap;
-      font-size: 13px; color: var(--dim-2); line-height: 1.7;
+      font-size: 14px; color: var(--dim-2); line-height: 1.7;
     }
     .foot-brand { display: flex; flex-direction: column; gap: 9px; max-width: 62ch; }
-    .foot-fine { font-size: 12.5px; line-height: 1.75; color: var(--dim-2); margin: 0; }
+    .foot-fine { font-size: 14px; line-height: 1.7; color: var(--dim-2); margin: 0; max-width: 46ch; text-wrap: pretty; }
     .foot-link {
       color: var(--mint); text-decoration: underline; text-underline-offset: 3px;
       text-decoration-thickness: 1px; text-decoration-color: rgba(126, 248, 147, 0.45);
@@ -426,7 +503,7 @@
     .foot-link:hover { text-decoration-color: var(--mint); }
     .foot-link.primary {
       display: inline-flex; align-items: center; gap: 9px; width: fit-content;
-      font-size: 14px; font-weight: 600; color: var(--white);
+      font-size: 15px; font-weight: 600; color: var(--white);
       text-decoration-color: rgba(255, 255, 255, 0.3);
     }
     .foot-link.primary:hover { color: var(--mint); text-decoration-color: var(--mint); }
@@ -453,15 +530,25 @@
         --over: #B3261E;
         --white: #111111;
         --text: #111111;
-        --ink-strong: rgba(0, 0, 0, 0.88);
+        --ink-strong: rgba(0, 0, 0, 0.92);
         --tick-cut: #FFFFFF;
-        --dim: rgba(0, 0, 0, 0.62);
-        --dim-2: rgba(0, 0, 0, 0.45);
-        --line: rgba(0, 0, 0, 0.16);
-        --line-soft: rgba(0, 0, 0, 0.09);
+        --dim: rgba(0, 0, 0, 0.70);
+        --dim-2: rgba(0, 0, 0, 0.55);
+        --line: rgba(0, 0, 0, 0.18);
+        --line-soft: rgba(0, 0, 0, 0.10);
         --surface: transparent;
         --surface-2: rgba(0, 0, 0, 0.10);
+        --warn-strong: #6E4406;
+        --warn-body: #3B2E15;
+        --warn-surface: #FCF6EA;
+        --warn-surface-2: #F7EBD5;
+        --warn-line: #D9B676;
       }
+      /* Gradient text does not print; fall back to solid ink. */
+      .hero-total .v {
+        background: none; -webkit-text-fill-color: #111; color: #111; animation: none;
+      }
+      .meter { background: rgba(0, 0, 0, 0.12); }
       body { background: #fff !important; color: #111; font-size: 10.5pt; }
       .page { max-width: none; padding: 0; }
       .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
@@ -470,7 +557,7 @@
       .hero, .panel { background: none !important; box-shadow: none; }
       .sec { break-inside: avoid; margin-bottom: 26px; }
       .table tbody tr[aria-current="true"] { background: none; }
-      .callout { background: #FCF6EA; border-color: #D9B676; color: #3B2E15; }
+      .callout { background: var(--warn-surface); border-color: var(--warn-line); color: var(--warn-body); }
       .callout strong, .flag-note strong, .flag-note svg, .callout svg { color: #8A5A0F; }
       a { color: #111 !important; }
     }
@@ -518,10 +605,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
         </a>
         <p class="foot-fine">
-          Questions about anything in this report?
+          Happy to walk through any line item with you.
           <a class="foot-link" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ05BDuPiNgyfpK6HRFzchDUrBoX2SjOj_dGFp47_xWtYoovrxOv1kLTSdDIoXCudPLii9WVIFpX" target="_blank" rel="noopener">Book a meeting</a>
           or <a class="foot-link" href="https://foundingcreative.com/contact-us/" target="_blank" rel="noopener">send us a message</a>.
-          We are happy to walk through any line item with you.
         </p>
       </div>
       <span id="footStamp"></span>
@@ -623,10 +709,20 @@
       });
     }
     function pctOf(used, budget) { return budget > 0 ? Math.round((used / budget) * 100) : 0; }
+
+    /* Using the retainer is the point, so 90% is not a warning state. Green
+       holds to the cap and only going over turns red. Fullness is carried by
+       opacity instead, so a nearly-spent month still reads as more emphatic
+       than a quiet one. Yellow stays reserved for data integrity. */
+    function usageFill(pct) {
+      if (pct > 100) return 'var(--over)';
+      var a = 0.55 + 0.45 * Math.min(1, Math.max(0, pct / 100));
+      return 'rgba(39, 172, 75, ' + a.toFixed(2) + ')';
+    }
     function repeat(s, n) { return new Array(Math.max(0, n) + 1).join(s); }
     function fmtMonths(n) { return (Math.round(n * 10) / 10).toFixed(1); }
-    function pctTone(pct) { return pct > 100 ? 'over' : pct > 85 ? 'warn' : 'ok'; }
-    function pctColor(pct) { return pct > 100 ? 'var(--over)' : pct > 85 ? 'var(--warn)' : 'var(--ok)'; }
+    function pctTone(pct) { return pct > 100 ? 'over' : 'ok'; }
+    function pctColor(pct) { return pct > 100 ? 'var(--over)' : 'var(--ok)'; }
 
     var ICONS = {
       refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>',
@@ -635,6 +731,7 @@
       external: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
       alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
       info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+      spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>',
       close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
     };
 
@@ -787,17 +884,21 @@
       renderMonthTabs();
       renderMonthPanel();
       drawChart();
+      startFunFacts(totals().total);
       tickClock();
     }
 
     /* ── Intro ──────────────────────────────────────────────────── */
     function ledeHtml() {
-      var h = '<section class="intro">';
+      var h = '<section class="intro"><div class="intro-copy">';
       h += '<p>This is a live view of the hours we have delivered for Moss. Every figure is pulled ' +
            'straight from our ClickUp time tracking when the page loads, with no manual entry and no ' +
            'rounding in our favour. We publish it because you should be able to see exactly what you ' +
            'are paying for, month by month and task by task.</p>';
-      h += '<p>Work falls into two buckets:</p>';
+      h += '<p>Where a task was tracked in ClickUp, its line item links straight to it, so you can ' +
+           'open the work itself. Some time is logged against work that never got a ClickUp task, in ' +
+           'which case no link appears. Closing those gaps is what the data note is about.</p>';
+      h += '</div>';
 
       h += '<div class="defs">';
       h += '<div class="def" style="--def-tint:' + CATS[0].tint + '">' +
@@ -809,10 +910,6 @@
            '<div class="def-body">Project work scoped and approved separately, under its own ' +
            '<b>statement of work (SOW)</b>. It sits outside the retainer and does not draw against those hours.</div></div>';
       h += '</div>';
-
-      h += '<p style="margin-top:20px">Where a task was tracked in ClickUp, its line item links straight to it, so ' +
-           'you can open the work itself. Some time is logged against work that never got a ClickUp task, ' +
-           'in which case no link appears. Closing those gaps is exactly what the data note below is about.</p>';
       h += '</section>';
       return h;
     }
@@ -825,7 +922,9 @@
       var h = '<section class="sec"><div class="hero">';
       h += '<div class="hero-top">';
       h += '<div class="hero-total"><div class="eyebrow">Total hours delivered · ' + YEAR + '</div>' +
-           '<div class="v num">' + fmtH(t.total) + '</div></div>';
+           '<div class="v num">' + fmtH(t.total) + '</div>' +
+           '<div class="funfact"><span class="ff-icon">' + ICONS.spark + '</span>' +
+           '<span class="ff-text" id="funfact"></span></div></div>';
       h += '<div class="hero-ctx"><strong>' + span + ' ' + YEAR + '</strong><br>' +
            allowanceMonths() + ' ' + (allowanceMonths() === 1 ? 'month' : 'months') + ' of retainer · ' +
            BUDGET + 'h per month</div>';
@@ -838,25 +937,36 @@
       var monthsWorth = t.creative / BUDGET;   // retainer-months actually consumed
       h += '<div class="srow">';
       h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>' +
-           '<span>Creative<span class="sub">' + BUDGET + 'h/mo × ' + months + ' = ' + allow + 'h available</span></span></div>';
+           '<span>Creative<span class="sub">' + allow + ' hours available so far this year</span></span></div>';
       h += '<div><div class="stat"><span class="used num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + '</span>' +
            '<span class="of num">/ ' + allow + 'h</span></div>' +
            '<div class="meter ticked" style="margin-top:10px" role="img" aria-label="' + pct +
              ' percent of available retainer hours used, across ' + months + ' months">' +
-           '<div class="fill" style="width:' + Math.min(100, pct) + '%;background:' + CATS[0].fillVar + '"></div>' +
+           '<div class="fill" style="width:' + Math.min(100, pct) + '%;background:' + usageFill(pct) + '"></div>' +
            '<div class="ticks" aria-hidden="true">' + repeat('<span></span>', months) + '</div></div>' +
-           '<div class="meter-scale"><span>Each segment is one month at ' + BUDGET + 'h</span>' +
+           '<div class="meter-scale"><span>Each segment is one month of retainer</span>' +
            '<span class="pace"><strong>' + fmtMonths(monthsWorth) + '</strong> of ' + months + ' months used</span></div></div>';
       h += '<div class="r"><span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></div>';
       h += '</div>';
 
-      // Other has no budget, so no meter and no invented denominator.
+      /* Other has no cap of its own, so instead of inventing one its bar is
+         drawn at the same hours-per-pixel as the retainer meter above. Equal
+         width means equal hours, which is what makes the two comparable. */
       var shareOfTotal = t.total > 0 ? Math.round((t.nonCreative / t.total) * 100) : 0;
+      var otherPct = allow > 0 ? (t.nonCreative / allow) * 100 : 0;
+      var otherOver = otherPct > 100;
       h += '<div class="srow">';
       h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>' +
-           '<span>' + CATS[1].label + '<span class="sub">Scoped project work (SOW), outside the retainer</span></span></div>';
+           '<span>' + CATS[1].label + '<span class="sub">Project work, billed outside the retainer</span></span></div>';
       h += '<div><div class="stat"><span class="used num" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</span>' +
-           '<span class="of">delivered</span></div></div>';
+           '<span class="of">delivered</span></div>' +
+           '<div class="meter" style="margin-top:10px" role="img" aria-label="' + fmtH(t.nonCreative) +
+             ' of other work, drawn to the same scale as the retainer bar above">' +
+           '<div class="fill" style="width:' + Math.min(100, otherPct) + '%;background:' + CATS[1].fillVar + '"></div></div>' +
+           '<div class="meter-scale"><span>Same scale as the bar above</span>' +
+           '<span class="pace">' + (otherOver
+             ? '<strong>more</strong> than the whole retainer to date'
+             : '<strong>' + Math.round(otherPct) + '%</strong> of a retainer-sized bar') + '</span></div></div>';
       h += '<div class="r"><span class="pct-chip neutral">' + shareOfTotal + '% of total</span></div>';
       h += '</div>';
 
@@ -903,8 +1013,13 @@
       h += '<span class="legend-hint">Hover to isolate a series, click to hide it</span>';
       h += '</div>';
 
+      // The hatch key belongs with the legend, not in a separate warning box.
       var flags = flagsInRange(YEAR, state.range, 'creative');
-      if (flags.length) h += '<div style="margin-top:18px">' + calloutHtml(flags[0]) + '</div>';
+      if (flags.length) {
+        h += '<div class="legend-key"><span class="hatch-swatch" aria-hidden="true"></span>' +
+             '<span>Hatched bars are <b>' + esc(flags[0].label.toLowerCase()) + '</b>. ' +
+             'Select one for detail.</span></div>';
+      }
       h += '</section>';
       return h;
     }
@@ -933,7 +1048,7 @@
         h += '<td class="r num"><span class="primary">' + fmtH(m.creative) + '</span> <span class="of">/ ' + BUDGET + 'h</span></td>';
         h += '<td class="r num hide-sm" style="color:' + pctColor(pct) + ';font-weight:700">' + pct + '%</td>';
         h += '<td class="hide-sm"><div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
-             '%;background:' + (pct > 100 ? 'var(--over)' : CATS[0].fillVar) + '"></div></div></td>';
+             '%;background:' + usageFill(pct) + '"></div></div></td>';
         h += '<td class="r num">' + fmtH(m.nonCreative) + '</td>';
         h += '<td class="r num primary">' + fmtH(m.total) + '</td>';
         h += '</tr>';
@@ -1023,7 +1138,7 @@
                '<span class="of num">/ ' + BUDGET + 'h</span>' +
                '<span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></span>';
           h += '<div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
-               '%;background:' + (pct > 100 ? 'var(--over)' : c.fillVar) + '"></div></div>';
+               '%;background:' + usageFill(pct) + '"></div></div>';
         } else {
           h += '<span class="stat" style="justify-content:flex-end">' +
                '<span class="used num" style="font-size:20px;color:' + c.inkVar + '">' + fmtH(hours) + '</span>' +
@@ -1281,6 +1396,84 @@
           }
         }
       });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       Comparison line
+
+       A dense page of hour totals is hard to feel. Each of these turns the
+       headline number into something with a shape, and they rotate slowly so
+       the page has one small moving part. Every figure is computed from the
+       real total, so they stay true as the number grows.
+       ═══════════════════════════════════════════════════════════════ */
+    var FUN_FACTS = [
+      function (h) {
+        return 'That is <b>' + fmt1(h / 24) + ' full days</b> of round-the-clock work, without stopping to sleep.';
+      },
+      function (h) {
+        return 'Long enough to watch the extended Lord of the Rings trilogy <b>' + fmt1(h / 11.4) + ' times</b> back to back.';
+      },
+      function (h) {
+        return 'The International Space Station would circle the Earth <b>' + Math.round(h / 1.533) + ' times</b> in that span.';
+      },
+      function (h) {
+        return 'Enough time to fly <b>' + fmt1(h / 7.5) + ' round trips</b> between New York and London.';
+      },
+      function (h) {
+        return 'A three-toed sloth, moving flat out, would cover <b>' + fmt1(h * 0.15) + ' miles</b>.';
+      },
+      function (h) {
+        return 'That is <b>' + Math.round(h / 1.5) + ' sleep cycles</b>, if anyone were getting any.';
+      },
+      function (h) {
+        return 'Sunlight takes 8 minutes 20 seconds to reach us. This is <b>' + Math.round(h * 60 / 8.33) + ' of those journeys</b>.';
+      },
+      function (h) {
+        return 'Roughly <b>' + Math.round(h / 2.01) + ' marathons</b> at world-record pace.';
+      },
+      function (h) {
+        return 'You could listen to every Beatles studio album <b>' + fmt1(h / 10.2) + ' times</b> through.';
+      },
+      function (h) {
+        return 'About <b>' + fmt1(h / 8) + ' standard working days</b>, or ' + fmt1(h / 40) + ' working weeks.';
+      },
+      function (h) {
+        return 'A hummingbird would beat its wings about <b>' + Math.round(h * 3600 * 53 / 1e6) + ' million times</b>.';
+      },
+      function (h) {
+        return 'Long enough to boil <b>' + Math.round(h * 60 / 4) + ' kettles</b>, one after another.';
+      }
+    ];
+    function fmt1(n) {
+      return (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 });
+    }
+
+    var factTimer = null, factIdx = 0, factOrder = [];
+    function startFunFacts(totalHours) {
+      var el = document.getElementById('funfact');
+      if (!el || !(totalHours > 0)) return;
+      if (factTimer) clearInterval(factTimer);
+
+      // Shuffled once per render so a reload does not always open the same way.
+      factOrder = FUN_FACTS.map(function (_, i) { return i; });
+      for (var i = factOrder.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = factOrder[i]; factOrder[i] = factOrder[j]; factOrder[j] = tmp;
+      }
+      factIdx = 0;
+      el.innerHTML = FUN_FACTS[factOrder[0]](totalHours);
+
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      factTimer = setInterval(function () {
+        factIdx = (factIdx + 1) % factOrder.length;
+        var next = FUN_FACTS[factOrder[factIdx]](totalHours);
+        if (reduce) { el.innerHTML = next; return; }
+        el.dataset.out = 'true';
+        setTimeout(function () {
+          el.innerHTML = next;
+          el.dataset.out = 'false';
+        }, 600);
+      }, 9000);
     }
 
     /* ═══════════════════════════════════════════════════════════════
