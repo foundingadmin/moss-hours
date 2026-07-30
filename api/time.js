@@ -146,7 +146,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       year,
       retainerBudget: RETAINER_BUDGET_HOURS,
-      // When this payload was built server-side — the report shows it as
+      // When this payload was built server-side. The report shows it as
       // "last updated" so the freshness of the data is never in question.
       generatedAt: new Date().toISOString(),
       months: monthsOut,

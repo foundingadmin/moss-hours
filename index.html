@@ -32,6 +32,7 @@
       --line: rgba(255, 255, 255, 0.12);
       --line-soft: rgba(255, 255, 255, 0.07);
       --ink-strong: rgba(255, 255, 255, 0.88);
+      --tick-cut: var(--n-black);   /* meter segment gaps: always the page surface */
       --dim: rgba(255, 255, 255, 0.66);
       --dim-2: rgba(255, 255, 255, 0.45);
     }
@@ -57,19 +58,25 @@
       background: rgba(0, 0, 0, 0.72);
       backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     }
-    /* Both wordmarks are aligned on their cap height, not their box height:
-       the Moss mark's spear descender fills ~44% of its artboard, so matching
-       raw heights would leave "Moss" optically half the size of "Founding".
-       The row is fixed to the cap height and the spear overhangs into the
-       masthead's bottom padding. */
-    .lockup { display: flex; align-items: flex-start; gap: 15px; height: 21px; }
+    /* The two wordmarks are balanced optically, not by box height. Measured
+       from the artwork: Founding's F is 84.4% of its artboard with the baseline
+       at 83.6%; Moss's caps are 55.7% with the baseline at 56.8% (the spear
+       descender eats the rest). So the boxes are bottom-aligned and Moss is
+       pulled down by --moss-drop to put both baselines on the same line, then
+       set to ~0.74x Founding's cap height, because matching cap heights lets
+       Moss's heavy sans overpower Founding's light serif. The spear overhangs
+       into the masthead's bottom padding. */
+    .lockup {
+      --fc-h: 22px; --moss-h: 24.6px; --moss-drop: 7px;
+      display: flex; align-items: flex-end; gap: 15px; height: var(--fc-h);
+    }
     .lockup img { display: block; width: auto; }
-    .lockup img.fc { height: 21px; }
-    .lockup img.moss { height: 34px; }
-    .lockup .x { width: 1px; height: 21px; background: var(--line); display: block; flex: none; }
+    .lockup img.fc { height: var(--fc-h); }
+    .lockup img.moss { height: var(--moss-h); margin-bottom: calc(var(--moss-drop) * -1); }
+    .lockup .x { width: 1px; height: var(--fc-h); background: var(--line); display: block; flex: none; }
     .lockup .role {
       font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-      color: var(--dim-2); padding-left: 3px; line-height: 21px;
+      color: var(--dim-2); padding-left: 3px; line-height: var(--fc-h);
     }
 
     .status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -199,9 +206,25 @@
     .pct-chip.over { color: var(--over); background: rgba(255, 138, 128, 0.12); }
     .pct-chip.neutral { color: var(--dim); background: rgba(255,255,255,0.05); border-color: var(--line); }
 
-    .meter { height: 8px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; min-width: 120px; }
+    .meter { position: relative; height: 8px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; min-width: 120px; }
     .meter .fill { height: 100%; border-radius: var(--r-full); transition: width .5s cubic-bezier(.22,.9,.3,1); }
     .meter.thin { height: 6px; }
+
+    /* Segmented meter: one tick per month of retainer, so the bar reads as
+       "N months at 50h" rather than an abstract percentage. The ticks are cut
+       in the page colour, giving the 2px gap between adjacent fills. */
+    .meter.ticked { height: 11px; border-radius: 3px; }
+    .meter.ticked .fill { border-radius: 2px 0 0 2px; }
+    .meter.ticked .ticks { position: absolute; inset: 0; display: flex; pointer-events: none; }
+    .meter.ticked .ticks span { flex: 1 1 0; border-right: 2px solid var(--tick-cut); }
+    .meter.ticked .ticks span:last-child { border-right: 0; }
+
+    .meter-scale {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 10px; margin-top: 7px; font-size: 12px; color: var(--dim-2);
+    }
+    .meter-scale .pace { color: var(--dim); }
+    .meter-scale .pace strong { color: var(--ink-strong); font-weight: 700; }
 
     /* ── Data-integrity callout (annotation component) ──────────── */
     .callout {
@@ -360,6 +383,7 @@
         --white: #111111;
         --text: #111111;
         --ink-strong: rgba(0, 0, 0, 0.88);
+        --tick-cut: #FFFFFF;
         --dim: rgba(0, 0, 0, 0.62);
         --dim-2: rgba(0, 0, 0, 0.45);
         --line: rgba(0, 0, 0, 0.16);
@@ -395,7 +419,7 @@
 
       <div class="status">
         <div class="clock">
-          <span class="now"><span class="live-dot" aria-hidden="true"></span><span id="clockNow">—</span></span>
+          <span class="now"><span class="live-dot" aria-hidden="true"></span><span id="clockNow">…</span></span>
           <span class="fetched" id="clockFetched">Loading data…</span>
         </div>
         <button class="btn icon-only" id="refreshBtn" title="Refresh data from ClickUp" aria-label="Refresh data from ClickUp"></button>
@@ -464,7 +488,7 @@
         series: 'creative',
         label: 'Under-reported',
         detail: 'Creative hours for January–May 2026 come from a partially corrupt ' +
-                'time-tracking export. Actual usage was higher than shown — we are ' +
+                'time-tracking export. Actual usage was higher than shown; we are ' +
                 'reconstructing the missing entries and will restate these months.'
       }
     ];
@@ -492,7 +516,7 @@
        Formatting helpers
        ═══════════════════════════════════════════════════════════════ */
     function fmtH(h) {
-      if (h === null || h === undefined) return '—';
+      if (h === null || h === undefined) return '0h';
       var hrs = Math.floor(h), mins = Math.round((h - hrs) * 60);
       if (mins === 60) { hrs += 1; mins = 0; }
       if (hrs === 0 && mins === 0) return '0h';
@@ -506,6 +530,8 @@
       });
     }
     function pctOf(used, budget) { return budget > 0 ? Math.round((used / budget) * 100) : 0; }
+    function repeat(s, n) { return new Array(Math.max(0, n) + 1).join(s); }
+    function fmtMonths(n) { return (Math.round(n * 10) / 10).toFixed(1); }
     function pctTone(pct) { return pct > 100 ? 'over' : pct > 85 ? 'warn' : 'ok'; }
     function pctColor(pct) { return pct > 100 ? 'var(--over)' : pct > 85 ? 'var(--warn)' : 'var(--ok)'; }
 
@@ -579,7 +605,18 @@
       });
       return t;
     }
-    function allowance() { return BUDGET * state.range.length; }
+    /* Months of retainer the client has actually paid for, which is not the same
+       as the months that happen to carry tracked time: the retainer accrues on
+       the 1st whether or not anyone logs hours. For the current year that runs
+       from the first tracked month through the month we are in now; for a past
+       year it runs through the last month with time on it. */
+    function allowanceMonths() {
+      var first = state.range[0].month;
+      var last = state.range[state.range.length - 1].month;
+      if (YEAR === CURRENT_YEAR) last = Math.max(last, new Date().getMonth());
+      return last - first + 1;
+    }
+    function allowance() { return BUDGET * allowanceMonths(); }
 
     /* ═══════════════════════════════════════════════════════════════
        Load
@@ -670,7 +707,7 @@
     /* ── Method note ────────────────────────────────────────────── */
     function ledeHtml() {
       return '<p class="lede">' + ICONS.info +
-        '<span>Every figure below is pulled live from our ClickUp time tracking — no manual entry, ' +
+        '<span>Every figure below is pulled live from our ClickUp time tracking, with no manual entry and ' +
         'no rounding in our favour. <b>Creative</b> is retainer work drawn against your ' +
         BUDGET + ' hours per month; <b>Non-Creative</b> is separately scoped project work (SOW) ' +
         'that sits outside the retainer. Line items link straight to the task they were logged against.</span></p>';
@@ -687,24 +724,30 @@
       h += '<div class="hero-total"><div class="eyebrow">Total hours delivered · ' + YEAR + '</div>' +
            '<div class="v num">' + fmtH(t.total) + '</div></div>';
       h += '<div class="hero-ctx"><strong>' + span + ' ' + YEAR + '</strong><br>' +
-           state.range.length + ' ' + (state.range.length === 1 ? 'month' : 'months') + ' tracked · ' +
-           BUDGET + 'h retainer per month</div>';
+           allowanceMonths() + ' ' + (allowanceMonths() === 1 ? 'month' : 'months') + ' of retainer · ' +
+           BUDGET + 'h per month</div>';
       h += '</div>';
 
       h += '<div class="split">';
 
-      // Creative — budgeted, so it gets the meter and a % used.
+      // Creative is budgeted, so it gets the segmented meter and a % used.
+      var months = allowanceMonths();
+      var monthsWorth = t.creative / BUDGET;   // retainer-months actually consumed
       h += '<div class="srow">';
       h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>' +
-           '<span>Creative<span class="sub">' + BUDGET + 'h/mo × ' + state.range.length + ' = ' + allow + 'h available</span></span></div>';
+           '<span>Creative<span class="sub">' + BUDGET + 'h/mo × ' + months + ' = ' + allow + 'h available</span></span></div>';
       h += '<div><div class="stat"><span class="used num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + '</span>' +
            '<span class="of num">/ ' + allow + 'h</span></div>' +
-           '<div class="meter thin" style="margin-top:10px" role="img" aria-label="' + pct + ' percent of available retainer hours used">' +
-           '<div class="fill" style="width:' + Math.min(100, pct) + '%;background:' + CATS[0].fillVar + '"></div></div></div>';
+           '<div class="meter ticked" style="margin-top:10px" role="img" aria-label="' + pct +
+             ' percent of available retainer hours used, across ' + months + ' months">' +
+           '<div class="fill" style="width:' + Math.min(100, pct) + '%;background:' + CATS[0].fillVar + '"></div>' +
+           '<div class="ticks" aria-hidden="true">' + repeat('<span></span>', months) + '</div></div>' +
+           '<div class="meter-scale"><span>Each segment is one month at ' + BUDGET + 'h</span>' +
+           '<span class="pace"><strong>' + fmtMonths(monthsWorth) + '</strong> of ' + months + ' months used</span></div></div>';
       h += '<div class="r"><span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></div>';
       h += '</div>';
 
-      // Non-Creative — no budget, so no meter and no invented denominator.
+      // Non-Creative has no budget, so no meter and no invented denominator.
       var shareOfTotal = t.total > 0 ? Math.round((t.nonCreative / t.total) * 100) : 0;
       h += '<div class="srow">';
       h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>' +
@@ -723,7 +766,7 @@
 
     function calloutHtml(flag, inline) {
       return '<div class="callout' + (inline ? ' inline' : '') + '">' + ICONS.alert +
-        '<span><strong>' + esc(flag.label) + ' · ' + monthSpanLabel(flag) + '</strong> — ' + esc(flag.detail) + '</span></div>';
+        '<span><strong>' + esc(flag.label) + ' · ' + monthSpanLabel(flag) + '.</strong> ' + esc(flag.detail) + '</span></div>';
     }
     // Compact one-liner used where the full callout would be a third repeat.
     function flagNoteHtml(flag, text) {
@@ -760,7 +803,7 @@
 
       var flags = flagsInRange(YEAR, state.range, 'creative');
       if (flags.length) {
-        h += flagNoteHtml(flags[0], 'is hatched and marked ▾ — these bars understate actual usage.');
+        h += flagNoteHtml(flags[0], 'is hatched and marked ▾. Those bars understate actual usage.');
       }
       h += '</section>';
       return h;
@@ -806,7 +849,7 @@
       h += '</tr></tfoot></table></div>';
 
       var flags = flagsInRange(YEAR, state.range, 'creative');
-      if (flags.length) h += flagNoteHtml(flags[0], 'is flagged ⚠ — those months are under-reported and will be restated.');
+      if (flags.length) h += flagNoteHtml(flags[0], 'is flagged ⚠. Those months are under-reported and will be restated.');
 
       h += '</section>';
       return h;
@@ -931,7 +974,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════
-       Chart — grouped bars, hatched where data is flagged
+       Chart: grouped bars, hatched where data is flagged
        ═══════════════════════════════════════════════════════════════ */
     var patternCache = {};
     function hatch(color) {
@@ -994,7 +1037,7 @@
     }
 
     /* The chart is drawn to a canvas, so the print stylesheet can't reach its
-       axis text, gridlines or markers — re-theme it around the print events. */
+       axis text, gridlines or markers, so re-theme it around the print events. */
     var printing = false;
     function chartTheme(isPrint) {
       printing = isPrint;
@@ -1092,7 +1135,7 @@
                     var f = flagFor(YEAR, m.month, CATS[it.datasetIndex].key);
                     if (f && notes.indexOf(f.label) === -1) notes.push(f.label);
                   });
-                  return notes.length ? '⚠ ' + notes.join(', ') + ' — see note below' : '';
+                  return notes.length ? '⚠ ' + notes.join(', ') + ', see note below' : '';
                 }
               }
             }
