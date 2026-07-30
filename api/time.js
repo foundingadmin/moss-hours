@@ -1,7 +1,7 @@
 const CLICKUP_TOKEN = process.env.CLICKUP_TOKEN;
 const WORKSPACE_ID = '9011561475';
 
-// Monthly Creative Retainer budget, in hours (used for % / remaining figures).
+// Monthly Creative retainer budget, in hours (used for % / meter figures).
 const RETAINER_BUDGET_HOURS = 50;
 
 const FOLDER_IDS = {
@@ -13,6 +13,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // The report advertises itself as live data and offers a manual refresh, so
+  // every request must hit ClickUp rather than a CDN copy.
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -50,18 +53,28 @@ export default async function handler(req, res) {
           ''
       );
 
+    // Deep link back to the source of truth. `task_url` is returned by ClickUp
+    // directly; the /t/{id} form is a stable fallback that resolves for any task.
+    const taskUrlOf = (entry) => {
+      if (entry?.task_url) return String(entry.task_url);
+      const id = entry?.task?.id;
+      return id ? `https://app.clickup.com/t/${id}` : null;
+    };
+
     if (req.query.debug) {
       const sample = (entries || [])[0] || null;
       return res.status(200).json({
         year,
         totalEntries: (entries || []).length,
         resolvedFolderIdOfSample: sample ? folderIdOf(sample) : null,
+        resolvedTaskUrlOfSample: sample ? taskUrlOf(sample) : null,
         sampleEntry: sample,
       });
     }
 
-    // One bucket per month, each tracking total hours plus a per-task tally
-    // (keyed by task name) for the Retainer and SOW categories.
+    // One bucket per month, each tracking total hours plus a per-task tally for
+    // the Creative (retainer) and Non-Creative (SOW) categories. Tasks are keyed
+    // by ClickUp task id where available so a renamed task stays one line item.
     const months = Array.from({ length: 12 }, () => ({
       retainerHours: 0,
       sowHours: 0,
@@ -82,25 +95,43 @@ export default async function handler(req, res) {
       const hours = (parseInt(entry.duration) || 0) / 3600000;
       const fid = folderIdOf(entry);
       const taskName = entry?.task?.name || '(untitled task)';
+      const taskId = entry?.task?.id ? String(entry.task.id) : null;
 
-      let bucket;
-      if (FOLDER_IDS.retainer.includes(fid)) bucket = months[month].retainerTasks;
-      else if (FOLDER_IDS.sow.includes(fid)) bucket = months[month].sowTasks;
-      else {
+      let bucket, isRetainer;
+      if (FOLDER_IDS.retainer.includes(fid)) {
+        bucket = months[month].retainerTasks;
+        isRetainer = true;
+      } else if (FOLDER_IDS.sow.includes(fid)) {
+        bucket = months[month].sowTasks;
+        isRetainer = false;
+      } else {
         unmatchedEntries += 1;
         unmatchedHours += hours;
         continue;
       }
 
-      bucket.set(taskName, (bucket.get(taskName) || 0) + hours);
-      if (bucket === months[month].retainerTasks) months[month].retainerHours += hours;
+      const key = taskId || `name:${taskName}`;
+      const existing = bucket.get(key);
+      if (existing) {
+        existing.hours += hours;
+      } else {
+        bucket.set(key, {
+          id: taskId,
+          name: taskName,
+          hours,
+          url: taskUrlOf(entry),
+          listId: entry?.task_location?.list_id ? String(entry.task_location.list_id) : null,
+        });
+      }
+
+      if (isRetainer) months[month].retainerHours += hours;
       else months[month].sowHours += hours;
     }
 
     const round = (n) => Math.round(n * 100) / 100;
     const toItems = (map) =>
-      [...map.entries()]
-        .map(([name, hours]) => ({ name, hours: round(hours) }))
+      [...map.values()]
+        .map((t) => ({ ...t, hours: round(t.hours) }))
         .filter((t) => t.hours > 0) // drop tasks that round to 0h (milestones, sub-second timers)
         .sort((a, b) => b.hours - a.hours);
 
@@ -115,6 +146,9 @@ export default async function handler(req, res) {
     return res.status(200).json({
       year,
       retainerBudget: RETAINER_BUDGET_HOURS,
+      // When this payload was built server-side — the report shows it as
+      // "last updated" so the freshness of the data is never in question.
+      generatedAt: new Date().toISOString(),
       months: monthsOut,
       // Flat aggregates kept for convenience / back-compat.
       retainer: monthsOut.map((m) => m.retainerHours),

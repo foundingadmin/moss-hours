@@ -10,16 +10,28 @@
   <link rel="stylesheet" href="https://brand.foundingcreative.com/css/tokens.css" />
 
   <style>
-    /* Report-specific styling, layered on the DS dark scheme (default in tokens.css). */
+    /* ─────────────────────────────────────────────────────────────
+       Report-specific styling, layered on the DS dark scheme.
+
+       Series colors: FC's brand mint / lavender hues, stepped into the
+       dark-mode lightness band for the chart + meter fills, with the full
+       brand values kept for strokes, swatches and text accents.
+       ───────────────────────────────────────────────────────────── */
     :root {
-      --retainer: var(--mint);                 /* #7EF893 */
-      --sow: var(--holo-lavender);             /* #C6A2FF */
+      --creative-fill: #27AC4B;
+      --creative-ink: var(--mint);                  /* #7EF893 */
+      --noncreative-fill: #9B77D0;
+      --noncreative-ink: var(--holo-lavender);      /* #C6A2FF */
+
       --ok: var(--mint);
       --warn: #F5C26B;
       --over: #FF8A80;
+
       --surface: rgba(255, 255, 255, 0.045);
       --surface-2: rgba(255, 255, 255, 0.08);
       --line: rgba(255, 255, 255, 0.12);
+      --line-soft: rgba(255, 255, 255, 0.07);
+      --ink-strong: rgba(255, 255, 255, 0.88);
       --dim: rgba(255, 255, 255, 0.66);
       --dim-2: rgba(255, 255, 255, 0.45);
     }
@@ -32,119 +44,453 @@
       background-attachment: fixed;
       font-size: 16px;
     }
-    .page { max-width: 840px; margin: 0 auto; padding: 56px 28px 90px; }
+    .page { max-width: 980px; margin: 0 auto; padding: 0 28px 90px; }
+    .num { font-variant-numeric: tabular-nums; }
 
-    /* Header */
-    .report-head { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+    /* ── Masthead: agency × client lockup + live status bar ─────── */
+    .masthead {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; flex-wrap: wrap;
+      padding: 16px 0 24px; margin-bottom: 34px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+    /* Both wordmarks are aligned on their cap height, not their box height:
+       the Moss mark's spear descender fills ~44% of its artboard, so matching
+       raw heights would leave "Moss" optically half the size of "Founding".
+       The row is fixed to the cap height and the spear overhangs into the
+       masthead's bottom padding. */
+    .lockup { display: flex; align-items: flex-start; gap: 15px; height: 21px; }
+    .lockup img { display: block; width: auto; }
+    .lockup img.fc { height: 21px; }
+    .lockup img.moss { height: 34px; }
+    .lockup .x { width: 1px; height: 21px; background: var(--line); display: block; flex: none; }
+    .lockup .role {
+      font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--dim-2); padding-left: 3px; line-height: 21px;
+    }
+
+    .status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .clock {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+      font-size: 12px; line-height: 1.35; text-align: right;
+    }
+    .clock .now { color: var(--white); font-weight: 600; }
+    .clock .now .live-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--mint); margin-right: 6px; vertical-align: middle;
+      box-shadow: 0 0 0 0 rgba(126, 248, 147, 0.6); animation: pulse 2.4s ease-out infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(126, 248, 147, 0.5); }
+      70% { box-shadow: 0 0 0 7px rgba(126, 248, 147, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(126, 248, 147, 0); }
+    }
+    .clock .fetched { color: var(--dim-2); }
+
+    /* ── Buttons ────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      font-family: var(--font-body); font-size: 13.5px; font-weight: 600; color: var(--dim);
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+      padding: 8px 12px; cursor: pointer; transition: all .14s ease; white-space: nowrap;
+    }
+    .btn:hover { color: var(--white); background: var(--surface-2); border-color: rgba(255,255,255,0.22); }
+    .btn:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+    .btn svg { width: 15px; height: 15px; flex: none; }
+    .btn.icon-only { padding: 8px; }
+    .btn[aria-busy="true"] svg { animation: spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .menu-wrap { position: relative; }
+    .menu {
+      position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 226px;
+      background: #101010; border: 1px solid var(--line); border-radius: var(--r-md);
+      box-shadow: var(--shadow-2xl); padding: 6px; display: none;
+    }
+    .menu[data-open="true"] { display: block; }
+    .menu button {
+      display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+      font-family: var(--font-body); font-size: 13.5px; font-weight: 500; color: var(--dim);
+      background: transparent; border: 0; border-radius: var(--r-xs); padding: 9px 10px; cursor: pointer;
+    }
+    .menu button:hover { background: var(--surface-2); color: var(--white); }
+    .menu button svg { width: 14px; height: 14px; flex: none; opacity: .8; }
+    .menu .menu-label {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--dim-2); padding: 8px 10px 5px;
+    }
+
+    /* ── Title row + pill selectors ─────────────────────────────── */
+    .title-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
     .report-title { font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; }
-    .report-range { font-size: 15px; color: var(--dim); white-space: nowrap; }
+    .report-range { font-size: 14px; color: var(--dim); margin-top: 7px; }
 
-    /* Pill selectors (years + month tabs) */
     .pills { display: inline-flex; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-full); padding: 4px; }
     .pills.scroll { display: flex; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
     .pills.scroll::-webkit-scrollbar { display: none; }
     .pill {
-      font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--dim);
-      background: transparent; border: 0; cursor: pointer; padding: 8px 18px; border-radius: var(--r-full);
+      font-family: var(--font-body); font-size: 14.5px; font-weight: 600; color: var(--dim);
+      background: transparent; border: 0; cursor: pointer; padding: 8px 17px; border-radius: var(--r-full);
       transition: all .14s ease; white-space: nowrap;
     }
     .pill:hover { color: var(--white); }
     .pill[aria-pressed="true"], .pill[aria-selected="true"] { background: var(--mint); color: var(--n-black); }
-    .years { margin: 16px 0 26px; }
-
-    /* Disclaimer */
-    .disclaimer {
-      font-size: 14px; color: var(--dim); margin-bottom: 30px; line-height: 1.7; max-width: 64ch;
-      border-left: 2px solid rgba(126, 248, 147, 0.5); padding-left: 16px;
+    .pill .flag-dot {
+      display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--warn); margin-left: 6px; vertical-align: middle;
     }
 
-    /* Summary cards */
-    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 34px; }
-    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px 22px; }
-    .card.accent { background: linear-gradient(180deg, rgba(126, 248, 147, 0.14), rgba(126, 248, 147, 0.035)); border-color: rgba(126, 248, 147, 0.32); }
-    .card .k { font-size: 14px; font-weight: 600; color: var(--dim); margin-bottom: 8px; }
-    .card .v { font-family: var(--font-display); font-size: 36px; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; }
-    .card .s { font-size: 13.5px; color: var(--dim); margin-top: 6px; }
-    .v.green { color: var(--retainer); }
-    .v.purple { color: var(--sow); }
+    /* ── Lede / method note ─────────────────────────────────────── */
+    .lede {
+      display: flex; gap: 11px; align-items: flex-start;
+      font-size: 14px; line-height: 1.65; color: var(--dim);
+      margin: 22px 0 36px; text-wrap: pretty;
+    }
+    .lede svg { width: 15px; height: 15px; flex: none; margin-top: 3px; color: var(--dim-2); }
+    .lede b { color: var(--ink-strong); font-weight: 600; }
 
-    /* Section heading */
-    .sec-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; margin: 0 0 16px; }
+    /* ── Section scaffolding ────────────────────────────────────── */
+    .sec { margin-bottom: 52px; }
+    .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+    .sec-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; margin: 0; }
+    .sec-note { font-size: 13px; color: var(--dim-2); }
+    .eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+      color: var(--dim-2);
+    }
 
-    /* Overview chart */
-    .chart-wrap { position: relative; width: 100%; height: 230px; margin-bottom: 14px; }
-    .legend { display: flex; gap: 22px; font-size: 14px; color: var(--dim); margin-bottom: 40px; flex-wrap: wrap; }
-    .legend span { display: flex; align-items: center; gap: 7px; }
-    .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    /* ── Year-to-date hero panel ────────────────────────────────── */
+    .hero {
+      background: linear-gradient(158deg, rgba(255,255,255,0.062), rgba(255,255,255,0.022));
+      border: 1px solid var(--line); border-radius: var(--r-xl);
+      padding: 26px 28px 24px; box-shadow: var(--shadow-xl);
+    }
+    .hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+    .hero-total .eyebrow { margin-bottom: 9px; }
+    .hero-total .v {
+      font-family: var(--font-display); font-size: clamp(40px, 7vw, 58px); font-weight: 600;
+      line-height: 1; letter-spacing: -0.015em;
+    }
+    .hero-ctx { font-size: 13.5px; color: var(--dim); text-align: right; line-height: 1.7; }
+    .hero-ctx strong { color: var(--ink-strong); font-weight: 600; }
 
-    /* Month tabs + detail panel */
-    .month-tabs { margin: 0 0 18px; }
-    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 26px 26px 22px; box-shadow: var(--shadow-xl); }
-    .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+    .split { border-top: 1px solid var(--line); }
+    .srow { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.5fr) auto; gap: 18px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
+    .srow:last-child { border-bottom: 0; padding-bottom: 4px; }
+    .srow-label { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 700; }
+    .srow-label .sub { display: block; font-size: 12.5px; font-weight: 500; color: var(--dim-2); margin-top: 3px; letter-spacing: 0; }
+    .swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
+
+    /* The stat block that replaced "6h 44m used · 13% of 50h · 43h 16m remaining":
+       value / allowance / percentage each get their own size, weight and color. */
+    .stat { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .stat .used { font-family: var(--font-display); font-size: 27px; font-weight: 600; line-height: 1; letter-spacing: -0.01em; }
+    .stat .of { font-size: 15px; font-weight: 500; color: var(--dim-2); }
+    .pct-chip {
+      font-size: 12px; font-weight: 700; letter-spacing: .02em;
+      padding: 4px 9px; border-radius: var(--r-full); white-space: nowrap;
+      border: 1px solid currentColor;
+    }
+    .pct-chip.ok { color: var(--ok); background: rgba(126, 248, 147, 0.1); }
+    .pct-chip.warn { color: var(--warn); background: rgba(245, 194, 107, 0.1); }
+    .pct-chip.over { color: var(--over); background: rgba(255, 138, 128, 0.12); }
+    .pct-chip.neutral { color: var(--dim); background: rgba(255,255,255,0.05); border-color: var(--line); }
+
+    .meter { height: 8px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; min-width: 120px; }
+    .meter .fill { height: 100%; border-radius: var(--r-full); transition: width .5s cubic-bezier(.22,.9,.3,1); }
+    .meter.thin { height: 6px; }
+
+    /* ── Data-integrity callout (annotation component) ──────────── */
+    .callout {
+      display: flex; gap: 11px; align-items: flex-start;
+      background: rgba(245, 194, 107, 0.075);
+      border: 1px solid rgba(245, 194, 107, 0.3);
+      border-radius: var(--r-md); padding: 12px 14px;
+      font-size: 13.5px; line-height: 1.6; color: var(--ink-strong);
+    }
+    .callout svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--warn); }
+    .callout strong { color: var(--warn); font-weight: 700; }
+    .callout.inline { margin-top: 14px; }
+
+    /* Compact inline flag: pill in tables, superscript beside a figure. */
+    .flag-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700; letter-spacing: .02em;
+      color: var(--warn); background: rgba(245, 194, 107, 0.11);
+      border: 1px solid rgba(245, 194, 107, 0.3); border-radius: var(--r-full);
+      padding: 2px 8px; white-space: nowrap; cursor: help;
+    }
+    .flag-tag svg { width: 11px; height: 11px; }
+    /* Icon-only variant for repeated table rows, where the section callout
+       already spells the note out in full. */
+    .flag-tag.compact { padding: 3px; border-radius: 5px; }
+
+    .flag-note {
+      display: flex; gap: 8px; align-items: flex-start;
+      font-size: 12.5px; line-height: 1.6; color: var(--dim-2); margin: 14px 0 0;
+    }
+    .flag-note svg { width: 13px; height: 13px; flex: none; margin-top: 2px; color: var(--warn); }
+    .flag-note strong { color: var(--warn); font-weight: 700; }
+
+    /* ── Chart + interactive legend ─────────────────────────────── */
+    .chart-wrap { position: relative; width: 100%; height: 260px; margin-bottom: 16px; }
+    .legend { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .legend-item {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-body); font-size: 13.5px; font-weight: 600; color: var(--dim);
+      background: transparent; border: 1px solid transparent; border-radius: var(--r-full);
+      padding: 6px 12px 6px 10px; cursor: pointer; transition: all .14s ease;
+    }
+    .legend-item:hover, .legend-item:focus-visible { color: var(--white); background: var(--surface); border-color: var(--line); outline: none; }
+    .legend-item[data-off="true"] { opacity: .4; }
+    .legend-item[data-off="true"] .swatch { background: var(--dim-2) !important; }
+    .legend-item .val { color: var(--dim-2); font-weight: 500; font-variant-numeric: tabular-nums; }
+    .legend-hint { font-size: 12.5px; color: var(--dim-2); margin-left: 4px; }
+
+    /* ── Monthly summary table ──────────────────────────────────── */
+    .table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+    .table th, .table td { padding: 12px 12px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+    .table th {
+      font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--dim-2); border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .table td.r, .table th.r { text-align: right; }
+    .table tbody tr { cursor: pointer; transition: background .12s ease; }
+    .table tbody tr:hover { background: rgba(255,255,255,0.035); }
+    .table tbody tr[aria-current="true"] { background: rgba(126, 248, 147, 0.07); }
+    .table .mo { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .table .primary { font-weight: 600; color: var(--white); }
+    .table .of { color: var(--dim-2); font-weight: 500; }
+    .table .meter { width: 82px; margin-left: auto; }
+    .table td.r, .table th.r { white-space: nowrap; }
+    .table tfoot td {
+      border-bottom: 0; border-top: 1px solid var(--line);
+      font-weight: 700; padding-top: 14px; color: var(--white);
+    }
+    .table-scroll { overflow-x: auto; }
+    @media (max-width: 680px) {
+      .hide-sm { display: none; }
+      .table th, .table td { padding: 12px 9px; }
+    }
+
+    /* Below this width the three-column stat rows can't hold their minimums,
+       so the figure + meter drop to their own full-width line. */
+    @media (max-width: 640px) {
+      .srow { grid-template-columns: 1fr auto; gap: 12px 14px; }
+      .srow > div:nth-child(2) { grid-column: 1 / -1; }
+      .cat-head { grid-template-columns: 1fr; }
+      .cat-head .stat { justify-content: flex-start; }
+    }
+
+    /* ── Month detail panel ─────────────────────────────────────── */
+    .panel-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 16px; }
+    .seg { display: inline-flex; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 3px; }
+    .seg button {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-body); font-size: 12.5px; font-weight: 600; color: var(--dim);
+      background: transparent; border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; white-space: nowrap;
+    }
+    .seg button:hover { color: var(--white); }
+    .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--white); }
+    .seg button svg { width: 12px; height: 12px; }
+    .seg-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim-2); margin-right: 9px; }
+
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 24px 26px 22px; box-shadow: var(--shadow-xl); }
+    .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
     .panel-head .mname { font-family: var(--font-display); font-size: 24px; font-weight: 600; }
-    .panel-head .mtotal { font-size: 15px; color: var(--dim); }
-    .panel-head .mtotal strong { color: var(--white); font-weight: 700; }
+    .panel-head .mtotal { font-size: 14px; color: var(--dim); }
+    .panel-head .mtotal strong { color: var(--white); font-weight: 700; font-size: 15px; }
 
-    .cat { margin-bottom: 26px; }
-    .cat:last-child { margin-bottom: 0; }
-    .cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
-    .cat-name { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .cat-name.green { color: var(--retainer); }
-    .cat-name.purple { color: var(--sow); }
-    .cat-meta { font-size: 14px; font-weight: 600; text-align: right; }
-    .row { display: flex; align-items: center; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .cat { margin-top: 26px; }
+    .cat-head { display: grid; grid-template-columns: minmax(140px, 1fr) auto; gap: 14px 18px; align-items: center; margin-bottom: 6px; }
+    .cat-head .meter { grid-column: 1 / -1; }
+    .row { display: flex; align-items: center; gap: 13px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
     .row:last-child { border-bottom: 0; }
-    .row .name { flex: 1 1 0; min-width: 0; font-size: 15px; font-weight: 500; color: rgba(255, 255, 255, 0.9); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .track { flex: 0 0 150px; height: 7px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; }
-    .fill { height: 100%; border-radius: var(--r-full); }
-    .row .hrs { flex: 0 0 66px; font-size: 15px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
-    .empty-note { font-size: 14px; color: var(--dim-2); font-style: italic; margin: 0; }
-    @media (max-width: 540px) { .track { flex-basis: 90px; } }
+    .row .name { flex: 1 1 0; min-width: 0; font-size: 14.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row .track { flex: 0 0 130px; height: 6px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; }
+    .row .track .fill { display: block; height: 100%; border-radius: var(--r-full); }
+    .row .hrs { flex: 0 0 64px; font-size: 14.5px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
+    .row .link {
+      flex: none; display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 6px; color: var(--dim-2);
+      border: 1px solid transparent; transition: all .14s ease;
+    }
+    .row .link:hover { color: var(--mint); background: var(--surface-2); border-color: var(--line); }
+    .row .link svg { width: 14px; height: 14px; }
+    .row .link.placeholder { opacity: .22; pointer-events: none; }
+    .empty-note { font-size: 14px; color: var(--dim-2); font-style: italic; margin: 6px 0 0; }
+    @media (max-width: 560px) { .row .track { display: none; } }
 
-    /* YTD table */
-    .ytd { margin-top: 44px; }
-    .ytd-grid { display: grid; grid-template-columns: 1.4fr 1fr 0.9fr 1fr 1fr; font-size: 14.5px; }
-    .ytd-grid > div { padding: 11px 12px; border-bottom: 1px solid var(--line); }
-    .ytd-grid .h { color: var(--dim); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
-    .ytd-grid .r { text-align: right; font-variant-numeric: tabular-nums; }
-    .ytd-grid .b { font-weight: 700; }
-    .ytd-grid .tot { border-bottom: 0; border-top: 2px solid var(--surface-2); padding-top: 13px; }
-
-    /* States + footer */
+    /* ── States + footer ────────────────────────────────────────── */
     .state { text-align: center; padding: 80px 20px; color: var(--dim); font-size: 16px; }
     .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--mint); animation: spin 1s linear infinite; margin: 0 auto 18px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .err { color: var(--over); }
     .err code { display: block; margin-top: 12px; color: var(--dim); font-size: 13.5px; word-break: break-word; }
-    .foot { margin-top: 44px; font-size: 13.5px; color: var(--dim-2); text-align: center; line-height: 1.8; }
-    .foot a { color: var(--mint); text-decoration: none; }
+
+    .foot {
+      margin-top: 60px; padding-top: 26px; border-top: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap;
+      font-size: 13px; color: var(--dim-2); line-height: 1.7;
+    }
+    .foot a { color: var(--dim); text-decoration: none; display: inline-flex; align-items: center; gap: 9px; transition: color .14s ease; }
+    .foot a:hover { color: var(--mint); }
+    .foot img { height: 17px; width: auto; display: block; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+
+    /* ── Print / Save-as-PDF ─────────────────────────────────────
+       Re-point the tokens rather than patching selector by selector, so
+       every colour that inherits from them flips with one change. The
+       brand hues are re-stepped for contrast against white paper, which
+       also carries the derived --creative-ink / --noncreative-ink / --ok. */
+    @media print {
+      :root {
+        --mint: #147A38;
+        --holo-lavender: #5E3B96;
+        --creative-fill: #2E9950;
+        --noncreative-fill: #8461BE;
+        --warn: #9A6512;
+        --over: #B3261E;
+        --white: #111111;
+        --text: #111111;
+        --ink-strong: rgba(0, 0, 0, 0.88);
+        --dim: rgba(0, 0, 0, 0.62);
+        --dim-2: rgba(0, 0, 0, 0.45);
+        --line: rgba(0, 0, 0, 0.16);
+        --line-soft: rgba(0, 0, 0, 0.09);
+        --surface: transparent;
+        --surface-2: rgba(0, 0, 0, 0.10);
+      }
+      body { background: #fff !important; color: #111; font-size: 10.5pt; }
+      .page { max-width: none; padding: 0; }
+      .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
+      .lockup img { filter: invert(1); }
+      .status, .pills, .seg, .panel-toolbar, .sec-note, .row .link, .menu-wrap { display: none !important; }
+      .hero, .panel { background: none !important; box-shadow: none; }
+      .sec { break-inside: avoid; margin-bottom: 26px; }
+      .table tbody tr[aria-current="true"] { background: none; }
+      .callout { background: #FCF6EA; border-color: #D9B676; color: #3B2E15; }
+      .callout strong, .flag-note strong, .flag-note svg, .callout svg { color: #8A5A0F; }
+      a { color: #111 !important; }
+    }
   </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </head>
 <body>
   <div class="page">
-    <div class="report-head">
-      <div class="report-title">Moss · Hours Report</div>
-      <div class="report-range" id="range"></div>
+    <header class="masthead">
+      <div class="lockup">
+        <img class="fc" src="assets/fc-wordmark-white.svg" alt="Founding Creative" />
+        <span class="x" aria-hidden="true"></span>
+        <img class="moss" src="assets/moss-wordmark-white.svg" alt="Moss" />
+        <span class="role">Hours Report</span>
+      </div>
+
+      <div class="status">
+        <div class="clock">
+          <span class="now"><span class="live-dot" aria-hidden="true"></span><span id="clockNow">—</span></span>
+          <span class="fetched" id="clockFetched">Loading data…</span>
+        </div>
+        <button class="btn icon-only" id="refreshBtn" title="Refresh data from ClickUp" aria-label="Refresh data from ClickUp"></button>
+        <div class="menu-wrap">
+          <button class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>
+          <div class="menu" id="exportMenu" role="menu"></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="title-row">
+      <div>
+        <h1 class="report-title">Hours Report</h1>
+        <div class="report-range" id="range"></div>
+      </div>
+      <div class="pills" id="years" role="group" aria-label="Select year"></div>
     </div>
-    <div class="pills years" id="years" role="group" aria-label="Select year"></div>
 
     <div id="content"></div>
+
+    <footer class="foot">
+      <a href="https://foundingcreative.com" target="_blank" rel="noopener">
+        <img src="assets/fc-icon-white.svg" alt="" />
+        <span>Founding Creative</span>
+      </a>
+      <span id="footStamp"></span>
+    </footer>
   </div>
 
   <script>
+    /* ═══════════════════════════════════════════════════════════════
+       Config
+       ═══════════════════════════════════════════════════════════════ */
     var API_BASE = new URLSearchParams(location.search).get('api') || '/api/time';
     var CURRENT_YEAR = new Date().getFullYear();
     var YEAR = parseInt(new URLSearchParams(location.search).get('year')) || CURRENT_YEAR;
-    var YEAR_OPTIONS = [CURRENT_YEAR, CURRENT_YEAR - 1]; // current + previous year only
+    var YEAR_OPTIONS = [CURRENT_YEAR, CURRENT_YEAR - 1];
     var BUDGET = 50;
+
     var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var RETAINER = '#7EF893', SOW = '#C6A2FF';
-    var chart = null;
-    var state = { months: [], range: [], selected: null };
 
+    // Two categorical series. `fill` is the mark color (brand hue, stepped into
+    // the dark-mode lightness band); `ink` is the full-brand value used for
+    // strokes, swatches and figures.
+    var CATS = [
+      { key: 'creative',    label: 'Creative',     budgeted: true,
+        fill: '#27AC4B', ink: '#7EF893',                                 // literals: Chart.js canvas
+        fillVar: 'var(--creative-fill)', inkVar: 'var(--creative-ink)',  // DOM: re-pointable per media
+        items: 'creativeItems', hours: 'creative' },
+      { key: 'nonCreative', label: 'Non-Creative', budgeted: false,
+        fill: '#9B77D0', ink: '#C6A2FF',
+        fillVar: 'var(--noncreative-fill)', inkVar: 'var(--noncreative-ink)',
+        items: 'nonCreativeItems', hours: 'nonCreative' }
+    ];
+
+    /* Data-integrity annotations. Each entry flags a (year, months, series)
+       slice as not fully trustworthy, and surfaces as: a hatched bar + marker
+       on the chart, a tag in the summary table and month tabs, and a callout
+       in the month detail panel. Remove an entry once its data is repaired. */
+    var DATA_FLAGS = [
+      {
+        id: 'moss-2026-creative-jan-may',
+        year: 2026,
+        months: [0, 1, 2, 3, 4],           // Jan–May
+        series: 'creative',
+        label: 'Under-reported',
+        detail: 'Creative hours for January–May 2026 come from a partially corrupt ' +
+                'time-tracking export. Actual usage was higher than shown — we are ' +
+                'reconstructing the missing entries and will restate these months.'
+      }
+    ];
+
+    function flagFor(year, monthIdx, seriesKey) {
+      for (var i = 0; i < DATA_FLAGS.length; i++) {
+        var f = DATA_FLAGS[i];
+        if (f.year === year && f.series === seriesKey && f.months.indexOf(monthIdx) !== -1) return f;
+      }
+      return null;
+    }
+    function flagsInRange(year, range, seriesKey) {
+      var out = [];
+      range.forEach(function (m) {
+        var f = flagFor(year, m.month, seriesKey);
+        if (f && out.indexOf(f) === -1) out.push(f);
+      });
+      return out;
+    }
+
+    var chart = null;
+    var state = { months: [], range: [], selected: null, sort: 'hours-desc', hidden: {}, generatedAt: null };
+
+    /* ═══════════════════════════════════════════════════════════════
+       Formatting helpers
+       ═══════════════════════════════════════════════════════════════ */
     function fmtH(h) {
       if (h === null || h === undefined) return '—';
       var hrs = Math.floor(h), mins = Math.round((h - hrs) * 60);
@@ -155,16 +501,89 @@
       return hrs + 'h ' + mins + 'm';
     }
     function esc(s) {
-      return String(s).replace(/[&<>"]/g, function (c) {
+      return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
       });
     }
-    function pctColor(pct) { return pct > 100 ? 'var(--over)' : pct > 80 ? 'var(--warn)' : 'var(--ok)'; }
-    function bar(h, max, color) {
-      var w = max > 0 ? Math.round((h / max) * 100) : 0;
-      return '<div class="track"><div class="fill" style="width:' + w + '%;background:' + color + ';"></div></div>';
+    function pctOf(used, budget) { return budget > 0 ? Math.round((used / budget) * 100) : 0; }
+    function pctTone(pct) { return pct > 100 ? 'over' : pct > 85 ? 'warn' : 'ok'; }
+    function pctColor(pct) { return pct > 100 ? 'var(--over)' : pct > 85 ? 'var(--warn)' : 'var(--ok)'; }
+
+    var ICONS = {
+      refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>',
+      download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+      printer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>',
+      external: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+      alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+      info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+      arrowDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
+      arrowUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
+      az: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="16" y2="7"/><line x1="4" y1="12" x2="13" y2="12"/><line x1="4" y1="17" x2="10" y2="17"/><polyline points="18 14 20.5 17 23 14"/></svg>'
+    };
+
+    /* ═══════════════════════════════════════════════════════════════
+       Live clock + freshness
+       ═══════════════════════════════════════════════════════════════ */
+    function fmtDateTime(d) {
+      return d.toLocaleString(undefined, {
+        weekday: 'short', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short'
+      });
+    }
+    function relTime(d) {
+      var s = Math.max(0, Math.round((Date.now() - d.getTime()) / 1000));
+      if (s < 10) return 'just now';
+      if (s < 60) return s + 's ago';
+      if (s < 3600) return Math.round(s / 60) + 'm ago';
+      return Math.round(s / 3600) + 'h ago';
+    }
+    function tickClock() {
+      document.getElementById('clockNow').textContent = fmtDateTime(new Date());
+      var el = document.getElementById('clockFetched');
+      if (state.generatedAt) {
+        el.textContent = 'Data updated ' + relTime(state.generatedAt) +
+          ' · ' + state.generatedAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      }
+      var stamp = document.getElementById('footStamp');
+      if (stamp && state.generatedAt) {
+        stamp.textContent = 'Live from ClickUp · generated ' + fmtDateTime(state.generatedAt);
+      }
     }
 
+    /* ═══════════════════════════════════════════════════════════════
+       Data shaping
+       ═══════════════════════════════════════════════════════════════ */
+    function normalize(data) {
+      return (data.months || []).map(function (m) {
+        return {
+          month: m.month,
+          creative: m.retainerHours || 0,
+          nonCreative: m.sowHours || 0,
+          total: (m.retainerHours || 0) + (m.sowHours || 0),
+          creativeItems: m.retainerItems || [],
+          nonCreativeItems: m.sowItems || []
+        };
+      });
+    }
+    function sortItems(items) {
+      var out = items.slice();
+      if (state.sort === 'hours-asc') out.sort(function (a, b) { return a.hours - b.hours; });
+      else if (state.sort === 'name') out.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      else out.sort(function (a, b) { return b.hours - a.hours; });
+      return out;
+    }
+    function totals() {
+      var t = { creative: 0, nonCreative: 0, total: 0 };
+      state.range.forEach(function (m) {
+        t.creative += m.creative; t.nonCreative += m.nonCreative; t.total += m.total;
+      });
+      return t;
+    }
+    function allowance() { return BUDGET * state.range.length; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       Load
+       ═══════════════════════════════════════════════════════════════ */
     function renderYears() {
       var el = document.getElementById('years');
       el.innerHTML = YEAR_OPTIONS.map(function (y) {
@@ -172,6 +591,7 @@
       }).join('');
       el.querySelectorAll('button').forEach(function (b) {
         b.addEventListener('click', function () {
+          if (YEAR === parseInt(b.dataset.y)) return;
           YEAR = parseInt(b.dataset.y);
           renderYears();
           load();
@@ -179,13 +599,17 @@
       });
     }
 
-    function load() {
+    function load(manual) {
       var content = document.getElementById('content');
-      content.innerHTML = '<div class="state"><div class="spinner"></div>Loading ' + YEAR + ' hours…</div>';
+      var btn = document.getElementById('refreshBtn');
+      btn.setAttribute('aria-busy', 'true');
+      if (!manual) content.innerHTML = '<div class="state"><div class="spinner"></div>Loading ' + YEAR + ' hours…</div>';
       document.getElementById('range').textContent = '';
       if (chart) { chart.destroy(); chart = null; }
 
-      fetch(API_BASE + '?year=' + YEAR)
+      // Cache-bust so the refresh button is a genuine round trip to ClickUp.
+      var url = API_BASE + '?year=' + YEAR + '&_=' + Date.now();
+      fetch(url, { cache: 'no-store' })
         .then(function (r) {
           return r.text().then(function (t) {
             if (!r.ok) throw new Error('API ' + r.status + ': ' + t.slice(0, 200));
@@ -196,102 +620,255 @@
         .catch(function (e) {
           content.innerHTML = '<div class="state err">Couldn’t load data.<code>' + esc(e.message) + '</code>' +
             '<div style="margin-top:12px;color:var(--dim);">Confirm <b>CLICKUP_TOKEN</b> is set in Vercel and the API is reachable at <code>' + esc(API_BASE) + '</code>.</div></div>';
-        });
+        })
+        .then(function () { btn.removeAttribute('aria-busy'); });
     }
 
+    /* ═══════════════════════════════════════════════════════════════
+       Render
+       ═══════════════════════════════════════════════════════════════ */
     function render(data) {
       BUDGET = data.retainerBudget || 50;
-      var months = data.months || [];
+      state.generatedAt = data.generatedAt ? new Date(data.generatedAt) : new Date();
+      state.months = normalize(data);
+
       var active = [];
-      months.forEach(function (m) { if ((m.retainerHours || 0) + (m.sowHours || 0) > 0) active.push(m.month); });
+      state.months.forEach(function (m) { if (m.total > 0) active.push(m.month); });
 
       var content = document.getElementById('content');
       if (!active.length) {
         document.getElementById('range').textContent = YEAR;
-        content.innerHTML = '<div class="state">No tracked Retainer or SOW hours for ' + YEAR + ' yet.</div>';
+        content.innerHTML = '<div class="state">No tracked hours for ' + YEAR + ' yet.</div>';
+        tickClock();
         return;
       }
 
       var first = active[0], last = active[active.length - 1];
-      document.getElementById('range').textContent = MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR;
+      state.range = state.months.slice(first, last + 1);
+      if (state.selected === null || state.selected < first || state.selected > last) state.selected = last;
 
-      var retYTD = 0, sowYTD = 0;
-      months.forEach(function (m) { retYTD += m.retainerHours || 0; sowYTD += m.sowHours || 0; });
+      document.getElementById('range').textContent =
+        MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR + ' · ' + state.range.length +
+        (state.range.length === 1 ? ' month' : ' months') + ' of tracked time';
 
-      var range = [];
-      for (var i = first; i <= last; i++) range.push(months[i]);
-      state.months = months;
-      state.range = range;
-      state.selected = last; // default to the most recent month with data
+      content.innerHTML =
+        ledeHtml() +
+        heroHtml() +
+        overviewHtml() +
+        summaryHtml() +
+        detailHtml();
 
-      var html = '';
-
-      html += '<div class="disclaimer">Hours are pulled live from ClickUp time tracking and grouped by project folder ' +
-        '(Moss Creative Retainer and Moss SOWs). Figures are working estimates and may shift as timesheets are updated. ' +
-        'Retainer percentages assume a ' + BUDGET + 'h / month budget.</div>';
-
-      html += '<div class="summary">';
-      html += card('Retainer used (YTD)', '<span class="v green">' + fmtH(retYTD) + '</span>', 'of ' + BUDGET + 'h/mo budget', true);
-      html += card('Non-retainer SOW (YTD)', '<span class="v purple">' + fmtH(sowYTD) + '</span>', 'outside retainer scope', false);
-      html += card('Total hours (YTD)', '<span class="v">' + fmtH(retYTD + sowYTD) + '</span>', 'all Moss work combined', false);
-      html += card('Retainer budget', '<span class="v">' + BUDGET + 'h</span>', 'per month', false);
-      html += '</div>';
-
-      html += '<h2 class="sec-title">Monthly overview</h2>';
-      html += '<div class="chart-wrap"><canvas id="overviewChart" role="img" aria-label="Grouped bar chart of retainer vs SOW hours by month"></canvas></div>';
-      html += '<div class="legend">' +
-        '<span><span class="swatch" style="background:' + RETAINER + '"></span>Creative retainer</span>' +
-        '<span><span class="swatch" style="background:' + SOW + '"></span>Non-retainer (SOW / project work)</span>' +
-        '</div>';
-
-      // Month tabs + detail panel
-      html += '<h2 class="sec-title">By month</h2>';
-      html += '<div class="pills scroll month-tabs" id="monthTabs" role="tablist" aria-label="Select month"></div>';
-      html += '<div class="panel" id="monthPanel" role="tabpanel"></div>';
-
-      // YTD table
-      html += '<div class="ytd"><h2 class="sec-title">Year-to-date summary</h2><div class="ytd-grid">';
-      html += '<div class="h">Month</div><div class="h r">Retainer</div><div class="h r">% of ' + BUDGET + 'h</div><div class="h r">Non-retainer</div><div class="h r">Total</div>';
-      range.forEach(function (m) {
-        var pct = Math.round((m.retainerHours / BUDGET) * 100);
-        html += '<div>' + MONTH_NAMES[m.month] + '</div>';
-        html += '<div class="r">' + fmtH(m.retainerHours) + '</div>';
-        html += '<div class="r" style="color:' + pctColor(pct) + '">' + pct + '%</div>';
-        html += '<div class="r">' + fmtH(m.sowHours) + '</div>';
-        html += '<div class="r b">' + fmtH(m.retainerHours + m.sowHours) + '</div>';
-      });
-      html += '<div class="tot b">Total</div>';
-      html += '<div class="tot r b" style="color:var(--retainer)">' + fmtH(retYTD) + '</div>';
-      html += '<div class="tot r"></div>';
-      html += '<div class="tot r b" style="color:var(--sow)">' + fmtH(sowYTD) + '</div>';
-      html += '<div class="tot r b">' + fmtH(retYTD + sowYTD) + '</div>';
-      html += '</div></div>';
-
-      var footExtra = data.unmatchedHours > 0
-        ? fmtH(data.unmatchedHours) + ' of time tracked for other clients is excluded from this report.<br>'
-        : '';
-      html += '<div class="foot">' + footExtra + 'Founding Creative · <a href="https://brand.foundingcreative.com">Brand System</a></div>';
-
-      content.innerHTML = html;
+      wireLegend();
+      wireSummaryTable();
       renderMonthTabs();
+      renderSortControls();
       renderMonthPanel();
-      drawChart(range);
+      drawChart();
+      tickClock();
     }
 
-    function card(k, v, s, accent) {
-      return '<div class="card' + (accent ? ' accent' : '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="s">' + s + '</div></div>';
+    /* ── Method note ────────────────────────────────────────────── */
+    function ledeHtml() {
+      return '<p class="lede">' + ICONS.info +
+        '<span>Every figure below is pulled live from our ClickUp time tracking — no manual entry, ' +
+        'no rounding in our favour. <b>Creative</b> is retainer work drawn against your ' +
+        BUDGET + ' hours per month; <b>Non-Creative</b> is separately scoped project work (SOW) ' +
+        'that sits outside the retainer. Line items link straight to the task they were logged against.</span></p>';
+    }
+
+    /* ── Year-to-date hero ──────────────────────────────────────── */
+    function heroHtml() {
+      var t = totals(), allow = allowance(), pct = pctOf(t.creative, allow);
+      var flags = flagsInRange(YEAR, state.range, 'creative');
+      var span = MONTH_ABBR[state.range[0].month] + '–' + MONTH_ABBR[state.range[state.range.length - 1].month];
+
+      var h = '<section class="sec"><div class="hero">';
+      h += '<div class="hero-top">';
+      h += '<div class="hero-total"><div class="eyebrow">Total hours delivered · ' + YEAR + '</div>' +
+           '<div class="v num">' + fmtH(t.total) + '</div></div>';
+      h += '<div class="hero-ctx"><strong>' + span + ' ' + YEAR + '</strong><br>' +
+           state.range.length + ' ' + (state.range.length === 1 ? 'month' : 'months') + ' tracked · ' +
+           BUDGET + 'h retainer per month</div>';
+      h += '</div>';
+
+      h += '<div class="split">';
+
+      // Creative — budgeted, so it gets the meter and a % used.
+      h += '<div class="srow">';
+      h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>' +
+           '<span>Creative<span class="sub">' + BUDGET + 'h/mo × ' + state.range.length + ' = ' + allow + 'h available</span></span></div>';
+      h += '<div><div class="stat"><span class="used num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + '</span>' +
+           '<span class="of num">/ ' + allow + 'h</span></div>' +
+           '<div class="meter thin" style="margin-top:10px" role="img" aria-label="' + pct + ' percent of available retainer hours used">' +
+           '<div class="fill" style="width:' + Math.min(100, pct) + '%;background:' + CATS[0].fillVar + '"></div></div></div>';
+      h += '<div class="r"><span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></div>';
+      h += '</div>';
+
+      // Non-Creative — no budget, so no meter and no invented denominator.
+      var shareOfTotal = t.total > 0 ? Math.round((t.nonCreative / t.total) * 100) : 0;
+      h += '<div class="srow">';
+      h += '<div class="srow-label"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>' +
+           '<span>Non-Creative<span class="sub">Scoped project work, outside the retainer</span></span></div>';
+      h += '<div><div class="stat"><span class="used num" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</span>' +
+           '<span class="of">delivered</span></div></div>';
+      h += '<div class="r"><span class="pct-chip neutral">' + shareOfTotal + '% of total</span></div>';
+      h += '</div>';
+
+      h += '</div>'; // .split
+
+      if (flags.length) h += calloutHtml(flags[0], true);
+      h += '</div></section>';
+      return h;
+    }
+
+    function calloutHtml(flag, inline) {
+      return '<div class="callout' + (inline ? ' inline' : '') + '">' + ICONS.alert +
+        '<span><strong>' + esc(flag.label) + ' · ' + monthSpanLabel(flag) + '</strong> — ' + esc(flag.detail) + '</span></div>';
+    }
+    // Compact one-liner used where the full callout would be a third repeat.
+    function flagNoteHtml(flag, text) {
+      return '<p class="flag-note">' + ICONS.alert + '<span><strong>' + esc(monthSpanLabel(flag)) +
+        '</strong> ' + esc(text) + '</span></p>';
+    }
+    function monthSpanLabel(flag) {
+      var ms = flag.months.slice().sort(function (a, b) { return a - b; });
+      var label = ms.length > 1 ? MONTH_ABBR[ms[0]] + '–' + MONTH_ABBR[ms[ms.length - 1]] : MONTH_ABBR[ms[0]];
+      return label + ' ' + flag.year + ' Creative';
+    }
+    function flagTagHtml(flag, compact) {
+      var title = flag.label + ': ' + flag.detail;
+      return '<span class="flag-tag' + (compact ? ' compact' : '') + '" title="' + esc(title) + '"' +
+        (compact ? ' role="img" aria-label="' + esc(title) + '"' : '') + '>' +
+        ICONS.alert + (compact ? '' : esc(flag.label)) + '</span>';
+    }
+
+    /* ── Monthly overview ───────────────────────────────────────── */
+    function overviewHtml() {
+      var t = totals();
+      var h = '<section class="sec"><div class="sec-head">' +
+        '<h2 class="sec-title">Monthly overview</h2>' +
+        '<span class="sec-note">Hover a series to isolate it · click to hide</span></div>';
+      h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
+        'aria-label="Grouped bar chart of Creative and Non-Creative hours by month"></canvas></div>';
+      h += '<div class="legend" id="legend">';
+      CATS.forEach(function (c, i) {
+        h += '<button class="legend-item" data-i="' + i + '" data-off="false" aria-pressed="true">' +
+          '<span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label +
+          '<span class="val">' + fmtH(t[c.hours]) + '</span></button>';
+      });
+      h += '</div>';
+
+      var flags = flagsInRange(YEAR, state.range, 'creative');
+      if (flags.length) {
+        h += flagNoteHtml(flags[0], 'is hatched and marked ▾ — these bars understate actual usage.');
+      }
+      h += '</section>';
+      return h;
+    }
+
+    /* ── Monthly summary table (high level, moved above detail) ─── */
+    function summaryHtml() {
+      var t = totals(), allow = allowance(), ytdPct = pctOf(t.creative, allow);
+
+      var h = '<section class="sec"><div class="sec-head">' +
+        '<h2 class="sec-title">Summary by month</h2>' +
+        '<span class="sec-note">Select a row to jump to its detail</span></div>';
+      h += '<div class="table-scroll"><table class="table"><thead><tr>' +
+        '<th>Month</th>' +
+        '<th class="r">Creative</th>' +
+        '<th class="r hide-sm">Used</th>' +
+        '<th class="r hide-sm"><span class="sr-only">Creative usage meter</span></th>' +
+        '<th class="r">Non-Creative</th>' +
+        '<th class="r">Total</th>' +
+        '</tr></thead><tbody>';
+
+      state.range.forEach(function (m) {
+        var pct = pctOf(m.creative, BUDGET);
+        var flag = flagFor(YEAR, m.month, 'creative');
+        h += '<tr data-m="' + m.month + '" aria-current="' + (m.month === state.selected) + '">';
+        h += '<td><span class="mo">' + MONTH_NAMES[m.month] + (flag ? flagTagHtml(flag, true) : '') + '</span></td>';
+        h += '<td class="r num"><span class="primary">' + fmtH(m.creative) + '</span> <span class="of">/ ' + BUDGET + 'h</span></td>';
+        h += '<td class="r num hide-sm" style="color:' + pctColor(pct) + ';font-weight:700">' + pct + '%</td>';
+        h += '<td class="hide-sm"><div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
+             '%;background:' + (pct > 100 ? 'var(--over)' : CATS[0].fillVar) + '"></div></div></td>';
+        h += '<td class="r num">' + fmtH(m.nonCreative) + '</td>';
+        h += '<td class="r num primary">' + fmtH(m.total) + '</td>';
+        h += '</tr>';
+      });
+
+      h += '</tbody><tfoot><tr>';
+      h += '<td>Year to date</td>';
+      h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + ' <span class="of">/ ' + allow + 'h</span></td>';
+      h += '<td class="r num hide-sm" style="color:' + pctColor(ytdPct) + '">' + ytdPct + '%</td>';
+      h += '<td class="hide-sm"></td>';
+      h += '<td class="r num" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</td>';
+      h += '<td class="r num">' + fmtH(t.total) + '</td>';
+      h += '</tr></tfoot></table></div>';
+
+      var flags = flagsInRange(YEAR, state.range, 'creative');
+      if (flags.length) h += flagNoteHtml(flags[0], 'is flagged ⚠ — those months are under-reported and will be restated.');
+
+      h += '</section>';
+      return h;
+    }
+
+    /* ── Month detail (lowest level) ────────────────────────────── */
+    function detailHtml() {
+      return '<section class="sec"><div class="sec-head">' +
+        '<h2 class="sec-title">Task detail by month</h2>' +
+        '<span class="sec-note">Every line links to its ClickUp task</span></div>' +
+        '<div class="pills scroll" id="monthTabs" role="tablist" aria-label="Select month" style="margin-bottom:16px"></div>' +
+        '<div class="panel-toolbar"><div id="sortControls"></div></div>' +
+        '<div class="panel" id="monthPanel" role="tabpanel"></div></section>';
     }
 
     function renderMonthTabs() {
       var el = document.getElementById('monthTabs');
       el.innerHTML = state.range.map(function (m) {
-        return '<button class="pill" role="tab" data-m="' + m.month + '" aria-selected="' + (m.month === state.selected) + '">' + MONTH_ABBR[m.month] + '</button>';
+        var flagged = !!flagFor(YEAR, m.month, 'creative');
+        return '<button class="pill" role="tab" data-m="' + m.month + '" aria-selected="' + (m.month === state.selected) + '">' +
+          MONTH_ABBR[m.month] + (flagged ? '<span class="flag-dot" title="Known data issue"></span>' : '') + '</button>';
       }).join('');
       el.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () { selectMonth(parseInt(b.dataset.m)); });
+      });
+    }
+
+    function renderSortControls() {
+      var opts = [
+        { k: 'hours-desc', label: 'Most hours', icon: ICONS.arrowDown },
+        { k: 'hours-asc', label: 'Fewest hours', icon: ICONS.arrowUp },
+        { k: 'name', label: 'Name', icon: ICONS.az }
+      ];
+      var el = document.getElementById('sortControls');
+      el.innerHTML = '<span class="seg-label">Sort</span><span class="seg">' + opts.map(function (o) {
+        return '<button data-k="' + o.k + '" aria-pressed="' + (state.sort === o.k) + '">' + o.icon + o.label + '</button>';
+      }).join('') + '</span>';
+      el.querySelectorAll('button').forEach(function (b) {
         b.addEventListener('click', function () {
-          state.selected = parseInt(b.dataset.m);
-          el.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-selected', x === b); });
+          state.sort = b.dataset.k;
+          renderSortControls();
           renderMonthPanel();
+        });
+      });
+    }
+
+    function selectMonth(monthIdx) {
+      state.selected = monthIdx;
+      document.querySelectorAll('#monthTabs button').forEach(function (x) {
+        x.setAttribute('aria-selected', parseInt(x.dataset.m) === monthIdx);
+      });
+      document.querySelectorAll('.table tbody tr').forEach(function (r) {
+        r.setAttribute('aria-current', parseInt(r.dataset.m) === monthIdx);
+      });
+      renderMonthPanel();
+    }
+
+    function wireSummaryTable() {
+      document.querySelectorAll('.table tbody tr').forEach(function (r) {
+        r.addEventListener('click', function () {
+          selectMonth(parseInt(r.dataset.m));
+          document.getElementById('monthTabs').scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
       });
     }
@@ -299,73 +876,337 @@
     function renderMonthPanel() {
       var m = state.months[state.selected];
       var panel = document.getElementById('monthPanel');
-      var html = '<div class="panel-head">';
-      html += '<span class="mname">' + MONTH_NAMES[m.month] + ' ' + YEAR + '</span>';
-      html += '<span class="mtotal">Total: <strong>' + fmtH(m.retainerHours + m.sowHours) + '</strong></span>';
-      html += '</div>';
 
-      var pct = Math.round((m.retainerHours / BUDGET) * 100);
-      var remaining = BUDGET - m.retainerHours;
-      html += '<div class="cat"><div class="cat-head">';
-      html += '<span class="cat-name green"><span class="swatch" style="background:' + RETAINER + '"></span>Creative retainer</span>';
-      html += '<span class="cat-meta" style="color:' + pctColor(pct) + '">' + fmtH(m.retainerHours) + ' used · ' + pct + '% of ' + BUDGET + 'h · ' +
-        (remaining >= 0 ? fmtH(remaining) + ' remaining' : fmtH(-remaining) + ' over') + '</span>';
-      html += '</div>';
-      html += taskRows(m.retainerItems, RETAINER) || '<p class="empty-note">No retainer time tracked this month.</p>';
-      html += '</div>';
+      var h = '<div class="panel-head">';
+      h += '<span class="mname">' + MONTH_NAMES[m.month] + ' ' + YEAR + '</span>';
+      h += '<span class="mtotal">Total <strong class="num">' + fmtH(m.total) + '</strong></span>';
+      h += '</div>';
 
-      html += '<div class="cat"><div class="cat-head">';
-      html += '<span class="cat-name purple"><span class="swatch" style="background:' + SOW + '"></span>Non-retainer (SOW / project work)</span>';
-      html += '<span class="cat-meta" style="color:var(--sow)">' + fmtH(m.sowHours) + ' total</span>';
-      html += '</div>';
-      html += taskRows(m.sowItems, SOW) || '<p class="empty-note">No SOW / project time tracked this month.</p>';
-      html += '</div>';
+      CATS.forEach(function (c) {
+        var hours = m[c.hours], items = m[c.items] || [];
+        var flag = flagFor(YEAR, m.month, c.key);
 
-      panel.innerHTML = html;
+        h += '<div class="cat">';
+        h += '<div class="cat-head">';
+        h += '<span class="srow-label"><span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>';
+
+        if (c.budgeted) {
+          var pct = pctOf(hours, BUDGET);
+          h += '<span class="stat" style="justify-content:flex-end">' +
+               '<span class="used num" style="font-size:20px;color:' + c.inkVar + '">' + fmtH(hours) + '</span>' +
+               '<span class="of num">/ ' + BUDGET + 'h</span>' +
+               '<span class="pct-chip ' + pctTone(pct) + '">' + pct + '% used</span></span>';
+          h += '<div class="meter thin"><div class="fill" style="width:' + Math.min(100, pct) +
+               '%;background:' + (pct > 100 ? 'var(--over)' : c.fillVar) + '"></div></div>';
+        } else {
+          h += '<span class="stat" style="justify-content:flex-end">' +
+               '<span class="used num" style="font-size:20px;color:' + c.inkVar + '">' + fmtH(hours) + '</span>' +
+               '<span class="of">delivered</span></span>';
+        }
+        h += '</div>';
+
+        if (flag) h += calloutHtml(flag, true);
+        h += taskRows(items, c) || '<p class="empty-note">No ' + c.label.toLowerCase() + ' time tracked this month.</p>';
+        h += '</div>';
+      });
+
+      panel.innerHTML = h;
     }
 
-    function taskRows(items, color) {
+    function taskRows(items, cat) {
       if (!items || !items.length) return '';
       var max = items.reduce(function (a, t) { return Math.max(a, t.hours); }, 0);
-      return items.map(function (t) {
+      return '<div style="margin-top:6px">' + sortItems(items).map(function (t) {
+        var w = max > 0 ? Math.round((t.hours / max) * 100) : 0;
+        var link = t.url
+          ? '<a class="link" href="' + esc(t.url) + '" target="_blank" rel="noopener" title="Open “' + esc(t.name) + '” in ClickUp" aria-label="Open ' + esc(t.name) + ' in ClickUp">' + ICONS.external + '</a>'
+          : '<span class="link placeholder" title="No ClickUp link available" aria-hidden="true">' + ICONS.external + '</span>';
         return '<div class="row">' +
           '<span class="name" title="' + esc(t.name) + '">' + esc(t.name) + '</span>' +
-          bar(t.hours, max, color) +
+          '<span class="track"><span class="fill" style="width:' + w + '%;background:' + cat.fillVar + '"></span></span>' +
           '<span class="hrs">' + fmtH(t.hours) + '</span>' +
+          link +
         '</div>';
-      }).join('');
+      }).join('') + '</div>';
     }
 
-    function drawChart(range) {
+    /* ═══════════════════════════════════════════════════════════════
+       Chart — grouped bars, hatched where data is flagged
+       ═══════════════════════════════════════════════════════════════ */
+    var patternCache = {};
+    function hatch(color) {
+      if (patternCache[color]) return patternCache[color];
+      var c = document.createElement('canvas');
+      c.width = c.height = 8;
+      var g = c.getContext('2d');
+      g.fillStyle = color; g.fillRect(0, 0, 8, 8);
+      g.strokeStyle = 'rgba(255,255,255,0.42)'; g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(-2, 10); g.lineTo(10, -2);
+      g.moveTo(2, 14); g.lineTo(14, 2);
+      g.moveTo(-6, 6); g.lineTo(6, -6);
+      g.stroke();
+      patternCache[color] = g.createPattern(c, 'repeat');
+      return patternCache[color];
+    }
+
+    // emphasis: index of the isolated series, or null for "show everything".
+    var emphasis = null;
+    var GHOST = 'rgba(255,255,255,0.06)';
+    var GHOST_LINE = 'rgba(255,255,255,0.14)';
+
+    function barColors(catIdx, which) {
+      var c = CATS[catIdx];
+      var ghosted = emphasis !== null && emphasis !== catIdx;
+      return state.range.map(function (m) {
+        if (ghosted) return which === 'fill' ? GHOST : GHOST_LINE;
+        var flagged = !!flagFor(YEAR, m.month, c.key);
+        if (which === 'fill') return flagged ? hatch(c.fill) : c.fill;
+        return c.ink;
+      });
+    }
+
+    function applyEmphasis(next) {
+      emphasis = next;
+      if (!chart) return;
+      chart.data.datasets.forEach(function (ds, i) {
+        ds.backgroundColor = barColors(i, 'fill');
+        ds.borderColor = barColors(i, 'line');
+      });
+      chart.update('none');
+    }
+
+    function wireLegend() {
+      document.querySelectorAll('#legend .legend-item').forEach(function (b) {
+        var i = parseInt(b.dataset.i);
+        b.addEventListener('mouseenter', function () { if (!state.hidden[i]) applyEmphasis(i); });
+        b.addEventListener('focus', function () { if (!state.hidden[i]) applyEmphasis(i); });
+        b.addEventListener('mouseleave', function () { applyEmphasis(null); });
+        b.addEventListener('blur', function () { applyEmphasis(null); });
+        b.addEventListener('click', function () {
+          state.hidden[i] = !state.hidden[i];
+          b.dataset.off = state.hidden[i] ? 'true' : 'false';
+          b.setAttribute('aria-pressed', String(!state.hidden[i]));
+          if (chart) { chart.setDatasetVisibility(i, !state.hidden[i]); chart.update(); }
+          applyEmphasis(null);
+        });
+      });
+    }
+
+    /* The chart is drawn to a canvas, so the print stylesheet can't reach its
+       axis text, gridlines or markers — re-theme it around the print events. */
+    var printing = false;
+    function chartTheme(isPrint) {
+      printing = isPrint;
+      if (!chart) return;
+      var s = chart.options.scales;
+      s.x.ticks.color = isPrint ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.62)';
+      s.y.ticks.color = isPrint ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)';
+      s.y.grid.color = isPrint ? 'rgba(0,0,0,0.13)' : 'rgba(255,255,255,0.07)';
+      chart.update('none');
+    }
+    window.addEventListener('beforeprint', function () { chartTheme(true); });
+    window.addEventListener('afterprint', function () { chartTheme(false); });
+
+    // Marks flagged bars with a small warning caret above the column.
+    var flagMarkers = {
+      id: 'flagMarkers',
+      afterDatasetsDraw: function (c) {
+        var g = c.ctx;
+        c.data.datasets.forEach(function (ds, di) {
+          if (!c.isDatasetVisible(di)) return;
+          if (emphasis !== null && emphasis !== di) return;
+          var meta = c.getDatasetMeta(di);
+          meta.data.forEach(function (bar, bi) {
+            var m = state.range[bi];
+            if (!m || !flagFor(YEAR, m.month, CATS[di].key)) return;
+            var x = bar.x, y = bar.y - 9;
+            g.save();
+            g.fillStyle = printing ? '#9A6512' : '#F5C26B';
+            g.beginPath();
+            g.moveTo(x, y + 6); g.lineTo(x - 4.5, y - 1.5); g.lineTo(x + 4.5, y - 1.5);
+            g.closePath(); g.fill();
+            g.restore();
+          });
+        });
+      }
+    };
+
+    function drawChart() {
       var el = document.getElementById('overviewChart');
       if (!el || typeof Chart === 'undefined') return;
+      emphasis = null;
+
       chart = new Chart(el, {
         type: 'bar',
+        plugins: [flagMarkers],
         data: {
-          labels: range.map(function (m) { return MONTH_ABBR[m.month]; }),
-          datasets: [
-            { label: 'Creative retainer', data: range.map(function (m) { return m.retainerHours; }),
-              backgroundColor: RETAINER + 'd9', borderColor: RETAINER, borderWidth: 1, borderRadius: 4 },
-            { label: 'Non-retainer (SOW)', data: range.map(function (m) { return m.sowHours; }),
-              backgroundColor: SOW + 'd9', borderColor: SOW, borderWidth: 1, borderRadius: 4 }
-          ]
+          labels: state.range.map(function (m) { return MONTH_ABBR[m.month]; }),
+          datasets: CATS.map(function (c, i) {
+            return {
+              label: c.label,
+              data: state.range.map(function (m) { return m[c.hours]; }),
+              backgroundColor: barColors(i, 'fill'),
+              borderColor: barColors(i, 'line'),
+              borderWidth: 1.5,
+              borderRadius: 4,
+              borderSkipped: 'bottom',
+              hidden: !!state.hidden[i],
+              categoryPercentage: 0.66,
+              barPercentage: 0.86
+            };
+          })
         },
         options: {
-          responsive: true, maintainAspectRatio: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 14 } },
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtH(c.parsed.y); } } }
+            tooltip: {
+              backgroundColor: 'rgba(12,12,12,0.96)',
+              borderColor: 'rgba(255,255,255,0.14)',
+              borderWidth: 1,
+              padding: 12,
+              titleFont: { size: 13, weight: '700' },
+              bodyFont: { size: 13 },
+              footerFont: { size: 12, weight: '500' },
+              footerColor: '#F5C26B',
+              displayColors: true,
+              boxWidth: 9, boxHeight: 9, boxPadding: 5, usePointStyle: false,
+              callbacks: {
+                title: function (items) {
+                  var m = state.range[items[0].dataIndex];
+                  return MONTH_NAMES[m.month] + ' ' + YEAR;
+                },
+                label: function (c) {
+                  var cat = CATS[c.datasetIndex];
+                  var txt = ' ' + cat.label + ': ' + fmtH(c.parsed.y);
+                  if (cat.budgeted) txt += '  ·  ' + pctOf(c.parsed.y, BUDGET) + '% of ' + BUDGET + 'h';
+                  return txt;
+                },
+                footer: function (items) {
+                  var notes = [];
+                  items.forEach(function (it) {
+                    var m = state.range[it.dataIndex];
+                    var f = flagFor(YEAR, m.month, CATS[it.datasetIndex].key);
+                    if (f && notes.indexOf(f.label) === -1) notes.push(f.label);
+                  });
+                  return notes.length ? '⚠ ' + notes.join(', ') + ' — see note below' : '';
+                }
+              }
+            }
           },
           scales: {
-            x: { ticks: { autoSkip: false, maxRotation: 0, font: { size: 13 }, color: 'rgba(255,255,255,0.62)' }, grid: { display: false }, border: { display: false } },
-            y: { ticks: { font: { size: 13 }, color: 'rgba(255,255,255,0.62)', callback: function (v) { return v + 'h'; } },
-                 grid: { color: 'rgba(255,255,255,0.09)' }, border: { display: false }, beginAtZero: true }
+            x: {
+              ticks: { autoSkip: false, maxRotation: 0, font: { size: 13 }, color: 'rgba(255,255,255,0.62)' },
+              grid: { display: false }, border: { display: false }
+            },
+            y: {
+              ticks: { font: { size: 12.5 }, color: 'rgba(255,255,255,0.55)', callback: function (v) { return v + 'h'; }, padding: 6 },
+              grid: { color: 'rgba(255,255,255,0.07)' },
+              border: { display: false },
+              beginAtZero: true, grace: '10%'
+            }
           }
         }
       });
     }
 
+    /* ═══════════════════════════════════════════════════════════════
+       Export
+       ═══════════════════════════════════════════════════════════════ */
+    function csvCell(v) {
+      var s = String(v == null ? '' : v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+    function download(filename, rows) {
+      var csv = rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n');
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+    function stampSuffix() {
+      var d = state.generatedAt || new Date();
+      return d.toISOString().slice(0, 10);
+    }
+
+    function exportSummary() {
+      var t = totals(), allow = allowance();
+      var rows = [['Month', 'Creative hours', 'Retainer budget (h)', 'Creative % used', 'Non-Creative hours', 'Total hours', 'Data note']];
+      state.range.forEach(function (m) {
+        var f = flagFor(YEAR, m.month, 'creative');
+        rows.push([MONTH_NAMES[m.month] + ' ' + YEAR, m.creative.toFixed(2), BUDGET,
+                   pctOf(m.creative, BUDGET) + '%', m.nonCreative.toFixed(2), m.total.toFixed(2),
+                   f ? f.label + ': ' + f.detail : '']);
+      });
+      rows.push([]);
+      rows.push(['Year to date', t.creative.toFixed(2), allow, pctOf(t.creative, allow) + '%',
+                 t.nonCreative.toFixed(2), t.total.toFixed(2), '']);
+      rows.push([]);
+      rows.push(['Generated', (state.generatedAt || new Date()).toISOString(), 'Source', 'ClickUp time tracking']);
+      download('moss-hours-' + YEAR + '-summary-' + stampSuffix() + '.csv', rows);
+    }
+
+    function exportLineItems() {
+      var rows = [['Month', 'Category', 'Task', 'Hours', 'ClickUp link', 'Data note']];
+      state.range.forEach(function (m) {
+        CATS.forEach(function (c) {
+          var f = flagFor(YEAR, m.month, c.key);
+          sortItems(m[c.items] || []).forEach(function (t) {
+            rows.push([MONTH_NAMES[m.month] + ' ' + YEAR, c.label, t.name, t.hours.toFixed(2),
+                       t.url || '', f ? f.label : '']);
+          });
+        });
+      });
+      rows.push([]);
+      rows.push(['Generated', (state.generatedAt || new Date()).toISOString(), 'Source', 'ClickUp time tracking']);
+      download('moss-hours-' + YEAR + '-line-items-' + stampSuffix() + '.csv', rows);
+    }
+
+    function wireChrome() {
+      document.getElementById('refreshBtn').innerHTML = ICONS.refresh;
+      document.getElementById('refreshBtn').addEventListener('click', function () { load(true); });
+
+      var menu = document.getElementById('exportMenu');
+      var btn = document.getElementById('exportBtn');
+      btn.innerHTML = ICONS.download + 'Export';
+      menu.innerHTML =
+        '<div class="menu-label">Download</div>' +
+        '<button data-a="summary">' + ICONS.download + 'Monthly summary (CSV)</button>' +
+        '<button data-a="items">' + ICONS.download + 'Task line items (CSV)</button>' +
+        '<div class="menu-label">Share</div>' +
+        '<button data-a="print">' + ICONS.printer + 'Print / Save as PDF</button>';
+
+      function close() { menu.dataset.open = 'false'; btn.setAttribute('aria-expanded', 'false'); }
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = menu.dataset.open !== 'true';
+        menu.dataset.open = String(open);
+        btn.setAttribute('aria-expanded', String(open));
+      });
+      menu.addEventListener('click', function (e) {
+        var b = e.target.closest('button');
+        if (!b) return;
+        if (b.dataset.a === 'summary') exportSummary();
+        else if (b.dataset.a === 'items') exportLineItems();
+        else if (b.dataset.a === 'print') window.print();
+        close();
+      });
+      document.addEventListener('click', close);
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       Boot
+       ═══════════════════════════════════════════════════════════════ */
+    wireChrome();
     renderYears();
+    tickClock();
+    setInterval(tickClock, 1000);
     load();
   </script>
 </body>
