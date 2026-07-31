@@ -16,29 +16,61 @@ A tiny Vercel project that surfaces Moss client hours from ClickUp:
 
 Laid out high level → low level:
 
-1. **Masthead**: the Founding Creative wordmark, a live clock, the data's
-   last-updated time and a manual refresh button. The clock is set in the
-   platform monospace face, because Manrope ships no tabular-figure feature and
-   a proportional seconds field twitched the whole bar once a second.
-2. **Title**: the client wordmark set on the report title's own baseline, so it
-   reads as "Moss Hours Report", plus the year selector and the export link.
-   Export sits here rather than in the masthead so it reads as "this report, as
-   it stands", which is what it does. Only the agency mark is chrome, which
-   makes the template reusable for any retainer client.
+1. **Masthead**: the Founding Creative wordmark, on its own. Only the agency
+   mark is chrome here, which is what makes the template reusable for another
+   retainer client.
+2. **Title**: the client wordmark, then the report title, then the range and the
+   export link. The mark sits in a container of its own, centred on its **cap
+   band** rather than on its bounding box: measured from Moss's artwork, the caps
+   run 1.15 to 138.2 inside a 245.976 artboard while the spear descends to
+   160.45, leaving 35% of the box empty below the mark, so centring the box
+   floats the letters high. The shift is 21.7% of the rendered height. Doing it
+   with a container rather than a per-logo baseline nudge is what survives
+   swapping in a different client's artwork.
 3. **Year to date**: total hours delivered, the range beneath it, a rotating
-   comparison line in a labelled second column beside it (the two columns share
-   a top rail and are divided by a hairline, which turns horizontal when they
-   stack under 900px), and underneath, the two categories named and explained.
-   That is the one place the retainer terms are stated.
+   comparison line in a labelled second column beside it, and underneath, the
+   two categories named and explained. That is the one place the retainer terms
+   are stated. The comparison line has arrows to step it by hand; interacting
+   with the panel holds the auto-advance and lets go on the way out.
 4. **Monthly overview**: the chart and the table under one heading, because they
-   are the same year drawn and then written out. A grouped bar chart with a
-   dashed total-hours line over it and the legend floating in the plot's
-   top-right corner; hovering a legend entry ghosts every other series, clicking
-   hides it. Then a per-month table (hours plus that month's *% used*, each
-   figure in its series colour), where each row expands in place into that
-   month's task detail: the two categories side by side on desktop, each one
-   task per row with a permalink out to ClickUp, plus the people who worked
-   the month.
+   are the same year drawn and then written out.
+
+   The chart shows the **whole year**, with the months that have not happened yet
+   projected (see below). The legend floats in the plot's top-right corner above
+   700px and returns to the flow above the chart below that, where the plot
+   rotates and every month owns a full row. Hovering a legend entry ghosts every
+   other series; clicking hides it. The `Total` entry is a key, not a control.
+
+   Then a per-month table, deliberately plain: no rules between rows, no tinted
+   columns, no selected surface. Hierarchy is weight, colour, and one rule above
+   the totals. Every row expands in place into that month's task detail, with the
+   two categories side by side above 860px, one task per row with a permalink out
+   to ClickUp, and the people who worked the month. Nothing opens on arrival.
+
+### Chart and table are linked
+
+Pointing at a month in either dims every other month in **both**. Clicking a bar
+opens that month's row in the table and closes whichever was open. The two are
+views of one set of months, so they behave like it.
+
+### Projections
+
+The chart runs to December. Months after the last tracked one are estimated:
+
+- The basis is the mean of the **completed** months that carry time. The month in
+  progress is excluded, since it is still filling up and would drag the mean down.
+- Where the previous year is available, each future month is then shaped by how
+  that month compared with its own year's mean, which is what carries a seasonal
+  pattern like a quiet August. The factor is clamped to 0.45–1.8, so one freak
+  month last year cannot throw a forecast beyond anything ever observed.
+- The previous year is fetched lazily, and the chart redraws if it arrives.
+
+An estimate must never read as delivered hours in a client-facing report, so the
+projected stretch sits on its own textured ground behind a hairline boundary, its
+bars are hollow, its end labels and the total line ghost across it, and none of
+it is counted in the legend's totals. The key under the chart names the texture
+and states the basis, and is **built from the payload on every render**: in
+August it reads "Sep–Dec are projected" off the new data with no edit.
 
 ### Categories
 
@@ -50,6 +82,13 @@ The report uses two terms throughout, mapped from the ClickUp folder structure:
 | **Non-Creative** | Separately scoped project work (SOW), outside the retainer |
 
 Percentages are always *used*, never *unused* or *remaining*.
+
+**Colour is reserved.** Mint means Creative and lavender means Other, everywhere,
+so neither can be used for interface state: an affordance wearing a series colour
+reads as data. The action colour is the brand cyan, and it carries every
+interactive element (year selector, links, focus rings, the open-row marker).
+Selected surfaces use a cool grey ramp. Yellow is reserved for data integrity and
+is never used for utilisation.
 
 ### Retainer allowance and pace
 
@@ -69,8 +108,13 @@ against 50h.
 
 `api/time.js` sends `Cache-Control: no-store` and the report cache-busts every
 request, so each page load (and each press of the refresh button) is a real
-round trip to ClickUp. The masthead shows the current date and time alongside
-`generatedAt` from the API response, so the data's age is always visible.
+round trip to ClickUp. The **footer** carries the current date and time
+alongside `generatedAt` from the API response, plus the refresh control. It is a
+note on how fresh the data is, which is a closing remark rather than the first
+thing on the page. The readout is set in the platform monospace face: Manrope
+ships no tabular-figure feature (measured, its digits run 7.47px to 8.00px
+wide), so a proportional ticking seconds field twitched the whole line once a
+second.
 
 ### Export
 
@@ -97,11 +141,19 @@ var DATA_FLAGS = [
 ];
 ```
 
-One entry drives every surface at once: a hatched fill and a warning marker on
-the chart, a note in that bar's tooltip, a labelled tag at the top of the
+One entry drives every surface at once: a hatched fill on the chart, a note in
+that bar's tooltip, a labelled tag beside the **Creative** heading in the
 affected month's expanded detail, and a `Data note` column in both CSV exports.
-The closed table row carries no mark of its own: the flag is stated in full one
-click away, and the chart already shows it at a glance.
+The tag opens a modal lined with the same diagonal, so one visual language runs
+from the chart through to the note explaining it. The closed table row carries no
+mark of its own: the chart shows it at a glance and the detail states it in full.
+
+The flag sits with the series it applies to rather than with the month, since
+under-reporting never applied to the non-Creative side.
+
+Everywhere the diagonal appears outside the canvas it is drawn at `-45deg`: the
+canvas hatch runs bottom-left to top-right, and CSS at `45deg` lays its bands the
+other way, which silently mirrors it.
 
 **Delete the entry once the underlying data is repaired.** Nothing else needs
 to change.
@@ -213,7 +265,9 @@ while dropping them from the current year's contributors.
 Images live at `team/roster/<slug>.webp` (160px source) and
 `team/stack/<slug>.webp` (48px head crop). The report renders only the stack
 crop, in the avatar row inside each month's expanded detail, where the name and
-job title are the tooltip. Never use a roster image there: it is four times the
+job title appear in a rendered tooltip below the face. The browser's own `title`
+attribute is deliberately not used: it waits about a second, styles itself, and
+never fires on touch. Never use a roster image there: it is four times the
 weight and the face is unreadable at that size. The API still returns both, so
 a future surface can use the larger one.
 

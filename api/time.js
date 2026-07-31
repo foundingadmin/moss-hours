@@ -31,15 +31,22 @@ const DENVER = new Intl.DateTimeFormat('en-CA', {
   timeZone: TIMEZONE,
   year: 'numeric',
   month: '2-digit',
+  day: '2-digit',
 });
 
 // Built from a parts map rather than formatToParts array order, which is not
-// guaranteed across engines.
+// guaranteed across engines. The day is carried as well as the month: it is
+// what lets the report show where inside a month the work actually landed.
 function denverYM(ms) {
   const p = Object.fromEntries(
     DENVER.formatToParts(new Date(ms)).map((x) => [x.type, x.value])
   );
-  return { year: +p.year, month: +p.month - 1 };
+  return { year: +p.year, month: +p.month - 1, day: +p.day };
+}
+
+// Days in a month, so a day series is exactly as long as its month.
+function daysInMonth(year, month) {
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 }
 
 async function clickup(path) {
@@ -168,10 +175,14 @@ export default async function handler(req, res) {
     // (retainer) and Non-Creative (SOW) categories. Keyed on ClickUp task id:
     // this workspace has several distinct tasks sharing a name, which keying on
     // name silently merged, and a rename split one task's history in two.
-    const months = Array.from({ length: 12 }, () => ({
+    const months = Array.from({ length: 12 }, (_, m) => ({
       retainerTasks: new Map(),
       sowTasks: new Map(),
       contributors: new Set(),
+      // Per-day totals, indexed by day-of-month minus one. Entries are placed
+      // by their start day in Denver, the same rule the month buckets use.
+      retainerDaily: new Array(daysInMonth(year, m)).fill(0),
+      sowDaily: new Array(daysInMonth(year, m)).fill(0),
     }));
     const contributingIds = new Set();
     let unmatchedEntries = 0;
@@ -192,16 +203,20 @@ export default async function handler(req, res) {
         continue;
       }
 
-      const { year: entryYear, month } = denverYM(startTs);
+      const { year: entryYear, month, day } = denverYM(startTs);
       if (entryYear !== year) continue;
 
       const hours = durationMs / 3600000;
       const fid = folderIdOf(entry);
 
-      let bucket;
-      if (FOLDER_IDS.retainer.includes(fid)) bucket = months[month].retainerTasks;
-      else if (FOLDER_IDS.sow.includes(fid)) bucket = months[month].sowTasks;
-      else {
+      let bucket, daily;
+      if (FOLDER_IDS.retainer.includes(fid)) {
+        bucket = months[month].retainerTasks;
+        daily = months[month].retainerDaily;
+      } else if (FOLDER_IDS.sow.includes(fid)) {
+        bucket = months[month].sowTasks;
+        daily = months[month].sowDaily;
+      } else {
         unmatchedEntries += 1;
         unmatchedHours += hours;
         continue;
@@ -217,6 +232,8 @@ export default async function handler(req, res) {
         months[month].contributors.add(userId);
         contributingIds.add(userId);
       }
+
+      if (daily && day >= 1 && day <= daily.length) daily[day - 1] += hours;
 
       const taskId = entry?.task?.id ? String(entry.task.id) : null;
       const key = taskId || NO_TASK_KEY;
@@ -312,6 +329,10 @@ export default async function handler(req, res) {
         // Ids only. The frontend resolves them through the roster and collapses
         // every unrostered id onto one studio avatar.
         contributorIds: [...mo.contributors].sort(),
+        // One entry per day of the month. Rounded like every other figure, so
+        // the day series sums to within a rounding step of the month's total.
+        retainerDaily: mo.retainerDaily.map(round),
+        sowDaily: mo.sowDaily.map(round),
       };
     });
 

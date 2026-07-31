@@ -39,6 +39,17 @@
       --warn-surface-2: rgba(245, 194, 107, 0.16);
       --warn-line: rgba(245, 194, 107, 0.38);
 
+      /* Action colour. Deliberately neither series: mint is Creative and
+         lavender is Other, so an affordance wearing either reads as data. */
+      --action: var(--holo-cyan);
+      --action-soft: rgba(105, 238, 255, 0.16);
+
+      /* Cool grey ramp for selected surfaces. Neutral enough to sit under any
+         series colour, with just enough blue in it to feel of a piece with the
+         action colour rather than muddy. */
+      --sel-row: rgba(214, 228, 242, 0.085);
+      --sel-body: rgba(214, 228, 242, 0.05);
+
       --surface: rgba(255, 255, 255, 0.05);
       --surface-2: rgba(255, 255, 255, 0.10);
       --line: rgba(255, 255, 255, 0.14);
@@ -87,13 +98,14 @@
 
     @media (max-width: 560px) { .page { padding: 0 18px 64px; } }
 
-    /* ── Masthead: agency × client lockup + live status bar ─────── */
+    /* ── Masthead ────────────────────────────────────────────────── */
+    /* Just the agency mark now. The live clock and the refresh control moved to
+       the footer: they are a note on how fresh the data is, which is a closing
+       remark, not the first thing on the page. */
     .masthead {
       position: sticky; top: 0; z-index: 20;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 20px; flex-wrap: wrap;
-      padding: 16px 0 24px; margin-bottom: 34px;
-      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center;
+      padding: 18px 0 20px; margin-bottom: 30px;
       background: rgba(0, 0, 0, 0.72);
       backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     }
@@ -101,10 +113,12 @@
        title instead, where it reads as the subject of the page rather than as
        half of a co-branded lockup, which also makes this template reusable for
        any retainer client without re-balancing two wordmarks. */
-    .lockup { --fc-h: 22px; display: flex; align-items: center; height: var(--fc-h); }
+    .lockup { --fc-h: 30px; display: flex; align-items: center; height: var(--fc-h); }
     .lockup img { display: block; width: auto; height: var(--fc-h); }
 
-    .status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    /* Locked square: the icon is centred rather than the box sized by padding. */
+    #refreshBtn { width: 42px; height: 42px; padding: 0; border-radius: var(--r-md); }
+    #refreshBtn svg { width: 18px; height: 18px; }
     /* A ticking seconds field in Manrope twitched the whole masthead once a
        second: measured, its digits run 7.47px to 8.00px wide, and it ships no
        tnum feature to even them out. So the readout is set in the platform's
@@ -113,7 +127,7 @@
     .clock {
       display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
       font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-      font-size: 12px; line-height: 1.35; text-align: right; letter-spacing: -0.01em;
+      font-size: 12px; line-height: 1.4; text-align: right; letter-spacing: -0.01em;
     }
     .clock .now { color: var(--white); font-weight: 600; }
     .clock .now .live-dot {
@@ -128,28 +142,9 @@
     }
     .clock .fetched { color: var(--dim-2); }
 
-    /* On a phone the masthead is the single most expensive element on the page:
-       it is sticky, and at three wrapped rows it was covering the top of
-       whatever the reader had just scrolled to. Below 700px it becomes an
-       explicit two-row grid, the clock collapses to one compact line (the
-       string itself is shortened in tickClock), and the lockup steps down. */
     @media (max-width: 700px) {
-      .masthead {
-        display: grid; grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas: "lockup refresh" "clock clock";
-        align-items: center; gap: 7px 10px;
-        padding: 11px 0 12px; margin-bottom: 26px;
-      }
-      .masthead > .lockup { grid-area: lockup; }
-      .masthead > .status { display: contents; }
-      .status > .clock { grid-area: clock; }
-      .status > #refreshBtn { grid-area: refresh; }
-      .lockup { --fc-h: 19px; }
-      .clock {
-        flex-direction: row; align-items: baseline; flex-wrap: wrap;
-        gap: 0 7px; font-size: 11.5px; text-align: left;
-      }
-      .clock .fetched::before { content: "·"; margin-right: 7px; }
+      .masthead { padding: 12px 0 14px; margin-bottom: 24px; }
+      .lockup { --fc-h: 24px; }
       .btn { font-size: 14px; padding: 8px 11px; }
     }
 
@@ -161,7 +156,7 @@
       padding: 8px 12px; cursor: pointer; transition: all .14s ease; white-space: nowrap;
     }
     .btn:hover { color: var(--white); background: var(--surface-2); border-color: rgba(255,255,255,0.22); }
-    .btn:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+    .btn:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
     .btn svg { width: 15px; height: 15px; flex: none; }
     .btn.icon-only { padding: 8px; }
     .btn[aria-busy="true"] svg { animation: spin .9s linear infinite; }
@@ -188,22 +183,44 @@
 
     /* ── Title row + pill selectors ─────────────────────────────── */
     .title-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
-    /* The client mark reads as the first word of the title, so it is set on the
-       title's own baseline. Moss's spear descends well below its artboard's
-       cap line, so the mark is dropped by the measured share of its height to
-       put the two baselines on one line. */
+    /* Baseline-matching a wordmark to a text baseline only ever half-works:
+       every client's artwork sits differently inside its own artboard, so the
+       fix does not survive swapping the logo. Instead the mark gets a container
+       of its own, centred inside a box that is the full height of the title
+       stack beside it. The box does the alignment, not the artwork. */
+    .title-id { display: flex; align-items: stretch; gap: 22px; min-width: 0; }
+    .client-slot {
+      display: flex; align-items: center; justify-content: center; flex: none;
+      padding-right: 22px; border-right: 1px solid var(--line);
+    }
+    /* Measured from the artwork: the caps run 1.15 to 138.2 inside a 245.976
+       artboard and the spear descends to 160.45, leaving 35% of the box empty
+       below the mark. Centring the box therefore floats the visible letters
+       high. The shift is the gap between the artboard's centre (123.0) and the
+       cap band's centre (69.7), which is 21.7% of the rendered height, so the
+       caps sit on the container's centre line instead of the box. */
+    .client-slot .client-mark {
+      display: block; width: auto; height: 38px; max-width: 190px;
+      transform: translateY(21.7%);
+    }
     .report-title {
-      display: flex; align-items: baseline; gap: 15px;
       font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 600;
       letter-spacing: -0.01em; line-height: 1.05;
     }
-    .report-title .client-mark { height: 0.78em; width: auto; margin-bottom: -0.222em; flex: none; }
     .report-range { font-size: 15px; color: var(--dim); margin-top: 7px; }
 
-    /* Export lives beside the title, not in the masthead: from here it reads as
-       "export this report", which is what it does, rather than as a global
-       action that would follow you around the app. */
+
+    @media (max-width: 560px) {
+      .title-id { gap: 16px; }
+      .client-slot { padding-right: 16px; }
+      .client-slot .client-mark { height: 30px; max-width: 130px; }
+    }
+
+    /* Export sits in the heading of the section it exports, not in the masthead:
+       from there it reads as "export this report", which is what it does,
+       rather than as a global action that would follow you around the app. */
     .title-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+    .sec-head .menu-wrap { margin-left: auto; }
     .export-link {
       display: inline-flex; align-items: center; gap: 7px;
       font-family: var(--font-body); font-size: 14.5px; font-weight: 600; color: var(--dim);
@@ -213,7 +230,7 @@
       transition: color .14s ease, text-decoration-color .14s ease;
     }
     .export-link:hover { color: var(--white); text-decoration-color: var(--white); }
-    .export-link:focus-visible { outline: 2px solid var(--holo-cyan); outline-offset: 3px; border-radius: 2px; }
+    .export-link:focus-visible { outline: 2px solid var(--action); outline-offset: 3px; border-radius: 2px; }
     .export-link svg { width: 14px; height: 14px; flex: none; }
     @media (max-width: 560px) {
       .title-row { margin-bottom: 24px; }
@@ -228,7 +245,7 @@
       transition: all .14s ease; white-space: nowrap;
     }
     .pill:hover { color: var(--white); }
-    .pill[aria-pressed="true"], .pill[aria-selected="true"] { background: var(--mint); color: var(--n-black); }
+    .pill[aria-pressed="true"], .pill[aria-selected="true"] { background: var(--action); color: var(--n-black); }
 
     /* ── Section scaffolding ────────────────────────────────────────
        Each section is a dense visual in its own right, so the gap between them
@@ -260,9 +277,10 @@
     }
     .hero-total { min-width: 0; }
     .hero-total .eyebrow, .funfact .eyebrow { margin-bottom: 9px; }
-    .hero-total .v {
-      font-family: var(--font-display); font-size: clamp(44px, 7.5vw, 66px); font-weight: 600;
-      line-height: 1; letter-spacing: -0.015em;
+    /* The report's one piece of ornament, shared by the headline total and by
+       the figure inside each comparison, so the two read as the same kind of
+       number rather than as two unrelated highlights. */
+    .grad {
       background: linear-gradient(100deg, #FFFFFF 0%, var(--mint) 26%, var(--holo-cyan) 45%,
                                   var(--holo-lavender) 64%, #FFFFFF 88%, var(--mint) 100%);
       background-size: 260% 100%;
@@ -270,34 +288,55 @@
       -webkit-text-fill-color: transparent; color: transparent;
       animation: sheen 14s linear infinite;
     }
+    .hero-total .v {
+      font-family: var(--font-display); font-size: clamp(44px, 7.5vw, 66px); font-weight: 600;
+      line-height: 1; letter-spacing: -0.015em;
+    }
     @keyframes sheen { to { background-position: -260% 0; } }
 
-    /* Rotating comparison line. One idea at a time, cross-faded, set large
-       enough to be read on the way past, which is the only way it ever gets
-       read. Separated by the same hairline the card uses under this row. The
-       block is anchored at its top: it rewrites itself every few seconds, and
-       anchoring the bottom would shuffle the column on every change. */
+    /* Rotating comparison line, separated by the same hairline the card uses
+       under this row.
+
+       Every fact is in the DOM at once, stacked in one grid cell with only one
+       shown, so the block is always as tall as the longest fact it could show
+       and rotating cannot move anything under it. That replaced a reserved
+       height that had to be re-measured per breakpoint whenever the copy or the
+       type size changed. */
     .funfact {
       border-left: 1px solid var(--line); padding-left: 38px;
-      font-size: 19px; line-height: 1.5; color: var(--dim);
+      line-height: 1.45; color: var(--dim);
     }
-    .funfact .ff-body {
-      display: flex; align-items: flex-start; gap: 11px;
-      min-height: 3em; max-width: 46ch;
+    .funfact { position: relative; }
+    .funfact .ff-body { display: flex; align-items: flex-start; }
+    /* Bottom right of the panel, quiet until wanted. */
+    .ff-nav {
+      display: flex; justify-content: flex-end; gap: 6px; margin-top: 14px;
+      opacity: .5; transition: opacity .16s ease;
     }
-    .funfact .ff-icon { color: var(--mint); opacity: .8; flex: none; display: block; margin-top: 5px; }
-    .funfact .ff-icon svg { width: 19px; height: 19px; display: block; }
-    .funfact .ff-text {
-      opacity: 1; transform: translateY(0);
-      transition: opacity .6s ease, transform .6s ease;
-      text-wrap: pretty;
+    .funfact:hover .ff-nav, .ff-nav:focus-within { opacity: 1; }
+    .ff-stack { display: grid; min-width: 0; }
+    .ff-line {
+      grid-area: 1 / 1; text-wrap: pretty;
+      opacity: 0; visibility: hidden; transform: translateY(4px);
+      transition: opacity .55s ease, transform .55s ease;
     }
-    .funfact .ff-text[data-out="true"] { opacity: 0; transform: translateY(-5px); }
-    .funfact b { color: var(--ink-strong); font-weight: 600; }
+    .ff-line[data-on="true"] { opacity: 1; visibility: visible; transform: none; }
+    /* The figure and the subject: the only two things emphasised, and they are
+       emphasised differently on purpose. The figure runs the same gradient as
+       the headline total but cycles it faster, because at a fifth of the size
+       the sheen has a fifth of the distance to travel and at the headline's
+       pace it reads as a static wash. */
+    .ff-n { font-weight: 700; animation-duration: 5.5s; }
+    .ff-s { color: var(--white); font-weight: 700; }
+
+    /* No icon: the eyebrow already says what this column is, and at this size
+       the line is the loudest thing in the card on its own. */
+    .funfact { font-size: 27px; }
+
 
     @media (prefers-reduced-motion: reduce) {
-      .hero-total .v { animation: none; }
-      .funfact .ff-text { transition: none; }
+      .grad { animation: none; }
+      .ff-line { transition: none; }
       .live-dot { animation: none !important; }
     }
     .hero-ctx { font-size: 15.5px; color: var(--dim); line-height: 1.6; margin-top: 12px; }
@@ -308,16 +347,8 @@
     @media (max-width: 900px) {
       .hero-top { grid-template-columns: minmax(0, 1fr); gap: 20px; }
       .funfact { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 20px; }
-      .funfact .ff-body { max-width: none; }
+      .funfact .ff-body { max-width: 46ch; }
     }
-    /* The reserved height only carries weight once the columns stack: there the
-       fact sits directly above the team divider, so a shorter one would pull the
-       whole block up every few seconds. Beside the headline figure the row is
-       taller than the fact either way. Each step is the measured worst case for
-       its band, so re-check these if the fact list grows. */
-    @media (max-width: 640px) { .funfact .ff-body { min-height: 3.1em; } }
-    @media (max-width: 464px) { .funfact .ff-body { min-height: 4.5em; } }
-    @media (max-width: 375px) { .funfact .ff-body { min-height: 6em; } }
 
     .split { border-top: 1px solid var(--line); padding-top: 22px; }
     /* Top-aligned, not centre-aligned: the label often runs to a second line on
@@ -333,9 +364,13 @@
        retainer terms once, in the place the reader meets the two colours. Kept
        deliberately light: the figures themselves are charted below, and a full
        roster of tiles here never filled its row on a small team. */
-    .defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 36px; }
-    .def { display: flex; gap: 12px; align-items: flex-start; }
-    .def > .swatch { margin-top: 7px; }
+    /* Each definition is sized to its own text rather than to the taller of the
+       two, so its colour bar measures that definition and not the row. */
+    .defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 36px; align-items: start; }
+    .def { display: flex; gap: 14px; align-items: stretch; }
+    /* The swatch runs the full height of the text beside it: at this size the
+       colour is the label, so it is given enough of itself to read as one. */
+    .def > .swatch { align-self: stretch; height: auto; border-radius: var(--r-full); }
     .def-body { min-width: 0; }
     .def-name {
       display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
@@ -365,24 +400,58 @@
        used to carry a hairline ring outside it as well, because the studio mark
        is mostly black and read as a hole in the row; that mark no longer
        appears here, and the second edge read as a stray white stroke. */
-    .stack img, .stack .av-more {
-      width: 48px; height: 48px; border-radius: var(--r-md);
+    .stack { overflow: visible; }
+    .stack .av, .stack .av-more {
+      width: 60px; height: 60px; border-radius: var(--r-md);
       border: 2px solid var(--n-black); background: var(--surface-2);
-      display: block; object-fit: cover;
+      display: block; position: relative;
     }
-    .stack > * + * { margin-left: -14px; }
-    .stack img { transition: transform .14s ease; }
-    .stack img:hover { transform: translateY(-3px); z-index: 2; position: relative; }
+    .stack .av img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
+    .stack > * + * { margin-left: -16px; }
+    .stack .av { transition: transform .14s ease; }
+    .stack .av:hover, .stack .av:focus-visible { transform: translateY(-4px); z-index: 3; outline: none; }
+    .stack .av:focus-visible { box-shadow: 0 0 0 2px var(--action); }
+
+    /* Name and title, rendered rather than left to the browser's tooltip. */
+    /* Below the face, not above it: the avatars sit at the top of the drawer, so
+       a tooltip above would cover the month row the drawer belongs to. */
+    .stack .av::after {
+      content: attr(data-tip);
+      position: absolute; top: calc(100% + 9px); left: 50%; transform: translateX(-50%) translateY(-3px);
+      z-index: 4; pointer-events: none; white-space: nowrap;
+      font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--white);
+      background: #0E0E0E; border: 1px solid var(--line); border-radius: var(--r-sm);
+      padding: 7px 10px; box-shadow: var(--shadow-xl);
+      opacity: 0; transition: opacity .13s ease, transform .13s ease;
+    }
+    .stack .av:hover::after, .stack .av:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* The first avatar's tooltip would otherwise start off the left edge of a
+       narrow drawer. */
+    .stack .av:first-child::after { left: 0; transform: translateX(0) translateY(-3px); }
+    .stack .av:first-child:hover::after,
+    .stack .av:first-child:focus-visible::after { transform: translateX(0) translateY(0); }
     .av-more {
       display: flex; align-items: center; justify-content: center;
-      font-size: 13.5px; font-weight: 700; color: var(--dim);
+      font-size: 15px; font-weight: 700; color: var(--dim);
       background: var(--surface-2);
     }
-    .stack-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .stack-label { font-size: 13px; color: var(--dim-2); }
+    .stack-wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .stack-label { font-size: 14px; color: var(--dim-2); }
 
     /* ── Data-integrity flag ────────────────────────────────────────
-       Compact inline flag: pill in tables, superscript beside a figure. */
+       The chart hatches a flagged bar. The same diagonal, at a fraction of the
+       contrast, marks the cell that opens onto it and lines the modal that
+       explains it, so one language says "something is different here" from the
+       chart through to the note. It replaced a warning icon floating over every
+       flagged bar, which shouted the same thing five times before anyone had
+       asked. */
+    /* Same slope as the canvas hatch, which runs bottom-left to top-right.
+       CSS 45deg lays its bands the other way, so this is -45deg. */
+    .hazard {
+      background-image: repeating-linear-gradient(-45deg,
+        transparent 0 7px, var(--hazard-ink, rgba(245, 194, 107, 0.14)) 7px 9px);
+    }
+    /* Compact inline flag: pill in tables, superscript beside a figure. */
     .flag-tag { color: var(--warn); background: var(--warn-surface); border-color: var(--warn-line); cursor: help; }
 
 
@@ -390,26 +459,39 @@
        Height is set inline by drawChart: fixed for the vertical layout, and
        proportional to the month count for the horizontal one, so bar thickness
        stays constant as the year fills up. */
+    .chart-block { position: relative; }
     .chart-wrap { position: relative; width: 100%; height: 330px; }
     /* The legend floats in the plot's top-right corner instead of sitting under
        it, so the series totals read as part of the chart. drawChart reserves
        matching padding at the top of the canvas so no bar can run behind it. */
     .legend {
       position: absolute; top: 0; right: 0; z-index: 2;
+      /* Reserved for by drawChart, which pads the plot to match. */
       display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start;
       max-width: 100%; pointer-events: auto;
     }
     /* The legend doubles as the headline totals for each series, so the figure
        is the dominant element and the label sits above it. */
+    /* A rail down the left, the same device the category definitions use in the
+       hero card, so a series is identified the same way wherever it appears. */
     .legend-item {
-      display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px;
+      display: inline-flex; align-items: stretch; gap: 11px;
       font-family: var(--font-body); text-align: left;
       background: transparent; border: 1px solid transparent; border-radius: var(--r-md);
       padding: 9px 14px; cursor: pointer; transition: all .14s ease;
     }
+    .legend-item > .swatch { align-self: stretch; height: auto; width: 9px; border-radius: var(--r-full); }
+    .lg-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
     .legend-item:hover, .legend-item:focus-visible { background: var(--surface); border-color: var(--line); outline: none; }
+    /* The total is a key, not a control. */
+    .legend-item.is-key { cursor: default; }
+    .legend-item.is-key:hover { background: transparent; border-color: transparent; }
+    /* The total is a dashed line, so its rail is dashed down its length. */
+    .legend-item > .swatch.dash {
+      background-image: repeating-linear-gradient(to bottom,
+        var(--dim) 0 6px, transparent 6px 11px);
+    }
     .legend-item .lg-name {
-      display: flex; align-items: center; gap: 8px;
       font-size: 14px; font-weight: 600; color: var(--dim); transition: color .14s ease;
     }
     .legend-item:hover .lg-name, .legend-item:focus-visible .lg-name { color: var(--white); }
@@ -441,6 +523,55 @@
     .flag-btn.labelled:hover { transform: none; background: var(--warn-surface-2); border-color: var(--warn); }
     .flag-btn.labelled svg { width: 13px; height: 13px; }
 
+    /* View control, opposite the legend in the band reserved above the plot. */
+    .chart-controls {
+      position: absolute; top: 0; left: 0; z-index: 2;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .pills.seg { padding: 3px; }
+    .pills.seg .pill { font-size: 14px; padding: 7px 14px; }
+    
+    .month-step { display: flex; align-items: center; gap: 4px; }
+    .month-step[hidden] { display: none; }
+    .step-label {
+      font-size: 15px; font-weight: 700; color: var(--white);
+      min-width: 10.5ch; text-align: center;
+    }
+    .step-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; padding: 0; cursor: pointer;
+      color: var(--dim); background: var(--surface);
+      border: 1px solid var(--line); border-radius: var(--r-sm);
+      transition: all .14s ease;
+    }
+    .step-btn:hover:not(:disabled) { color: var(--white); background: var(--surface-2); }
+    .step-btn:disabled { opacity: .32; cursor: default; }
+    .step-btn svg { width: 15px; height: 15px; }
+    .step-btn[data-step="-1"] svg, .step-btn[data-fact="-1"] svg { transform: rotate(180deg); }
+    /* Key to the textured half of the plot, set as a legend entry rather than a
+       footnote so it reads as part of the chart. */
+    .chart-key { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0 0; max-width: 86ch; }
+    .chart-key[hidden] { display: none; }
+    /* The same rail the series use, filled with the same texture the chart lays
+       over its projected months, on the same slope. */
+    .chart-key { align-items: stretch; }
+    .key-swatch {
+      flex: none; width: 9px; border-radius: var(--r-full);
+      background-color: rgba(255, 255, 255, 0.05);
+      background-image: repeating-linear-gradient(-45deg,
+        transparent 0 4px, rgba(255, 255, 255, 0.30) 4px 6px);
+    }
+    .key-text { font-size: 13.5px; line-height: 1.6; color: var(--dim-2); margin: 0; }
+    .key-text b { color: var(--dim); font-weight: 700; }
+
+    /* Below this the plot is rotated and every month owns a full row, so there
+       is no corner left to float the legend into. It goes back into the flow
+       above the chart, and drawChart stops reserving space for it. */
+    @media (max-width: 700px) {
+      .legend { position: static; justify-content: flex-start; margin-bottom: 12px; }
+      .legend-item { padding: 7px 10px 7px 0; }
+    }
+
     /* ── Modal ──────────────────────────────────────────────────── */
     .modal-backdrop {
       position: fixed; inset: 0; z-index: 60; display: flex;
@@ -453,6 +584,14 @@
       background: linear-gradient(165deg, var(--warn-surface-2), var(--warn-surface)), #0E0C08;
       border: 1px solid var(--warn-line); border-radius: var(--r-lg);
       box-shadow: var(--shadow-2xl); padding: 22px 24px 24px;
+    }
+    /* Set after .modal so the stripes layer over its gradient rather than being
+       replaced by it: the shorthand there writes background-image too. */
+    .modal.hazard {
+      --hazard-ink: rgba(245, 194, 107, 0.06);
+      background-image:
+        repeating-linear-gradient(-45deg, transparent 0 8px, var(--hazard-ink) 8px 10px),
+        linear-gradient(165deg, var(--warn-surface-2), var(--warn-surface));
     }
     .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
     .modal-title {
@@ -467,61 +606,49 @@
     .modal .btn { color: var(--warn-body); border-color: var(--warn-line); background: var(--warn-surface); }
     .modal .btn:hover { color: var(--warn-strong); background: var(--warn-surface-2); border-color: var(--warn); }
 
-    /* ── Monthly summary table ──────────────────────────────────── */
-    .table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
-    .table th, .table td { padding: 12px 12px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+    /* ── Monthly summary table ────────────────────────────────────────
+       Closed, this is a plain list of figures: no rules between rows, no tinted
+       columns, no selected surface. Every one of those was scaffolding for a
+       denser page, and with the density gone they were the only noise left.
+       Hierarchy is carried by weight, colour and one rule above the totals. */
+    .table { --sel: var(--action); width: 100%; border-collapse: collapse; font-size: 15.5px; }
+    .table th, .table td { padding: 13px 12px; text-align: left; }
     .table th {
       font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-      color: var(--dim-2); border-bottom: 1px solid var(--line); white-space: nowrap;
+      color: var(--dim-2); white-space: nowrap; padding-bottom: 9px;
     }
     .table td.r, .table th.r { text-align: right; }
-    /* Selection is cyan, not mint. Mint means Creative everywhere else in the
-       report, so using it for "this row is open" made a UI state look like a
-       data category. Cyan is the brand's neutral action colour and belongs to
-       neither series. */
-    .table { --sel: var(--holo-cyan); --sel-row: rgba(105, 238, 255, 0.10); --sel-body: rgba(105, 238, 255, 0.045); }
-    .table tbody tr.mrow { cursor: pointer; transition: background .12s ease, box-shadow .12s ease; }
-    .table tbody tr.mrow:hover { background: rgba(255,255,255,0.085); }
-    .table tbody tr.mrow:hover td:first-child { box-shadow: inset 3px 0 0 var(--dim-2); }
+    .table tbody tr.mrow { cursor: pointer; transition: opacity .14s ease; }
+    .table tbody tr.mrow:hover .mo { color: var(--white); }
+    .table tbody tr.mrow:hover .caret { color: var(--action); }
     .table tbody tr.mrow:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
-    .table tbody tr.mrow[aria-expanded="true"] { background: var(--sel-row); }
-    .table tbody tr.mrow[aria-expanded="true"] td { border-bottom-color: transparent; }
-    /* The total column paints its own tint over the row's, which cut the open
-       row in two. Give it a stronger step of the same hue instead, so the band
-       stays one band and the column is still lifted. */
-    .table tbody tr.mrow[aria-expanded="true"] td.col-total { background: rgba(105, 238, 255, 0.13); }
-    .table tbody tr.mrow[aria-expanded="true"] td:first-child { box-shadow: inset 3px 0 0 var(--sel); }
+    /* Pointing at a month in the chart above dims every other month here, and
+       the year-to-date row with them: it is not the month being asked about. */
+    .table tbody tr.mrow.is-dim td, .table tfoot.is-dim td { opacity: .26; }
+    .table tfoot { transition: opacity .14s ease; }
     .table tbody tr.mrow[aria-expanded="true"] .mo { font-weight: 700; color: var(--white); }
-    .table .mo { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .table .mo { font-weight: 600; display: flex; align-items: center; gap: 8px; transition: color .12s ease; }
     /* The caret is the only thing saying the row opens, so it turns rather than
        appears: the closed and open states read as the same control. */
     .table .caret { display: inline-flex; width: 15px; height: 15px; flex: none; color: var(--dim-2); transition: transform .16s ease, color .16s ease; }
     .table .caret svg { width: 100%; height: 100%; }
-    .table tbody tr.mrow:hover .caret { color: var(--white); }
     .table tbody tr.mrow[aria-expanded="true"] .caret { transform: rotate(90deg); color: var(--sel); }
 
-    /* The open month's detail. It is drawn as a panel hanging off the bottom of
-       its own row, sharing the row's tint and continuing its left marker, so
-       the block is unmistakably part of the row above it and the next month's
-       row is the next thing with a full-width rule under it. */
-    .table tbody tr.acc > td { padding: 0 0 26px; border-bottom: 1px solid var(--line); background: var(--sel-row); }
-    .acc-inner {
-      box-shadow: inset 3px 0 0 var(--sel);
-      background: rgba(255, 255, 255, 0.028);
-      border-bottom-left-radius: var(--r-lg); border-bottom-right-radius: var(--r-lg);
-      padding: 20px 24px 22px;
-    }
-    .acc-note { font-size: 13.5px; color: var(--dim-2); margin: 20px 0 0; }
-    /* The month's own flag, which no longer marks the closed row. */
-    .acc-flag { margin-bottom: 16px; }
-    @media (max-width: 680px) { .acc-inner { padding: 16px 14px 18px; } }
+    /* The open month's detail. No surface of its own and no left rail: it is set
+       apart by the space around it, and the padding under it is what makes the
+       next month's row obviously the next thing. */
+    .table tbody tr.acc > td { padding: 0; }
+    .acc-inner { padding: 6px 2px 52px; }
+    .acc-note { font-size: 13px; color: var(--dim-2); margin: 26px 0 0; }
+    @media (max-width: 680px) { .acc-inner { padding: 4px 0 40px; } }
 
     /* Both categories side by side, so the two task lists that add up to the
        row's total are visible at once instead of one scrolling past the other.
        They stack below 860px, where two columns of task names would truncate to
        nothing useful. */
-    .cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 34px; align-items: start; }
+    .cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 68px; align-items: start; }
     @media (max-width: 860px) { .cat-grid { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
     .table .primary { font-weight: 600; color: var(--white); }
     .table .of { color: var(--dim-2); font-weight: 500; }
     /* The share of the retainer, reading as an annotation on the figure it
@@ -531,27 +658,22 @@
       font-size: 13.5px; font-weight: 700; text-align: right;
     }
     .table td.r, .table th.r { white-space: nowrap; }
-
-    /* The Total column and the year-to-date row are sums, not more of the same
-       data, so both are lifted out of the grid of monthly figures. The column
-       before it keeps a wider gutter, so its figures are not pressed up against
-       the tinted edge. */
     .table .col-gap { padding-right: 24px; }
-    .table .col-total { background: rgba(255,255,255,0.045); }
-    .table th.col-total { color: var(--ink-strong); }
+    /* Sums are set apart by a rule and by weight, not by a tinted panel. */
     .table tbody tr.mrow td.col-total { font-weight: 700; color: var(--white); }
     .table tfoot td {
-      border-bottom: 0; border-top: 2px solid var(--line);
-      font-weight: 700; padding-top: 18px; padding-bottom: 16px;
+      border-top: 1px solid var(--line);
+      font-weight: 700; padding-top: 20px; padding-bottom: 4px;
       font-size: 17px; color: var(--white);
-      background: rgba(255,255,255,0.05);
     }
-    .table tfoot td:first-child { letter-spacing: .01em; }
-    .table tfoot td.col-total { background: rgba(255,255,255,0.10); font-size: 18px; }
+    .table tfoot td.ytd-label {
+      font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -0.005em;
+    }
+    .table tfoot td.col-total { font-size: 18px; }
     /* The chart and the table are one unit: the chart is the shape of the year,
        the table is the same year in figures with its detail folded inside. A
        section-sized gap here made them read as two separate exhibits. */
-    .table-scroll { overflow-x: auto; margin-top: 20px; }
+    .table-scroll { overflow-x: auto; margin-top: 26px; }
     /* Month names are carried twice so the column can shorten without a
        re-render when the viewport crosses the breakpoint. */
     .mo-abbr { display: none; }
@@ -588,7 +710,7 @@
       .hero { padding: 20px 18px 18px; }
       .hero-top { gap: 16px; margin-bottom: 20px; }
       .hero-ctx { font-size: 14.5px; }
-      .funfact { font-size: 16.5px; padding-top: 16px; }
+      .funfact { font-size: 21px; padding-top: 16px; }
 
       .sec { margin-bottom: 62px; }
       .sec-title { font-size: 22px; }
@@ -599,9 +721,14 @@
        so none of them are repeated here. What is left is the thing the row
        cannot show: which tasks the hours went to, and who worked them. */
     .cat { margin-top: 18px; }
-    .cat-head { margin-bottom: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-    .row { display: flex; align-items: center; gap: 13px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
-    .row:last-child { border-bottom: 0; }
+    .cat-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .acc-top {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; flex-wrap: wrap; margin-bottom: 26px;
+    }
+    .dh-meta { font-size: 14px; color: var(--dim-2); }
+
+    .row { display: flex; align-items: center; gap: 13px; padding: 9px 0; }
     .row .name { flex: 1 1 0; min-width: 0; font-size: 15.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .row .track { flex: 0 0 130px; height: 6px; background: rgba(255, 255, 255, 0.14); border-radius: var(--r-full); overflow: hidden; }
     .row .track .fill { display: block; height: 100%; border-radius: var(--r-full); }
@@ -611,7 +738,7 @@
       width: 26px; height: 26px; border-radius: 6px; color: var(--dim-2);
       border: 1px solid transparent; transition: all .14s ease;
     }
-    .row .link:hover { color: var(--mint); background: var(--surface-2); border-color: var(--line); }
+    .row .link:hover { color: var(--action); background: var(--surface-2); border-color: var(--line); }
     .row .link svg { width: 14px; height: 14px; }
     .row .link.placeholder { opacity: .22; pointer-events: none; }
     .empty-note { font-size: 15px; color: var(--dim-2); font-style: italic; margin: 10px 0 0; }
@@ -627,11 +754,15 @@
       .row .hrs { flex: 0 0 auto; min-width: 60px; }
       .cat { margin-top: 22px; }
     }
-    /* Touch: 16px icons are legitimate targets only if their hit area is not. */
+    /* Touch: a 16px control is a legitimate target only if its hit area is not.
+       Text links keep their type size and grow their hit area around it. */
     @media (hover: none) {
       .flag-btn { position: relative; }
       .flag-btn:not(.labelled)::after { content: ""; position: absolute; inset: -11px; }
       .row .link { width: 34px; height: 34px; }
+      .export-link, .foot-link { position: relative; }
+      .export-link::after, .foot-link::after { content: ""; position: absolute; inset: -13px -6px; }
+      .step-btn { width: 38px; height: 38px; }
     }
 
     /* ── States + footer ────────────────────────────────────────── */
@@ -640,27 +771,39 @@
     .err { color: var(--over); }
     .err code { display: block; margin-top: 12px; color: var(--dim); font-size: 14.5px; word-break: break-word; }
 
+    /* One type scale across the whole footer: 14px everywhere, one accent
+       weight, one dim colour. The freshness readout is the page's last word
+       rather than its first, which is what it actually is: a footnote on the
+       data, not a headline. */
     .foot {
-      margin-top: 64px; padding-top: 8px;
-      display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap;
-      font-size: 14px; color: var(--dim-2); line-height: 1.7;
+      margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line-soft);
+      display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap;
+      font-size: 14px; line-height: 1.65; color: var(--dim-2);
     }
-    .foot-brand { display: flex; flex-direction: column; gap: 9px; max-width: 62ch; }
-    .foot-fine { font-size: 14px; line-height: 1.7; color: var(--dim-2); margin: 0; max-width: 46ch; text-wrap: pretty; }
+    .foot-brand { display: flex; flex-direction: column; gap: 7px; }
+    .foot-fine { font-size: 14px; line-height: 1.65; color: var(--dim-2); margin: 0; }
     .foot-link {
-      color: var(--mint); text-decoration: underline; text-underline-offset: 3px;
-      text-decoration-thickness: 1px; text-decoration-color: rgba(126, 248, 147, 0.45);
+      color: var(--action); text-decoration: underline; text-underline-offset: 3px;
+      text-decoration-thickness: 1px; text-decoration-color: rgba(105, 238, 255, 0.45);
       transition: text-decoration-color .14s ease, color .14s ease;
     }
-    .foot-link:hover { text-decoration-color: var(--mint); }
+    .foot-link:hover { text-decoration-color: var(--action); }
     .foot-link.primary {
-      display: inline-flex; align-items: center; gap: 9px; width: fit-content;
-      font-size: 15px; font-weight: 600; color: var(--white);
-      text-decoration-color: rgba(255, 255, 255, 0.3);
+      display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+      font-size: 14px; font-weight: 700; color: var(--white);
+      text-decoration-color: rgba(255, 255, 255, 0.28);
     }
-    .foot-link.primary:hover { color: var(--mint); text-decoration-color: var(--mint); }
-    .foot-link.primary svg { width: 13px; height: 13px; opacity: .7; }
-    .foot img { height: 17px; width: auto; display: block; }
+    .foot-link.primary:hover { color: var(--action); text-decoration-color: var(--action); }
+    .foot img { height: 15px; width: auto; display: block; }
+
+    .foot-data { display: flex; align-items: center; gap: 14px; }
+    .foot-data .clock { align-items: flex-end; font-size: 12px; }
+    .foot-data #refreshBtn { width: 34px; height: 34px; }
+    .foot-data #refreshBtn svg { width: 15px; height: 15px; }
+    @media (max-width: 560px) {
+      .foot { gap: 22px; }
+      .foot-data { width: 100%; justify-content: space-between; }
+    }
 
     .sr-only {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -697,29 +840,30 @@
         --warn-line: #D9B676;
       }
       /* Gradient text does not print; fall back to solid ink. */
-      .hero-total .v {
+      .grad {
         background: none; -webkit-text-fill-color: #111; color: #111; animation: none;
       }
+      /* Hidden facts are laid on top of the shown one, and visibility is not
+         enough on paper in every engine: collapse them out of flow instead. */
+      .ff-line { display: none; }
+      .ff-line[data-on="true"] { display: block; }
+      .ff-stack { display: block; }
       body { background: #fff !important; color: #111; font-size: 10.5pt; }
       .page { max-width: none; padding: 0; }
       .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
       .lockup img, .report-title .client-mark { filter: invert(1); }
-      .status, .pills, .sec-note, .row .link, .menu-wrap, .flag-btn { display: none !important; }
+      .foot-data, .pills, .sec-note, .row .link, .menu-wrap,
+      .flag-btn:not(.labelled) { display: none !important; }
+      /* The labelled flag is a tag, not a control: on paper it is the only thing
+         naming what the hatching means. */
+      .flag-btn.labelled { color: #8A5A0F; border-color: var(--warn-line); background: var(--warn-surface-2); }
       .hero { background: none !important; box-shadow: none; }
       .sec { break-inside: avoid; margin-bottom: 26px; }
-      /* Selection is a screen state. On paper the open month is simply the one
-         with its detail printed under it, so the cyan goes and the nesting is
-         carried by rules instead. */
-      .table tbody tr.mrow[aria-expanded="true"] { background: none; }
-      .table tbody tr.mrow[aria-expanded="true"] td:first-child { box-shadow: inset 3px 0 0 rgba(0, 0, 0, 0.45); }
-      .table tbody tr.mrow[aria-expanded="true"] td.col-total { background: rgba(0, 0, 0, 0.045); }
-      .table tbody tr.acc > td { background: none; }
-      .acc-inner { box-shadow: none; background: none; border-left: 2px solid rgba(0, 0, 0, 0.3); padding: 12px 0 4px 16px; }
+      /* Selection is a screen state: on paper the open month is simply the one
+         with its detail printed under it. */
+      .acc-inner { padding: 8px 0 24px; }
       .table .caret { display: none; }
-      /* The tints that separate the sums on screen are invisible on paper. */
-      .table .col-total { background: rgba(0, 0, 0, 0.045); }
-      .table tfoot td { background: rgba(0, 0, 0, 0.06); border-top-color: rgba(0, 0, 0, 0.35); }
-      .table tfoot td.col-total { background: rgba(0, 0, 0, 0.10); }
+      .table tfoot td { border-top-color: rgba(0, 0, 0, 0.35); }
       a { color: #111 !important; }
     }
   </style>
@@ -733,31 +877,21 @@
         <img class="fc" src="assets/fc-wordmark-white.svg" alt="Founding Creative" />
       </div>
 
-      <div class="status">
-        <div class="clock">
-          <span class="now"><span class="live-dot" aria-hidden="true"></span><span id="clockNow">…</span></span>
-          <span class="fetched" id="clockFetched">Loading data…</span>
-        </div>
-        <button class="btn icon-only" id="refreshBtn" title="Refresh data from ClickUp" aria-label="Refresh data from ClickUp"></button>
-      </div>
     </header>
 
     <div class="title-row">
-      <div>
-        <h1 class="report-title">
-          <img class="client-mark" src="assets/moss-wordmark-white.svg" alt="Moss" />
-          <span>Hours Report</span>
-        </h1>
-        <div class="report-range" id="range"></div>
-      </div>
-      <div class="title-actions">
-        <div class="pills" id="years" role="group" aria-label="Select year"></div>
-        <div class="menu-wrap">
-          <button class="export-link" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>
-          <div class="menu" id="exportMenu" role="menu"></div>
+      <div class="title-id">
+        <span class="client-slot"><img class="client-mark" src="assets/moss-wordmark-white.svg" alt="Moss" /></span>
+        <div class="title-stack">
+          <h1 class="report-title">Hours Report</h1>
+          <div class="report-range" data-range></div>
         </div>
       </div>
+      <div class="title-actions">
+        <div class="pills years" role="group" aria-label="Select year"></div>
+      </div>
     </div>
+
 
     <div id="content"></div>
 
@@ -766,14 +900,18 @@
         <a class="foot-link primary" href="https://foundingcreative.com" target="_blank" rel="noopener">
           <img src="assets/fc-icon-white.svg" alt="" />
           <span>foundingcreative.com</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
         </a>
-        <p class="foot-fine">Happy to walk through any line item with you.</p>
+        <p class="foot-fine">Happy to
+          <a class="foot-link" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ05BDuPiNgyfpK6HRFzchDUrBoX2SjOj_dGFp47_xWtYoovrxOv1kLTSdDIoXCudPLii9WVIFpX" target="_blank" rel="noopener">walk through any line item</a>
+          with you.</p>
       </div>
-      <a class="foot-link primary" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ05BDuPiNgyfpK6HRFzchDUrBoX2SjOj_dGFp47_xWtYoovrxOv1kLTSdDIoXCudPLii9WVIFpX" target="_blank" rel="noopener">
-        <span>Book a meeting</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-      </a>
+      <div class="foot-data">
+        <div class="clock">
+          <span class="now"><span class="live-dot" aria-hidden="true"></span><span id="clockNow">…</span></span>
+          <span class="fetched" id="clockFetched">Loading data…</span>
+        </div>
+        <button class="btn icon-only" id="refreshBtn" title="Refresh data from ClickUp" aria-label="Refresh data from ClickUp"></button>
+      </div>
     </footer>
 
     <!-- Reusable detail modal: used by the data-integrity flags, and available
@@ -856,6 +994,83 @@
     var state = { months: [], range: [], selected: null, hidden: {}, generatedAt: null,
                   team: [], teamById: {}, contributors: null };
 
+    var view = { mode: 'year' };
+    var priorYear = { year: null, months: null, state: 'idle' };  // 'idle' | 'loading' | 'done' | 'none'
+
+    /* The last month that can carry a complete figure: for the current year the
+       month we are in is still filling up, so it is never a basis for a mean. */
+    function lastCompleteMonth() {
+      if (YEAR !== CURRENT_YEAR) return 11;
+      return new Date().getMonth() - 1;
+    }
+    function lastActualMonth() {
+      var last = -1;
+      state.months.forEach(function (m) { if (m.total > 0) last = m.month; });
+      if (YEAR === CURRENT_YEAR) last = Math.max(last, new Date().getMonth());
+      return last;
+    }
+
+    /* Projection for the months that have not happened yet.
+
+       Basis: the mean of the completed months that carry time. If last year is
+       available, each future month is then shaped by how that month compared
+       with its own year's mean, which is what carries a seasonal pattern like a
+       quiet August. The factor is clamped, so one freak month last year cannot
+       throw a forecast twice as far as anything ever observed. */
+    function projectRest() {
+      var lastActual = lastActualMonth();
+      var lastComplete = lastCompleteMonth();
+      var out = { from: lastActual + 1, creative: [], nonCreative: [], basis: 'none' };
+      if (out.from > 11) return out;
+
+      var done = state.months.filter(function (m) {
+        return m.month <= lastComplete && m.total > 0;
+      });
+      if (!done.length) return out;
+
+      var meanC = done.reduce(function (a, m) { return a + m.creative; }, 0) / done.length;
+      var meanO = done.reduce(function (a, m) { return a + m.nonCreative; }, 0) / done.length;
+      out.basis = 'average';
+
+      var shape = null;
+      if (priorYear.state === 'done' && priorYear.months) {
+        var pr = priorYear.months.filter(function (m) { return m.total > 0; });
+        if (pr.length >= 6) {
+          var pMean = pr.reduce(function (a, m) { return a + m.total; }, 0) / pr.length;
+          if (pMean > 0) {
+            shape = priorYear.months.map(function (m) {
+              if (!(m.total > 0)) return 1;
+              return Math.min(1.8, Math.max(0.45, m.total / pMean));
+            });
+            out.basis = 'prior-year';
+          }
+        }
+      }
+
+      for (var i = out.from; i <= 11; i++) {
+        var f = shape ? shape[i] : 1;
+        out.creative[i] = meanC * f;
+        out.nonCreative[i] = meanO * f;
+      }
+      return out;
+    }
+
+    /* Last year is only worth a round trip when the reader asks for the full
+       year, so it is fetched on demand and the chart redrawn if it lands. */
+    function ensurePriorYear(then) {
+      if (priorYear.year === YEAR - 1 && priorYear.state !== 'idle') return then && then();
+      priorYear = { year: YEAR - 1, months: null, state: 'loading' };
+      fetch(API_BASE + '?year=' + (YEAR - 1) + '&_=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.months) { priorYear.state = 'none'; return; }
+          priorYear.months = normalize(d);
+          priorYear.state = priorYear.months.some(function (m) { return m.total > 0; }) ? 'done' : 'none';
+        })
+        .catch(function () { priorYear.state = 'none'; })
+        .then(function () { if (then) then(); });
+    }
+
     /* One breakpoint drives every layout decision the script makes: the chart
        orientation and the length of the clock string. It matches the CSS
        breakpoint used for the masthead. */
@@ -898,6 +1113,7 @@
       close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
       chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>',
     };
+
 
     /* ═══════════════════════════════════════════════════════════════
        Live clock + freshness
@@ -957,7 +1173,12 @@
           total: (m.retainerHours || 0) + (m.sowHours || 0),
           creativeItems: m.retainerItems || [],
           nonCreativeItems: m.sowItems || [],
-          contributorIds: m.contributorIds || []
+          contributorIds: m.contributorIds || [],
+          // Per-day totals, present from the API's day buckets. Absent on an
+          // older payload, in which case the day view says so rather than
+          // drawing an empty month.
+          creativeDaily: m.retainerDaily || null,
+          nonCreativeDaily: m.sowDaily || null
         };
       });
     }
@@ -987,19 +1208,25 @@
     /* ═══════════════════════════════════════════════════════════════
        Load
        ═══════════════════════════════════════════════════════════════ */
+    // Rendered into every .years container, so the two title-row layouts can be
+    // compared with a working selector in each.
     function renderYears() {
-      var el = document.getElementById('years');
-      el.innerHTML = YEAR_OPTIONS.map(function (y) {
-        return '<button class="pill" data-y="' + y + '" aria-pressed="' + (y === YEAR) + '">' + y + '</button>';
-      }).join('');
-      el.querySelectorAll('button').forEach(function (b) {
-        b.addEventListener('click', function () {
-          if (YEAR === parseInt(b.dataset.y)) return;
-          YEAR = parseInt(b.dataset.y);
-          renderYears();
-          load();
+      document.querySelectorAll('.years').forEach(function (el) {
+        el.innerHTML = YEAR_OPTIONS.map(function (y) {
+          return '<button class="pill" data-y="' + y + '" aria-pressed="' + (y === YEAR) + '">' + y + '</button>';
+        }).join('');
+        el.querySelectorAll('button').forEach(function (b) {
+          b.addEventListener('click', function () {
+            if (YEAR === parseInt(b.dataset.y)) return;
+            YEAR = parseInt(b.dataset.y);
+            renderYears();
+            load();
+          });
         });
       });
+    }
+    function setRangeText(txt) {
+      document.querySelectorAll('[data-range]').forEach(function (el) { el.textContent = txt; });
     }
 
     function load(manual) {
@@ -1007,7 +1234,7 @@
       var btn = document.getElementById('refreshBtn');
       btn.setAttribute('aria-busy', 'true');
       if (!manual) content.innerHTML = '<div class="state"><div class="spinner"></div>Loading ' + YEAR + ' hours…</div>';
-      document.getElementById('range').textContent = '';
+      setRangeText('');
       if (chart) { chart.destroy(); chart = null; }
 
       // Cache-bust so the refresh button is a genuine round trip to ClickUp.
@@ -1045,7 +1272,7 @@
 
       var content = document.getElementById('content');
       if (!active.length) {
-        document.getElementById('range').textContent = YEAR;
+        setRangeText(String(YEAR));
         content.innerHTML = '<div class="state">No tracked hours for ' + YEAR + ' yet.</div>';
         tickClock();
         return;
@@ -1053,11 +1280,12 @@
 
       var first = active[0], last = active[active.length - 1];
       state.range = state.months.slice(first, last + 1);
-      if (state.selected === null || state.selected < first || state.selected > last) state.selected = last;
+      // Closed on arrival. The table is a list of figures until the reader asks
+      // one of them a question.
+      if (state.selected !== null && (state.selected < first || state.selected > last)) state.selected = null;
 
-      document.getElementById('range').textContent =
-        MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR + ' · ' + state.range.length +
-        (state.range.length === 1 ? ' month' : ' months') + ' of tracked time';
+      setRangeText(state.range.length + (state.range.length === 1 ? ' month' : ' months') +
+        ' of tracked time · ' + MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR);
 
       // The table is part of the overview section now, not a section of its own.
       content.innerHTML = heroHtml() + overviewHtml();
@@ -1065,7 +1293,16 @@
       wireLegend();
       wireSummaryTable();
       wireAvatarFallbacks();
+      wireExport();
+      // Chart.js only reports hovers it receives, so leaving the plot has to
+       // clear the link itself. Bound on the wrapper as well as the canvas,
+       // since the legend and the view control sit over the top of it.
+      ['#overviewChart', '.chart-wrap'].forEach(function (sel) {
+        var el = document.querySelector(sel);
+        if (el) el.addEventListener('mouseleave', function () { linkHover(null, 'chart-out'); });
+      });
       drawChart();
+      updateChartNote();
       startFunFacts(totals().total);
       tickClock();
     }
@@ -1078,12 +1315,15 @@
       var h = '<section class="sec"><div class="hero">';
       h += '<div class="hero-top">';
       h += '<div class="hero-total"><div class="eyebrow">Total hours delivered · ' + YEAR + '</div>' +
-           '<div class="v num">' + fmtH(t.total) + '</div>' +
+           '<div class="v grad num">' + fmtH(t.total) + '</div>' +
            '<div class="hero-ctx"><strong>Year to date</strong> · ' +
            months + ' ' + (months === 1 ? 'month' : 'months') + '</div></div>';
       h += '<div class="funfact"><div class="eyebrow">For scale</div>' +
-           '<div class="ff-body"><span class="ff-icon">' + ICONS.spark + '</span>' +
-           '<span class="ff-text" id="funfact"></span></div></div>';
+           '<div class="ff-body">' + factStackHtml(t.total) + '</div>' +
+           '<div class="ff-nav">' +
+           '<button class="step-btn" data-fact="-1" aria-label="Previous comparison">' + ICONS.chevron + '</button>' +
+           '<button class="step-btn" data-fact="1" aria-label="Next comparison">' + ICONS.chevron + '</button>' +
+           '</div></div>';
       h += '</div>';
 
       /* This space has held the two summary meters and then the team roster.
@@ -1155,11 +1395,14 @@
       var shown = people.slice(0, 6), extra = people.length - shown.length;
       var h = '<div class="stack-wrap"><div class="stack">';
       shown.forEach(function (p) {
-        // The roster's job titles left the page with the roster; they come back
-        // here, where the face is the thing that raises the question.
+        /* The roster's job titles left the page with the roster; they come back
+           here, where the face is the thing that raises the question. Rendered
+           rather than left to the browser's title attribute, which waits a
+           second, styles itself and never appears on touch. */
         var label = p.name + (p.title ? ' · ' + p.title : '');
-        h += '<img src="' + esc(p.img) + '" alt="' + esc(label) + '" title="' + esc(label) + '" ' +
-             'width="48" height="48" loading="lazy" data-fallback="1">';
+        h += '<span class="av" tabindex="0" data-tip="' + esc(label) + '" aria-label="' + esc(label) + '">' +
+             '<img src="' + esc(p.img) + '" alt="" width="60" height="60" loading="lazy" data-fallback="1">' +
+             '</span>';
       });
       if (extra > 0) h += '<span class="av-more" title="' + extra + ' more">+' + extra + '</span>';
       h += '</div><span class="stack-label">Your team this month</span></div>';
@@ -1171,7 +1414,7 @@
        the name is already on the tooltip of the ones that did. */
     function wireAvatarFallbacks() {
       document.querySelectorAll('img[data-fallback]').forEach(function (img) {
-        img.addEventListener('error', function () { img.style.display = 'none'; });
+        img.addEventListener('error', function () { (img.closest('.av') || img).style.display = 'none'; });
       });
     }
 
@@ -1182,20 +1425,35 @@
     function overviewHtml() {
       var t = totals();
       var h = '<section class="sec"><div class="sec-head">' +
-        '<h2 class="sec-title">Monthly overview</h2></div>';
-      h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
-        'aria-label="Grouped bar chart of Creative and Other hours by month, with a total hours line"></canvas>';
+        '<h2 class="sec-title">Monthly overview</h2>' +
+        '<div class="menu-wrap">' +
+        '<button class="export-link" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>' +
+        '<div class="menu" id="exportMenu" role="menu"></div></div>' +
+        '</div>';
+      h += '<div class="chart-block">';
       h += '<div class="legend" id="legend">';
       CATS.forEach(function (c, i) {
         h += '<button class="legend-item" data-i="' + i + '" data-off="false" aria-pressed="true">' +
-          '<span class="lg-name"><span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>' +
-          '<span class="val">' + fmtH(t[c.hours]) + '</span></button>';
+          '<span class="swatch" style="background:' + c.inkVar + '"></span>' +
+          '<span class="lg-stack"><span class="lg-name">' + c.label + '</span>' +
+          '<span class="val">' + fmtH(t[c.hours]) + '</span></span></button>';
       });
-      h += '</div></div>';
+      // A key rather than a control: the total is drawn from the other two, so
+      // there is nothing to isolate it from.
+      h += '<span class="legend-item is-key" data-i="total">' +
+        '<span class="swatch dash" aria-hidden="true"></span>' +
+        '<span class="lg-stack"><span class="lg-name">Total</span>' +
+        '<span class="val">' + fmtH(t.total) + '</span></span></span>';
+      h += '</div>';
+      h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
+        'aria-label="Bar chart of Creative and Other hours, with a total hours line"></canvas></div>';
+      h += '</div>';
+      h += '<div class="chart-key" id="chartNote"></div>';
       h += summaryHtml();
       h += '</section>';
       return h;
     }
+
 
     /* ── Monthly summary table, with the task detail as a per-month
        accordion so a month's figures and its tasks read as one thing ── */
@@ -1222,7 +1480,8 @@
              '<span class="mo-abbr">' + MONTH_ABBR[m.month] + '</span></span></td>';
         // Each figure carries its series colour, so a row's numbers and the
         // colour-coded task lists it opens onto are read as the same thing.
-        h += '<td class="r num"><span style="color:' + CATS[0].inkVar + ';font-weight:600">' + fmtH(m.creative) + '</span>' +
+        h += '<td class="r num">' +
+             '<span style="color:' + CATS[0].inkVar + '">' + fmtH(m.creative) + '</span>' +
              '<span class="use" style="color:' + pctColor(pct) + '">' + pct + '%</span></td>';
         h += '<td class="r num col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(m.nonCreative) + '</td>';
         h += '<td class="r num primary col-total">' + fmtH(m.total) + '</td>';
@@ -1232,11 +1491,11 @@
       });
 
       h += '</tbody><tfoot><tr>';
-      h += '<td><span class="mo-full">Year to date</span><span class="mo-abbr">Total</span></td>';
+      h += '<td class="ytd-label"><span class="mo-full">Year to date</span><span class="mo-abbr">Total</span></td>';
       h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) +
            '<span class="use" style="color:' + pctColor(ytdPct) + '">' + ytdPct + '%</span></td>';
       h += '<td class="r num col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</td>';
-      h += '<td class="r num col-total">' + fmtH(t.total) + '</td>';
+      h += '<td class="r num col-total"><span class="grad">' + fmtH(t.total) + '</span></td>';
       h += '</tr></tfoot></table></div>';
       return h;
     }
@@ -1244,7 +1503,13 @@
     /* One month at a time: opening a row closes whichever was open, and
        selecting the open month closes it again. */
     function toggleMonth(monthIdx) {
-      state.selected = state.selected === monthIdx ? null : monthIdx;
+      openMonth(state.selected === monthIdx ? null : monthIdx);
+    }
+
+    // Unconditional, for the chart: clicking a bar opens that month whether or
+    // not it was already the open one.
+    function openMonth(monthIdx, scroll) {
+      state.selected = monthIdx;
       document.querySelectorAll('.table tbody tr.mrow').forEach(function (r) {
         r.setAttribute('aria-expanded', parseInt(r.dataset.m) === state.selected);
       });
@@ -1254,47 +1519,68 @@
       if (state.selected === null) return;
       var row = document.querySelector('.table tbody tr.mrow[data-m="' + state.selected + '"]');
       // 'nearest' so a row already on screen does not jump under the reader.
-      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (row && scroll !== false) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function wireSummaryTable() {
       document.querySelectorAll('.table tbody tr.mrow').forEach(function (r) {
+        var month = parseInt(r.dataset.m);
         // A flag button inside the row is handled in the capture phase by
         // wireModal, which stops the event before it reaches this listener.
-        r.addEventListener('click', function () { toggleMonth(parseInt(r.dataset.m)); });
+        r.addEventListener('click', function () { toggleMonth(month); });
         r.addEventListener('keydown', function (e) {
           // Only the row itself: Enter on the flag button it contains belongs
           // to the button.
           if (e.target !== r) return;
           if (e.key !== 'Enter' && e.key !== ' ') return;
           e.preventDefault();
-          toggleMonth(parseInt(r.dataset.m));
+          toggleMonth(month);
         });
+        // Pointing at a month here dims every other month in the chart above.
+        r.addEventListener('mouseenter', function () { linkHover(month); });
+        r.addEventListener('focus', function () { linkHover(month); });
+        r.addEventListener('mouseleave', function () { linkHover(null); });
+        r.addEventListener('blur', function () { linkHover(null); });
       });
+      // Leaving the table by any route clears it.
+      var tbl = document.querySelector('.table');
+      if (tbl) tbl.addEventListener('mouseleave', function () { linkHover(null); });
+
     }
 
     /* What the row itself cannot show: where the hours went, and who worked
        them. The month, its total and its Creative / Other split are all in the
        row this hangs from, so none of them are repeated here. */
+    function taskCount(m) {
+      return (m.creativeItems || []).length + (m.nonCreativeItems || []).length;
+    }
+
+    /* Top of the drawer: who worked the month on one side, how much there is to
+       read on the other. Neither is in the row above, which already carries the
+       month, its split and its total. */
+    function drawerHeadHtml(m) {
+      var n = taskCount(m);
+      return '<div class="acc-top">' +
+        (stackHtml(m.contributorIds) || '<span></span>') +
+        '<span class="dh-meta">' + n + (n === 1 ? ' task' : ' tasks') + ' this month</span>' +
+        '</div>';
+    }
+
     function monthDetailHtml(m) {
-      var monthFlag = flagFor(YEAR, m.month, 'creative') || flagFor(YEAR, m.month, 'nonCreative');
-      var h = '';
-      if (monthFlag) h += '<div class="acc-flag">' + flagBtnHtml(monthFlag, true) + '</div>';
-
-      var stack = stackHtml(m.contributorIds);
-      if (stack) h += '<div style="margin:0 0 6px">' + stack + '</div>';
-
+      var h = drawerHeadHtml(m);
       h += '<div class="cat-grid">';
       CATS.forEach(function (c) {
         var items = m[c.items] || [];
+        // The flag rides with the series it applies to, beside its name.
+        var flag = flagFor(YEAR, m.month, c.key);
         h += '<div class="cat">';
         h += '<div class="cat-head"><span class="srow-label">' +
-             '<span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span></div>';
+             '<span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>' +
+             (flag ? flagBtnHtml(flag, true) : '') + '</div>';
         h += taskRows(items, c) || '<p class="empty-note">No ' + c.label.toLowerCase() + ' time tracked this month.</p>';
         h += '</div>';
       });
       h += '</div>';
-
       h += '<p class="acc-note">Sorted by most hours. Links open the ClickUp task where one exists.</p>';
       return h;
     }
@@ -1351,12 +1637,23 @@
     function totalInk() { return printing ? '#444444' : 'rgba(255,255,255,0.78)'; }
     function isTotalSeries(i) { return !CATS[i]; }
 
+    /* Projected bars must not be readable as delivered hours: they are drawn as
+       outlines over a textured ground, and named in the key under the chart. */
+    function projFill() { return 'transparent'; }
+    function projLine(c) { return rgba(c.ink, 0.6); }
+    function rgba(hex, a) {
+      var n = parseInt(hex.slice(1), 16);
+      return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+    }
+
     function barColors(catIdx, which) {
       var c = CATS[catIdx];
       var ghosted = emphasis !== null && emphasis !== catIdx;
-      return state.range.map(function (m) {
-        if (ghosted) return which === 'fill' ? GHOST : GHOST_LINE;
-        var flagged = !!flagFor(YEAR, m.month, c.key);
+      return chartRows.map(function (r) {
+        var dim = ghosted || (hoverMonth !== null && !(r.kind === 'month' && r.month === hoverMonth));
+        if (dim) return which === 'fill' ? GHOST : GHOST_LINE;
+        if (r.projected) return which === 'fill' ? projFill() : projLine(c);
+        var flagged = r.kind === 'month' && !!flagFor(YEAR, r.month, c.key);
         if (which === 'fill') return flagged ? hatch(c.fill) : c.fill;
         return c.ink;
       });
@@ -1364,25 +1661,13 @@
 
     function applyEmphasis(next) {
       emphasis = next;
-      if (!chart) return;
-      chart.data.datasets.forEach(function (ds, i) {
-        if (isTotalSeries(i)) {
-          // Isolating a category means isolating it from the total as well.
-          var ink = emphasis === null ? totalInk() : GHOST_LINE;
-          ds.borderColor = ink;
-          ds.pointBackgroundColor = ink;
-          ds.pointBorderColor = ink;
-          return;
-        }
-        ds.backgroundColor = barColors(i, 'fill');
-        ds.borderColor = barColors(i, 'line');
-      });
-      chart.update('none');
+      paintBars();
     }
 
     function wireLegend() {
-      document.querySelectorAll('#legend .legend-item').forEach(function (b) {
+      document.querySelectorAll('#legend .legend-item:not(.is-key)').forEach(function (b) {
         var i = parseInt(b.dataset.i);
+        if (isNaN(i)) return;
         b.addEventListener('mouseenter', function () { if (!state.hidden[i]) applyEmphasis(i); });
         b.addEventListener('focus', function () { if (!state.hidden[i]) applyEmphasis(i); });
         b.addEventListener('mouseleave', function () { applyEmphasis(null); });
@@ -1402,6 +1687,7 @@
     var printing = false;
     function chartTheme(isPrint) {
       printing = isPrint;
+      projGroundPattern = null;
       if (!chart) return;
       var s = chart.options.scales;
       // Which axis carries the months flips with the orientation.
@@ -1449,26 +1735,6 @@
       g.restore();
     }
 
-    // Marks flagged bars with the warning icon above the column. Vertical
-    // layout only: horizontal puts the same marker inline with the end label.
-    var flagMarkers = {
-      id: 'flagMarkers',
-      afterDatasetsDraw: function (c) {
-        if (c.options.indexAxis === 'y') return;
-        var g = c.ctx;
-        c.data.datasets.forEach(function (ds, di) {
-          if (isTotalSeries(di) || !c.isDatasetVisible(di)) return;
-          if (emphasis !== null && emphasis !== di) return;
-          var meta = c.getDatasetMeta(di);
-          meta.data.forEach(function (bar, bi) {
-            var m = state.range[bi];
-            if (!m || !flagFor(YEAR, m.month, CATS[di].key)) return;
-            drawWarnIcon(g, bar.x, bar.y - 11, 15, printing ? '#9A6512' : '#F5C26B');
-          });
-        });
-      }
-    };
-
     /* Horizontal only. A phone has no room for a value axis worth reading, so
        the hours are written at the end of each bar instead, in the series
        colour, with the data flag (where there is one) leading them. That also
@@ -1485,10 +1751,10 @@
           var ghosted = emphasis !== null && emphasis !== di;
           var meta = c.getDatasetMeta(di);
           meta.data.forEach(function (bar, bi) {
-            var m = state.range[bi];
-            if (!m) return;
+            var r = chartRows[bi];
+            if (!r) return;
             var x = bar.x + END_GAP;
-            if (flagFor(YEAR, m.month, CATS[di].key)) {
+            if (r.kind === 'month' && flagFor(YEAR, r.month, CATS[di].key)) {
               drawWarnIcon(g, x + 7, bar.y, 14,
                 ghosted ? GHOST_LINE : (printing ? '#9A6512' : '#F5C26B'));
               x += FLAG_W;
@@ -1497,11 +1763,65 @@
             g.font = '600 12.5px ' + font;
             g.textAlign = 'left';
             g.textBaseline = 'middle';
-            g.fillStyle = ghosted ? GHOST_LINE : (printing ? '#333333' : CATS[di].ink);
+            g.fillStyle = (ghosted || r.projected)
+              ? GHOST_LINE : (printing ? '#333333' : CATS[di].ink);
             g.fillText(fmtH(ds.data[bi]), x, bar.y);
             g.restore();
           });
         });
+      }
+    };
+
+    /* The estimated stretch of the year gets its own ground: a hairline where
+       tracked time stops and a diagonal texture over everything after it. The
+       texture is what the key under the chart names, which is why there is no
+       longer a word floating in the plot. */
+    var projGroundPattern = null;
+    function projGround(g) {
+      if (projGroundPattern) return projGroundPattern;
+      var c = document.createElement('canvas');
+      c.width = c.height = 9;
+      var x = c.getContext('2d');
+      x.strokeStyle = printing ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.11)';
+      x.lineWidth = 2;
+      x.beginPath();
+      x.moveTo(-2, 11); x.lineTo(11, -2);
+      x.moveTo(-2, 20); x.lineTo(20, -2);
+      x.moveTo(-11, 2); x.lineTo(2, -11);
+      x.stroke();
+      projGroundPattern = g.createPattern(c, 'repeat');
+      return projGroundPattern;
+    }
+
+    var projBoundary = {
+      id: 'projBoundary',
+      beforeDatasetsDraw: function (c) {
+        if (!chartProjection || chartProjection.from > 11) return;
+        var i = chartProjection.from;
+        if (i <= 0 || i >= chartRows.length) return;
+        var meta = c.getDatasetMeta(0);
+        var bar = meta.data[i], prev = meta.data[i - 1];
+        if (!bar || !prev) return;
+        var horiz = c.options.indexAxis === 'y';
+        var a = c.chartArea;
+        var g = c.ctx;
+        g.save();
+        g.fillStyle = projGround(g);
+        g.strokeStyle = printing ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.22)';
+        g.setLineDash([4, 4]);
+        g.lineWidth = 1;
+        g.beginPath();
+        if (horiz) {
+          var y = (bar.y + prev.y) / 2;
+          g.fillRect(a.left, y, a.right - a.left, a.bottom - y);
+          g.moveTo(a.left, y); g.lineTo(a.right, y);
+        } else {
+          var x = (bar.x + prev.x) / 2;
+          g.fillRect(x, a.top, a.right - x, a.bottom - a.top);
+          g.moveTo(x, a.top); g.lineTo(x, a.bottom);
+        }
+        g.stroke();
+        g.restore();
       }
     };
 
@@ -1514,48 +1834,175 @@
       return {
         type: 'line',
         label: 'Total',
-        data: state.range.map(function (m) { return m.total; }),
+        data: chartRows.map(function (r) { return r.total; }),
         borderColor: ink,
         backgroundColor: 'transparent',
         borderWidth: 2,
         borderDash: [5, 4],
+        /* Ghosted from the boundary onward: past it the line is an estimate too,
+           and should carry no more weight than the hollow bars under it. */
+        segment: {
+          borderColor: function (ctx) {
+            var i = ctx.p1DataIndex;
+            var r = chartRows[i];
+            return (r && r.projected) ? GHOST_LINE : undefined;
+          }
+        },
         tension: 0.32,
         pointRadius: 3.5,
         pointHoverRadius: 6,
-        pointBackgroundColor: ink,
-        pointBorderColor: ink,
+        pointBackgroundColor: pointColors(),
+        pointBorderColor: pointColors(),
         fill: false,
         // Lower order draws on top of the bars.
         order: 0
       };
     }
 
+    /* The legend's figures are the totals for whatever the chart is showing, so
+       dropping into a single month re-totals them to that month. Projected
+       months are never counted: they are not delivered hours. */
+    /* A projection in a client-facing report has to say what it is and where it
+       came from, in the same breath as the bars. Written as a key to the
+       textured ground rather than as a footnote, and built from the data on
+       every render: come August it reads Sep to Dec on its own. */
+    function updateChartNote() {
+      var el = document.getElementById('chartNote');
+      if (!el) return;
+      if (!chartProjection || chartProjection.from > 11) {
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+      }
+      var from = MONTH_ABBR[chartProjection.from], to = MONTH_ABBR[11];
+      var basis = chartProjection.basis === 'prior-year'
+        ? 'this year\u2019s monthly average so far, shaped by how each month ran in ' + (YEAR - 1)
+        : 'this year\u2019s monthly average so far';
+      el.innerHTML =
+        '<span class="key-swatch" aria-hidden="true"></span>' +
+        '<p class="key-text"><b>' + from + '\u2013' + to + ' are projected, not tracked.</b> ' +
+        'The shaded stretch of the chart is an estimate from ' + basis + '. ' +
+        'The month in progress is still filling up, so it is left out of that average. ' +
+        'Projected months are drawn as outlines, and are not counted in the totals above.</p>';
+      el.hidden = false;
+    }
+
+    /* The legend's figures are tracked hours only: the projected months are an
+       estimate and are never summed into them. */
+    function updateLegendTotals() {
+      var t = totals();
+      document.querySelectorAll('#legend .legend-item').forEach(function (b) {
+        var c = CATS[parseInt(b.dataset.i)];
+        var v = b.querySelector('.val');
+        if (!v) return;
+        v.textContent = fmtH(c ? t[c.hours] : t.total);
+      });
+    }
+
+    /* The chart and the table are two views of one set of months, so pointing at
+       a month in either dims every other month in both. The chart side is
+       redrawn through the existing ghost colours; the table side is a class,
+       so it costs nothing while nothing is hovered. */
+    var hoverMonth = null;
+    function linkHover(month, source) {
+      if (hoverMonth === month) return;
+      hoverMonth = month;
+      document.querySelectorAll('.table tbody tr.mrow').forEach(function (r) {
+        r.classList.toggle('is-dim', month !== null && parseInt(r.dataset.m) !== month);
+      });
+      var foot = document.querySelector('.table tfoot');
+      if (foot) foot.classList.toggle('is-dim', month !== null);
+      // A hover that started on the chart has already moved the bars.
+      if (source !== 'chart') paintBars();
+    }
+
+    /* Re-colours the bars in place. Cheaper than a redraw and keeps the tooltip
+       and any running animation intact. */
+    function paintBars() {
+      if (!chart) return;
+      chart.data.datasets.forEach(function (ds, i) {
+        if (isTotalSeries(i)) {
+          var ghost = hoverMonth !== null || emphasis !== null;
+          ds.borderColor = ghost ? GHOST_LINE : totalInk();
+          ds.pointBackgroundColor = pointColors();
+          ds.pointBorderColor = pointColors();
+          return;
+        }
+        ds.backgroundColor = barColors(i, 'fill');
+        ds.borderColor = barColors(i, 'line');
+      });
+      chart.update('none');
+    }
+    function pointColors() {
+      var ink = totalInk();
+      return chartRows.map(function (r) {
+        if (r.projected) return GHOST_LINE;
+        if (emphasis !== null) return GHOST_LINE;
+        if (hoverMonth !== null && r.month !== hoverMonth) return GHOST_LINE;
+        return ink;
+      });
+    }
+
+    /* One row per bar group, whatever the view is showing. Everything
+       downstream (labels, datasets, flag markers, tooltips) reads this rather
+       than reaching into state.range, so a view is a data question and not a
+       second rendering path. */
+    var chartRows = [];
+    function buildRows() {
+      var p = projectRest();
+      chartProjection = p;
+      return state.months.map(function (m) {
+        var projected = m.month >= p.from;
+        var c = projected ? (p.creative[m.month] || 0) : m.creative;
+        var o = projected ? (p.nonCreative[m.month] || 0) : m.nonCreative;
+        return { kind: 'month', month: m.month, projected: projected,
+                 creative: c, nonCreative: o, total: c + o };
+      });
+    }
+    var chartProjection = null;
+
+    function rowLabel(r) { return MONTH_ABBR[r.month]; }
+    function rowTitle(r) {
+      return MONTH_NAMES[r.month] + ' ' + YEAR + (r.projected ? ' · projected' : '');
+    }
+
     function drawChart() {
       var el = document.getElementById('overviewChart');
       if (!el || typeof Chart === 'undefined') return;
       emphasis = null;
+      /* Switching views redraws onto the same canvas, which Chart.js refuses
+         until the instance holding it is released. */
+      if (chart) { chart.destroy(); chart = null; }
 
       /* Seven months of paired vertical bars on a 390px screen leaves each bar
          about 14px wide, with the figures unreadable and the flag markers
          floating in space. Rotated, every month gets a full row: the bars are
          thick, the month labels are horizontal, and the hours sit at the end of
          each bar. Height grows with the range so bar thickness is constant. */
-      var horiz = isNarrow();
+      chartRows = buildRows();
+      var day = view.mode === 'day';
+      /* The rotated layout exists so seven fat month rows beat seven hair-thin
+         columns on a phone. A month of days is 28 to 31 rows, which would be a
+         metre of scrolling, so the day view stays vertical at every width. */
+      var horiz = isNarrow() && !day;
       var wrap = el.parentNode;
       // Height of the floating legend, reserved at the top of the plot area so
       // the tallest bar or the total line can never run underneath it.
-      var LEGEND_H = 78;
-      wrap.style.height = horiz ? (state.range.length * 62 + 30 + LEGEND_H) + 'px' : '';
+      var LEGEND_H = window.matchMedia('(max-width: 700px)').matches ? 0 : 78;
+      wrap.style.height = horiz ? (chartRows.length * 52 + 26 + LEGEND_H) + 'px' : '';
 
       /* The widest bar and whether it carries a flag, which together size the
          right-hand gutter the end labels are written into. */
       var peak = 0, peakFlagged = false;
-      state.range.forEach(function (m) {
+      chartRows.forEach(function (r) {
         CATS.forEach(function (c) {
-          if (m[c.hours] > peak) { peak = m[c.hours]; peakFlagged = !!flagFor(YEAR, m.month, c.key); }
+          if (r[c.hours] > peak) {
+            peak = r[c.hours];
+            peakFlagged = r.kind === 'month' && !!flagFor(YEAR, r.month, c.key);
+          }
         });
       });
-      var gutter = Math.ceil(fmtH(peak).length * 7.4) + END_GAP + 10 + (peakFlagged ? FLAG_W : 0);
+      var gutter = Math.ceil(fmtH(peak).length * 8.1) + END_GAP + 12 + (peakFlagged ? FLAG_W : 0);
 
       /* A bar squared off against nothing reads as cropped rather than as
          finished, so the plot is given a floor: gridlines heavy enough to
@@ -1576,23 +2023,27 @@
                  grid: { display: false }, border: { display: true, color: AXIS, width: 1 } }
           }
         : {
-            x: { ticks: { autoSkip: false, maxRotation: 0, font: { size: 13 }, color: TICK },
-                 grid: { display: false }, border: { display: true, color: AXIS, width: 1 } },
+            /* A month of days will not carry 31 labels at this width, so the day
+               axis thins them out rather than rotating them to fit. */
+            x: { ticks: { autoSkip: day, maxTicksLimit: day ? 10 : undefined,
+                          maxRotation: 0, font: { size: 13 }, color: TICK },
+                 grid: { display: false }, border: { display: true, color: AXIS, width: 1 },
+                 stacked: day },
             y: { ticks: { font: { size: 12.5 }, color: 'rgba(255,255,255,0.55)',
                           callback: function (v) { return v + 'h'; }, padding: 6 },
                  grid: { color: GRID }, border: { display: false },
-                 beginAtZero: true, grace: '10%' }
+                 beginAtZero: true, grace: '10%', stacked: day }
           };
 
       chart = new Chart(el, {
         type: 'bar',
-        plugins: [flagMarkers, barEndLabels],
+        plugins: [barEndLabels, projBoundary],
         data: {
-          labels: state.range.map(function (m) { return MONTH_ABBR[m.month]; }),
+          labels: chartRows.map(rowLabel),
           datasets: CATS.map(function (c, i) {
             return {
               label: c.label,
-              data: state.range.map(function (m) { return m[c.hours]; }),
+              data: chartRows.map(function (r) { return r[c.hours]; }),
               backgroundColor: barColors(i, 'fill'),
               borderColor: barColors(i, 'line'),
               borderWidth: 1.5,
@@ -1600,11 +2051,13 @@
               // Square off the axis end, round the value end.
               borderSkipped: horiz ? 'left' : 'bottom',
               hidden: !!state.hidden[i],
-              categoryPercentage: horiz ? 0.74 : 0.66,
-              barPercentage: horiz ? 0.9 : 0.86,
+              categoryPercentage: horiz ? 0.74 : (day ? 0.9 : 0.66),
+              barPercentage: horiz ? 0.9 : (day ? 0.92 : 0.86),
+              borderRadius: day ? 2 : 4,
+              stack: day ? 'd' : undefined,
               order: 1
             };
-          }).concat(horiz ? [] : [totalLineDataset()])
+          }).concat(horiz || day ? [] : [totalLineDataset()])
         },
         options: {
           indexAxis: horiz ? 'y' : 'x',
@@ -1618,20 +2071,22 @@
           /* Desktop gets the note on hover via the tooltip, but a tap on a touch
              device raises no tooltip at all, so a flagged bar is also clickable
              and opens the same modal the flag buttons use. */
+          /* A bar is a month, and the thing a reader wants after pointing at one
+             is that month's tasks. Clicking one opens its row below and closes
+             whichever was open. Projected months have nothing to open. */
           onClick: function (evt, elements) {
             if (!elements.length) return;
-            var el = elements[0];
-            var m = state.range[el.index];
-            if (!m || isTotalSeries(el.datasetIndex)) return;
-            var f = flagFor(YEAR, m.month, CATS[el.datasetIndex].key);
-            if (f) openFlagModal(f.id);
+            var r = chartRows[elements[0].index];
+            // A day belongs to the month being viewed, so it opens the same row.
+            if (!r || r.projected) return;
+            openMonth(r.month, true);
           },
           onHover: function (evt, elements) {
-            var over = elements.length && (function () {
-              var e = elements[0], m = state.range[e.index];
-              return m && !isTotalSeries(e.datasetIndex) && flagFor(YEAR, m.month, CATS[e.datasetIndex].key);
-            })();
-            evt.native.target.style.cursor = over ? 'pointer' : 'default';
+            var r = elements.length ? chartRows[elements[0].index] : null;
+            var live = !!(r && r.kind === 'month' && !r.projected);
+            evt.native.target.style.cursor = live ? 'pointer' : 'default';
+            // Pointing at a bar dims every month but that one, in both places.
+            linkHover(live ? r.month : null, 'chart');
           },
           plugins: {
             legend: { display: false },
@@ -1648,8 +2103,8 @@
               boxWidth: 9, boxHeight: 9, boxPadding: 5, usePointStyle: false,
               callbacks: {
                 title: function (items) {
-                  var m = state.range[items[0].dataIndex];
-                  return MONTH_NAMES[m.month] + ' ' + YEAR;
+                  var r = chartRows[items[0].dataIndex];
+                  return r ? rowTitle(r) : '';
                 },
                 label: function (c) {
                   // The value lives on whichever axis is not the category one.
@@ -1661,11 +2116,14 @@
                   return txt;
                 },
                 footer: function (items) {
+                  var r = chartRows[items[0].dataIndex];
+                  if (r && r.projected) return 'Estimate, not tracked time.';
                   var notes = [];
                   items.forEach(function (it) {
                     if (isTotalSeries(it.datasetIndex)) return;
-                    var m = state.range[it.dataIndex];
-                    var f = flagFor(YEAR, m.month, CATS[it.datasetIndex].key);
+                    var row = chartRows[it.dataIndex];
+                    if (!row || row.kind !== 'month') return;
+                    var f = flagFor(YEAR, row.month, CATS[it.datasetIndex].key);
                     if (f && notes.indexOf(f.label) === -1) notes.push(f.label);
                   });
                   return notes.length ? '⚠ ' + notes.join(', ') + '. Select for detail.' : '';
@@ -1699,53 +2157,62 @@
        the page has one small moving part. Every figure is computed from the
        real total, so they stay true as the number grows.
        ═══════════════════════════════════════════════════════════════ */
+    /* Two kinds of emphasis, and only two: the figure, which carries the same
+       animated gradient as the headline total so the two read as the same kind
+       of number, and the subject being compared against, in plain bold. */
+    function ffN(s) { return '<span class="ff-n grad num">' + s + '</span>'; }
+    function ffS(s) { return '<b class="ff-s">' + s + '</b>'; }
+
     var FUN_FACTS = [
-      function (h) {
-        return 'That is <b>' + fmt1(h / 24) + ' full days</b> of round-the-clock work, without stopping to sleep.';
-      },
-      function (h) {
-        return 'Long enough to watch the extended Lord of the Rings trilogy <b>' + fmt1(h / 11.4) + ' times</b> back to back.';
-      },
-      function (h) {
-        return 'The International Space Station would circle the Earth <b>' + Math.round(h / 1.533) + ' times</b> in that span.';
-      },
-      function (h) {
-        return 'Enough time to fly <b>' + fmt1(h / 7.5) + ' round trips</b> between New York and London.';
-      },
-      function (h) {
-        return 'A three-toed sloth, moving flat out, would cover <b>' + fmt1(h * 0.15) + ' miles</b>.';
-      },
-      function (h) {
-        return 'That is <b>' + Math.round(h / 1.5) + ' sleep cycles</b>, if anyone were getting any.';
-      },
-      function (h) {
-        return 'Sunlight takes 8 minutes 20 seconds to reach us. This is <b>' + Math.round(h * 60 / 8.33) + ' of those journeys</b>.';
-      },
-      function (h) {
-        return 'Roughly <b>' + Math.round(h / 2.01) + ' marathons</b> at world-record pace.';
-      },
-      function (h) {
-        return 'You could listen to every Beatles studio album <b>' + fmt1(h / 10.2) + ' times</b> through.';
-      },
-      function (h) {
-        return 'About <b>' + fmt1(h / 8) + ' standard working days</b>, or ' + fmt1(h / 40) + ' working weeks.';
-      },
-      function (h) {
-        return 'A hummingbird would beat its wings about <b>' + Math.round(h * 3600 * 53 / 1e6) + ' million times</b>.';
-      },
-      function (h) {
-        return 'Long enough to boil <b>' + Math.round(h * 60 / 4) + ' kettles</b>, one after another.';
-      }
+      { line: function (h) {
+        return 'That is ' + ffN(fmt1(h / 24) + ' full days') + ' of ' + ffS('round-the-clock work') + ', without stopping to sleep.'; } },
+      { line: function (h) {
+        return 'Long enough to watch the extended ' + ffS('Lord of the Rings') + ' trilogy ' + ffN(fmt1(h / 11.4) + ' times') + ' back to back.'; } },
+      { line: function (h) {
+        return 'The ' + ffS('International Space Station') + ' would circle the Earth ' + ffN(Math.round(h / 1.533) + ' times') + ' in that span.'; } },
+      { line: function (h) {
+        return 'Enough time to fly ' + ffN(fmt1(h / 7.5) + ' round trips') + ' between ' + ffS('New York and London') + '.'; } },
+      { line: function (h) {
+        return 'A ' + ffS('three-toed sloth') + ', moving flat out, would cover ' + ffN(fmt1(h * 0.15) + ' miles') + '.'; } },
+      { line: function (h) {
+        return 'That is ' + ffN(Math.round(h / 1.5) + ' sleep cycles') + ' worth of ' + ffS('sleep') + ', if anyone were getting any.'; } },
+      { line: function (h) {
+        return ffS('Sunlight') + ' takes 8 minutes 20 seconds to reach us. This is ' + ffN(Math.round(h * 60 / 8.33) + ' of those journeys') + '.'; } },
+      { line: function (h) {
+        return 'Roughly ' + ffN(Math.round(h / 2.01) + ' marathons') + ' at ' + ffS('world-record pace') + '.'; } },
+      { line: function (h) {
+        return 'You could listen to every ' + ffS('Beatles') + ' studio album ' + ffN(fmt1(h / 10.2) + ' times') + ' through.'; } },
+      // One gradient figure per fact: two of them side by side read as a colour
+      // effect rather than as the number carrying the point.
+      { line: function (h) {
+        return 'About ' + ffN(fmt1(h / 8) + ' standard working days') + ', or ' + fmt1(h / 40) + ' ' + ffS('working weeks') + '.'; } },
+      { line: function (h) {
+        return 'A ' + ffS('hummingbird') + ' would beat its wings about ' + ffN(Math.round(h * 3600 * 53 / 1e6) + ' million times') + '.'; } },
+      { line: function (h) {
+        return 'Long enough to put the ' + ffS('kettle') + ' on ' + ffN(Math.round(h * 60 / 4) + ' times') + ', one after another.'; } }
     ];
     function fmt1(n) {
       return (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 });
     }
 
-    var factTimer = null, factIdx = 0, factOrder = [];
+    /* Every fact is rendered at once, stacked in a single grid cell, with only
+       one visible. The block is therefore always as tall as the longest fact it
+       could ever show, at any width, and rotating cannot move anything under
+       it. The old approach reserved a height per breakpoint, which had to be
+       re-measured whenever the copy or the type size changed. */
+    function factStackHtml(totalHours) {
+      return '<span class="ff-stack">' + FUN_FACTS.map(function (f, i) {
+        return '<span class="ff-line" data-i="' + i + '" data-on="false" aria-hidden="true">' +
+          f.line(totalHours) + '</span>';
+      }).join('') + '</span>';
+    }
+
+    var factTimer = null, factIdx = 0, factOrder = [], factHeld = false;
+    var FACT_EVERY = 9000;
+
     function startFunFacts(totalHours) {
-      var el = document.getElementById('funfact');
-      if (!el || !(totalHours > 0)) return;
-      if (factTimer) clearInterval(factTimer);
+      var lines = document.querySelectorAll('.ff-line');
+      if (!lines.length || !(totalHours > 0)) return;
 
       // Shuffled once per render so a reload does not always open the same way.
       factOrder = FUN_FACTS.map(function (_, i) { return i; });
@@ -1754,27 +2221,57 @@
         var tmp = factOrder[i]; factOrder[i] = factOrder[j]; factOrder[j] = tmp;
       }
       factIdx = 0;
-      el.innerHTML = FUN_FACTS[factOrder[0]](totalHours);
+      showFact(factOrder[0]);
+      resumeFacts();
 
-      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      factTimer = setInterval(function () {
-        factIdx = (factIdx + 1) % factOrder.length;
-        var next = FUN_FACTS[factOrder[factIdx]](totalHours);
-        if (reduce) { el.innerHTML = next; return; }
-        el.dataset.out = 'true';
-        setTimeout(function () {
-          el.innerHTML = next;
-          el.dataset.out = 'false';
-        }, 600);
-      }, 9000);
+      /* Reading at your own pace beats waiting for the carousel, so the arrows
+         step it and any interaction with the panel holds the timer. It restarts
+         on the way out, so the line still turns over while the reader is
+         somewhere else on the page. */
+      var panel = document.querySelector('.funfact');
+      if (!panel) return;
+      panel.querySelectorAll('[data-fact]').forEach(function (b) {
+        b.addEventListener('click', function () { stepFact(parseInt(b.dataset.fact)); });
+      });
+      ['mouseenter', 'focusin'].forEach(function (e) {
+        panel.addEventListener(e, function () { factHeld = true; pauseFacts(); });
+      });
+      ['mouseleave', 'focusout'].forEach(function (e) {
+        panel.addEventListener(e, function () { factHeld = false; resumeFacts(); });
+      });
+    }
+
+    function pauseFacts() { if (factTimer) { clearInterval(factTimer); factTimer = null; } }
+    function resumeFacts() {
+      pauseFacts();
+      if (factHeld || factOrder.length < 2) return;
+      factTimer = setInterval(function () { stepFact(1); }, FACT_EVERY);
+    }
+    function stepFact(delta) {
+      if (!factOrder.length) return;
+      factIdx = (factIdx + delta + factOrder.length) % factOrder.length;
+      showFact(factOrder[factIdx]);
+      // A manual step restarts the clock, so the next one is not cut short.
+      if (!factHeld) resumeFacts();
+    }
+
+    function showFact(idx) {
+      document.querySelectorAll('.ff-line').forEach(function (el) {
+        var on = parseInt(el.dataset.i) === idx;
+        el.dataset.on = on ? 'true' : 'false';
+        // Hidden lines are real text in the DOM, so they are taken out of the
+        // accessibility tree rather than left to be read as one long run-on.
+        el.setAttribute('aria-hidden', on ? 'false' : 'true');
+      });
     }
 
     /* ═══════════════════════════════════════════════════════════════
        Modal
        ═══════════════════════════════════════════════════════════════ */
     var lastFocus = null;
-    function openModal(titleHtml, bodyHtml) {
+    function openModal(titleHtml, bodyHtml, hazard) {
       lastFocus = document.activeElement;
+      document.querySelector('.modal').classList.toggle('hazard', !!hazard);
       document.getElementById('modalTitle').innerHTML = titleHtml;
       document.getElementById('modalBody').innerHTML = bodyHtml;
       document.getElementById('modalBackdrop').hidden = false;
@@ -1793,7 +2290,7 @@
         '<p><b>' + esc(monthSpanLabel(flag)) + '</b></p><p>' + esc(flag.detail) + '</p>' +
         '<p>Line items for these months link to ClickUp where a task exists. Some of the ' +
         'missing time was never logged against a task at all, which is part of what we are ' +
-        'reconstructing.</p>');
+        'reconstructing.</p>', true);
     }
 
     function wireModal() {
@@ -1902,9 +2399,14 @@
     function wireChrome() {
       document.getElementById('refreshBtn').innerHTML = ICONS.refresh;
       document.getElementById('refreshBtn').addEventListener('click', function () { load(true); });
+    }
 
+    /* The export control lives inside the section it exports, which is rebuilt
+       on every render, so it is wired per render rather than once at boot. */
+    function wireExport() {
       var menu = document.getElementById('exportMenu');
       var btn = document.getElementById('exportBtn');
+      if (!menu || !btn) return;
       // The qualifier is what makes this read as "this page, as it stands", so
       // it is only dropped where it will not fit beside the year pills.
       btn.innerHTML = ICONS.download + 'Export<span class="x-long"> this report</span>';
