@@ -66,6 +66,28 @@
       --badge-size: 12.5px;
       --badge-pad: 4px 10px;
       --badge-weight: 700;
+
+      /* A section heading and the series figures that float beside it are the
+         two biggest things in any section, and picking their sizes separately
+         is how they ended up matching. They are tied to the DS heading ramp
+         instead, one rung apart, so the heading outranks the figures by
+         construction and stays that way if the ramp ever moves.
+
+         Each carries a fallback because the ramp is served from
+         brand.foundingcreative.com: a colour or a radius failing to arrive is a
+         blemish, a font size failing to arrive collapses a heading to body
+         copy. */
+      --t-section: var(--h5, 32px);
+      --t-figure: var(--h6, 26px);
+    }
+
+    /* The DS ramp is a desktop ramp with no step of its own, so both rungs
+       drop together here rather than each being nudged where it is used. */
+    @media (max-width: 640px) {
+      :root {
+        --t-section: var(--h6, 26px);
+        --t-figure: var(--text-lg, 20px);
+      }
     }
 
     /* One badge geometry, shared by every chip and tag in the report. */
@@ -254,7 +276,10 @@
     .sec { margin-bottom: 92px; }
     .sec:last-child { margin-bottom: 0; }
     .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
-    .sec-title { font-family: var(--font-display); font-size: 25px; font-weight: 600; margin: 0; }
+    .sec-title {
+      font-family: var(--font-display); font-size: var(--t-section); font-weight: 600;
+      line-height: 1.2; letter-spacing: var(--tracking-display); margin: 0;
+    }
     .sec-note { font-size: 14px; color: var(--dim-2); }
     .eyebrow {
       font-size: 12px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
@@ -483,26 +508,42 @@
     .legend-item > .swatch { align-self: stretch; height: auto; width: 9px; border-radius: var(--r-full); }
     .lg-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
     .legend-item:hover, .legend-item:focus-visible { background: var(--surface); border-color: var(--line); outline: none; }
-    /* The total is a key, not a control. */
+    /* The total can be pointed at like the other two, and isolates the total
+       line the same way, but it cannot be switched off: it is drawn from the
+       other two, so there is nothing to hide it from. Hence the hover
+       treatment of a series with the cursor of a label. */
     .legend-item.is-key { cursor: default; }
-    .legend-item.is-key:hover { background: transparent; border-color: transparent; }
-    /* The total is a dashed line, so its rail is dashed down its length. */
+    /* The total is a dashed line, so its rail is dashed down its length.
+
+       Dashed from both ends rather than from the top down. The rail stretches
+       to whatever the label and figure beside it come to, so a single gradient
+       running top to bottom lands its last gap wherever the height happens to
+       fall, and a gap over a rounded end erases the cap: the rail reads as cut
+       off square. Each half repeats away from its own edge instead, which pins
+       a dash to the top and the bottom and leaves the two curves drawn. The
+       halves meet in the middle, where a dash landing slightly long is the one
+       place on a dashed rail nobody reads as a mistake. */
     .legend-item > .swatch.dash {
-      background-image: repeating-linear-gradient(to bottom,
-        var(--dim) 0 6px, transparent 6px 11px);
+      background-image:
+        repeating-linear-gradient(to bottom, var(--dim) 0 6px, transparent 6px 11px),
+        repeating-linear-gradient(to top, var(--dim) 0 6px, transparent 6px 11px);
+      background-size: 100% 50%;
+      background-position: left top, left bottom;
+      background-repeat: no-repeat;
     }
     .legend-item .lg-name {
       font-size: 14px; font-weight: 600; color: var(--dim); transition: color .14s ease;
     }
     .legend-item:hover .lg-name, .legend-item:focus-visible .lg-name { color: var(--white); }
+    /* Flush left with the label above it: the figure was indented past the
+       eyebrow, which read as two loose elements rather than one stacked pair. */
     .legend-item .val {
-      font-family: var(--font-display); font-size: 25px; font-weight: 600; line-height: 1.05;
-      letter-spacing: -0.01em; color: var(--white); font-variant-numeric: tabular-nums;
-      padding-left: 19px;
+      font-family: var(--font-display); font-size: var(--t-figure); font-weight: 600;
+      line-height: 1.05; letter-spacing: var(--tracking-display); color: var(--white);
+      font-variant-numeric: tabular-nums;
     }
     .legend-item[data-off="true"] { opacity: .38; }
     .legend-item[data-off="true"] .swatch { background: var(--dim-2) !important; }
-    @media (max-width: 560px) { .legend-item .val { font-size: 21px; } }
 
     /* Flag button: opens the shared modal. Bare icon by default so a table cell
        is not squeezed by a box; the labelled variant takes the badge geometry. */
@@ -555,8 +596,13 @@
     /* The same rail the series use, filled with the same texture the chart lays
        over its projected months, on the same slope. */
     .chart-key { align-items: stretch; }
+    /* The hairline is what makes this read as a swatch rather than as a stray
+       piece of texture: it draws the edge of the sample, the same way the plot
+       draws an edge where tracked time stops. Sized so the field inside the
+       border is the 9px the series rails are. */
     .key-swatch {
-      flex: none; width: 9px; border-radius: var(--r-full);
+      flex: none; width: 11px; border-radius: var(--r-full);
+      border: 1px solid var(--line);
       background-color: rgba(255, 255, 255, 0.05);
       background-image: repeating-linear-gradient(-45deg,
         transparent 0 4px, rgba(255, 255, 255, 0.30) 4px 6px);
@@ -713,7 +759,6 @@
       .funfact { font-size: 21px; padding-top: 16px; }
 
       .sec { margin-bottom: 62px; }
-      .sec-title { font-size: 22px; }
     }
 
     /* ── Month detail, inside the summary table's accordion ──────────
@@ -1016,11 +1061,21 @@
        available, each future month is then shaped by how that month compared
        with its own year's mean, which is what carries a seasonal pattern like a
        quiet August. The factor is clamped, so one freak month last year cannot
-       throw a forecast twice as far as anything ever observed. */
+       throw a forecast twice as far as anything ever observed.
+
+       Range: a single line of estimate reads as a promise. The spread of the
+       months already tracked is the only honest measure of how far a future
+       month might land from the average, so it becomes a high/low band around
+       each projected total: the coefficient of variation of the completed
+       months, floored so a short or unusually even history still admits some
+       uncertainty, and capped so a single wild month does not open the band
+       wider than it can mean anything. */
+    var SPREAD_MIN = 0.12, SPREAD_MAX = 0.45;
     function projectRest() {
       var lastActual = lastActualMonth();
       var lastComplete = lastCompleteMonth();
-      var out = { from: lastActual + 1, creative: [], nonCreative: [], basis: 'none' };
+      var out = { from: lastActual + 1, creative: [], nonCreative: [],
+                  low: [], high: [], spread: 0, basis: 'none' };
       if (out.from > 11) return out;
 
       var done = state.months.filter(function (m) {
@@ -1047,10 +1102,24 @@
         }
       }
 
+      /* How far a tracked month has typically sat from the average, as a
+         fraction of it. Population spread, not a sample estimate: these are all
+         the months there are, not a draw from a larger set. */
+      var meanT = meanC + meanO;
+      var sd = Math.sqrt(done.reduce(function (a, m) {
+        return a + (m.total - meanT) * (m.total - meanT);
+      }, 0) / done.length);
+      out.spread = meanT > 0
+        ? Math.min(SPREAD_MAX, Math.max(SPREAD_MIN, sd / meanT))
+        : SPREAD_MIN;
+
       for (var i = out.from; i <= 11; i++) {
         var f = shape ? shape[i] : 1;
         out.creative[i] = meanC * f;
         out.nonCreative[i] = meanO * f;
+        var mid = out.creative[i] + out.nonCreative[i];
+        out.low[i] = Math.max(0, mid * (1 - out.spread));
+        out.high[i] = mid * (1 + out.spread);
       }
       return out;
     }
@@ -1665,6 +1734,16 @@
     }
 
     function wireLegend() {
+      /* The total is the dataset after the categories, so pointing at its key
+         isolates it exactly the way pointing at a series does: everything that
+         is not it drops back. It has no click, so no focus handling either. */
+      var key = document.querySelector('#legend .legend-item.is-key');
+      if (key) {
+        key.addEventListener('mouseenter', function () {
+          if (chartHasTotal) applyEmphasis(CATS.length);
+        });
+        key.addEventListener('mouseleave', function () { applyEmphasis(null); });
+      }
       document.querySelectorAll('#legend .legend-item:not(.is-key)').forEach(function (b) {
         var i = parseInt(b.dataset.i);
         if (isNaN(i)) return;
@@ -1825,6 +1904,117 @@
       }
     };
 
+    /* Curvature for the total line and for everything drawn alongside it. Set
+       high enough that the projected half reads as a soft sweep rather than as
+       a set of ruled segments: an estimate should not look surveyed. */
+    var LINE_TENSION = 0.42;
+
+    /* Chart.js keeps its spline maths to itself, so the band drawn around the
+       total line would be a polygon laid over a curve, disagreeing with it
+       between every pair of months. This is the same calculation Chart.js runs
+       on the line (helpers.splineCurve): each point's control points sit along
+       the chord between its two neighbours, weighted by how far away each
+       neighbour is. An endpoint stands in as its own missing neighbour, which
+       is what leaves the first and last spans slack rather than straight. */
+    function splineCtrl(a, b, c, t) {
+      if (!a) a = b;
+      if (!c) c = b;
+      var d01 = Math.hypot(b.x - a.x, b.y - a.y);
+      var d12 = Math.hypot(c.x - b.x, c.y - b.y);
+      var sum = d01 + d12;
+      if (!sum) return { prev: b, next: b };
+      var fa = t * d01 / sum, fb = t * d12 / sum;
+      return {
+        prev: { x: b.x - fa * (c.x - a.x), y: b.y - fa * (c.y - a.y) },
+        next: { x: b.x + fb * (c.x - a.x), y: b.y + fb * (c.y - a.y) }
+      };
+    }
+    /* Appends a curve through `pts` to the open path. `join` continues from
+       wherever the path already is, which is what the filled band needs when it
+       turns the corner at the far end and comes back along its other edge.
+
+       Control points are held inside the plot, as Chart.js holds the line's:
+       a steep last month can throw one past the top of the frame, and the band
+       would billow out over the axis rather than following the line. */
+    function curveThrough(g, pts, t, area, join) {
+      if (!pts.length) return;
+      var clamp = function (v, lo, hi) { return Math.min(Math.max(v, lo), hi); };
+      var hold = function (p) {
+        return area
+          ? { x: clamp(p.x, area.left, area.right), y: clamp(p.y, area.top, area.bottom) }
+          : p;
+      };
+      if (join) g.lineTo(pts[0].x, pts[0].y);
+      else g.moveTo(pts[0].x, pts[0].y);
+      for (var i = 0; i < pts.length - 1; i++) {
+        var out = hold(splineCtrl(pts[i - 1], pts[i], pts[i + 1], t).next);
+        var into = hold(splineCtrl(pts[i], pts[i + 1], pts[i + 2], t).prev);
+        g.bezierCurveTo(out.x, out.y, into.x, into.y, pts[i + 1].x, pts[i + 1].y);
+      }
+    }
+
+    /* The high/low band, drawn as a cone opening out of the last tracked total.
+       The texture says "this half of the chart is estimated"; the band says how
+       loosely, which is the part a single projected line cannot express. It
+       hangs off the total line, so it is drawn only in the layout that has one.
+
+       Anchored at the last tracked month with zero width, so it grows out of a
+       figure the reader can check rather than appearing from nowhere. */
+    var projBand = {
+      id: 'projBand',
+      beforeDatasetsDraw: function (c) {
+        if (c.options.indexAxis === 'y') return;
+        var p = chartProjection;
+        if (!p || p.from > 11 || !p.spread) return;
+        var meta = c.getDatasetMeta(CATS.length);
+        if (!meta || !meta.data || !meta.data.length) return;
+        var val = c.scales.y;
+        if (!val) return;
+
+        var pts = [];
+        for (var i = Math.max(0, p.from - 1); i < chartRows.length; i++) {
+          var el = meta.data[i], r = chartRows[i];
+          if (!el || !r) continue;
+          var lo = r.projected ? p.low[r.month] : r.total;
+          var hi = r.projected ? p.high[r.month] : r.total;
+          if (lo == null || hi == null) continue;
+          pts.push({ x: el.x, lo: val.getPixelForValue(lo), hi: val.getPixelForValue(hi) });
+        }
+        if (pts.length < 2) return;
+
+        // Isolating a series pushes the band back with the total line it belongs
+        // to, so the emphasis reads as one move rather than the band hanging on.
+        var faded = hoverMonth !== null || (emphasis !== null && emphasis !== CATS.length);
+        var g = c.ctx;
+        var hiPts = pts.map(function (pt) { return { x: pt.x, y: pt.hi }; });
+        var loPts = pts.map(function (pt) { return { x: pt.x, y: pt.lo }; });
+        g.save();
+        // Out along the top edge, back along the bottom, both on the same
+        // curve the total line runs down the middle of.
+        g.beginPath();
+        curveThrough(g, hiPts, LINE_TENSION, c.chartArea, false);
+        curveThrough(g, loPts.slice().reverse(), LINE_TENSION, c.chartArea, true);
+        g.closePath();
+        g.fillStyle = printing
+          ? 'rgba(0,0,0,0.05)'
+          : 'rgba(255,255,255,' + (faded ? 0.028 : 0.06) + ')';
+        g.fill();
+
+        // Edges, dashed like the total line they bracket.
+        g.setLineDash([4, 4]);
+        g.lineWidth = 1;
+        g.strokeStyle = printing
+          ? 'rgba(0,0,0,0.26)'
+          : 'rgba(255,255,255,' + (faded ? 0.11 : 0.24) + ')';
+        [hiPts, loPts].forEach(function (edge) {
+          g.beginPath();
+          curveThrough(g, edge, LINE_TENSION, c.chartArea, false);
+          g.stroke();
+        });
+        g.restore();
+      }
+    };
+
     /* Total hours per month, drawn over the paired bars so the shape of the
        month-to-month workload reads without adding the two bars up by eye.
        Vertical layout only: the horizontal one pins its value axis to the
@@ -1848,7 +2038,7 @@
             return (r && r.projected) ? GHOST_LINE : undefined;
           }
         },
-        tension: 0.32,
+        tension: LINE_TENSION,
         pointRadius: 3.5,
         pointHoverRadius: 6,
         pointBackgroundColor: pointColors(),
@@ -1864,26 +2054,38 @@
        months are never counted: they are not delivered hours. */
     /* A projection in a client-facing report has to say what it is and where it
        came from, in the same breath as the bars. Written as a key to the
-       textured ground rather than as a footnote, and built from the data on
-       every render: come August it reads Sep to Dec on its own. */
+       textured ground rather than as a footnote.
+
+       It no longer names the months it covers: the chart already shows which
+       ones are textured, and repeating them spent the opening sentence on the
+       one thing the reader can see. What they cannot see is the arithmetic, so
+       the key states that instead: the basis, the seasonal adjustment, and how
+       wide the band is. */
     function updateChartNote() {
       var el = document.getElementById('chartNote');
+      var p = chartProjection;
       if (!el) return;
-      if (!chartProjection || chartProjection.from > 11) {
+      if (!p || p.from > 11 || p.basis === 'none') {
         el.hidden = true;
         el.innerHTML = '';
         return;
       }
-      var from = MONTH_ABBR[chartProjection.from], to = MONTH_ABBR[11];
-      var basis = chartProjection.basis === 'prior-year'
-        ? 'this year\u2019s monthly average so far, shaped by how each month ran in ' + (YEAR - 1)
-        : 'this year\u2019s monthly average so far';
+      var h = '<b>The rest of the year is an estimate, not tracked time.</b> ' +
+        'Each remaining month is set to the average of the months tracked so far';
+      h += p.basis === 'prior-year'
+        ? ', then adjusted for how that month ran in ' + (YEAR - 1) + '. '
+        : '. ';
+      if (chartHasTotal && p.spread) {
+        h += 'The band around the total line is that estimate give or take ' +
+             Math.round(p.spread * 100) + '%, which is how far a tracked month has ' +
+             'typically sat from the average. ';
+      }
+      h += 'The month in progress is still filling up, so it is left out of that ' +
+           'average. Estimated months are drawn as outlines, and are never counted ' +
+           'in the totals above.';
       el.innerHTML =
         '<span class="key-swatch" aria-hidden="true"></span>' +
-        '<p class="key-text"><b>' + from + '\u2013' + to + ' are projected, not tracked.</b> ' +
-        'The shaded stretch of the chart is an estimate from ' + basis + '. ' +
-        'The month in progress is still filling up, so it is left out of that average. ' +
-        'Projected months are drawn as outlines, and are not counted in the totals above.</p>';
+        '<p class="key-text">' + h + '</p>';
       el.hidden = false;
     }
 
@@ -1922,7 +2124,7 @@
       if (!chart) return;
       chart.data.datasets.forEach(function (ds, i) {
         if (isTotalSeries(i)) {
-          var ghost = hoverMonth !== null || emphasis !== null;
+          var ghost = hoverMonth !== null || (emphasis !== null && emphasis !== i);
           ds.borderColor = ghost ? GHOST_LINE : totalInk();
           ds.pointBackgroundColor = pointColors();
           ds.pointBorderColor = pointColors();
@@ -1935,9 +2137,11 @@
     }
     function pointColors() {
       var ink = totalInk();
+      // Isolating the total itself is the one case where these stay lit.
+      var ghosted = emphasis !== null && emphasis !== CATS.length;
       return chartRows.map(function (r) {
         if (r.projected) return GHOST_LINE;
-        if (emphasis !== null) return GHOST_LINE;
+        if (ghosted) return GHOST_LINE;
         if (hoverMonth !== null && r.month !== hoverMonth) return GHOST_LINE;
         return ink;
       });
@@ -1960,6 +2164,10 @@
       });
     }
     var chartProjection = null;
+    /* The total line, and so the band hanging off it, only exists in the
+       vertical layout. The key under the chart reads this so it does not
+       describe a band nobody can see. */
+    var chartHasTotal = false;
 
     function rowLabel(r) { return MONTH_ABBR[r.month]; }
     function rowTitle(r) {
@@ -1985,6 +2193,7 @@
          columns on a phone. A month of days is 28 to 31 rows, which would be a
          metre of scrolling, so the day view stays vertical at every width. */
       var horiz = isNarrow() && !day;
+      chartHasTotal = !horiz && !day;
       var wrap = el.parentNode;
       // Height of the floating legend, reserved at the top of the plot area so
       // the tallest bar or the total line can never run underneath it.
@@ -2003,6 +2212,16 @@
         });
       });
       var gutter = Math.ceil(fmtH(peak).length * 8.1) + END_GAP + 12 + (peakFlagged ? FLAG_W : 0);
+
+      /* The value axis is sized from the plotted data, which knows nothing about
+         the band drawn around the total line, so its top edge would be clipped
+         off. Asked for as a suggestion: real hours still win if they run higher. */
+      var bandTop = 0;
+      if (chartHasTotal && chartProjection && chartProjection.high) {
+        chartRows.forEach(function (r) {
+          if (r.projected) bandTop = Math.max(bandTop, chartProjection.high[r.month] || 0);
+        });
+      }
 
       /* A bar squared off against nothing reads as cropped rather than as
          finished, so the plot is given a floor: gridlines heavy enough to
@@ -2032,12 +2251,14 @@
             y: { ticks: { font: { size: 12.5 }, color: 'rgba(255,255,255,0.55)',
                           callback: function (v) { return v + 'h'; }, padding: 6 },
                  grid: { color: GRID }, border: { display: false },
-                 beginAtZero: true, grace: '10%', stacked: day }
+                 beginAtZero: true, grace: '10%', stacked: day,
+                 suggestedMax: bandTop || undefined }
           };
 
       chart = new Chart(el, {
         type: 'bar',
-        plugins: [barEndLabels, projBoundary],
+        // projBand after projBoundary: the band sits over the textured ground.
+        plugins: [barEndLabels, projBoundary, projBand],
         data: {
           labels: chartRows.map(rowLabel),
           datasets: CATS.map(function (c, i) {
@@ -2145,6 +2366,8 @@
       chart.destroy();
       chart = null;
       drawChart();
+      // The band, and so the sentence describing it, only exists in one layout.
+      updateChartNote();
     }
     if (NARROW.addEventListener) NARROW.addEventListener('change', onBreakpointChange);
     else if (NARROW.addListener) NARROW.addListener(onBreakpointChange);
