@@ -452,8 +452,10 @@
        chart through to the note. It replaced a warning icon floating over every
        flagged bar, which shouted the same thing five times before anyone had
        asked. */
+    /* Same slope as the canvas hatch, which runs bottom-left to top-right.
+       CSS 45deg lays its bands the other way, so this is -45deg. */
     .hazard {
-      background-image: repeating-linear-gradient(45deg,
+      background-image: repeating-linear-gradient(-45deg,
         transparent 0 7px, var(--hazard-ink, rgba(245, 194, 107, 0.14)) 7px 9px);
     }
     /* Compact inline flag: pill in tables, superscript beside a figure. */
@@ -464,33 +466,39 @@
        Height is set inline by drawChart: fixed for the vertical layout, and
        proportional to the month count for the horizontal one, so bar thickness
        stays constant as the year fills up. */
+    .chart-block { position: relative; }
     .chart-wrap { position: relative; width: 100%; height: 330px; }
     /* The legend floats in the plot's top-right corner instead of sitting under
        it, so the series totals read as part of the chart. drawChart reserves
        matching padding at the top of the canvas so no bar can run behind it. */
     .legend {
       position: absolute; top: 0; right: 0; z-index: 2;
+      /* Reserved for by drawChart, which pads the plot to match. */
       display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start;
       max-width: 100%; pointer-events: auto;
     }
     /* The legend doubles as the headline totals for each series, so the figure
        is the dominant element and the label sits above it. */
+    /* A rail down the left, the same device the category definitions use in the
+       hero card, so a series is identified the same way wherever it appears. */
     .legend-item {
-      display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px;
+      display: inline-flex; align-items: stretch; gap: 11px;
       font-family: var(--font-body); text-align: left;
       background: transparent; border: 1px solid transparent; border-radius: var(--r-md);
       padding: 9px 14px; cursor: pointer; transition: all .14s ease;
     }
+    .legend-item > .swatch { align-self: stretch; height: auto; width: 9px; border-radius: var(--r-full); }
+    .lg-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
     .legend-item:hover, .legend-item:focus-visible { background: var(--surface); border-color: var(--line); outline: none; }
     /* The total is a key, not a control. */
     .legend-item.is-key { cursor: default; }
     .legend-item.is-key:hover { background: transparent; border-color: transparent; }
-    .swatch.dash {
-      width: 16px; height: 0; border-radius: 0;
-      border-top: 2px dashed var(--dim); align-self: center;
+    /* The total is a dashed line, so its rail is dashed down its length. */
+    .legend-item > .swatch.dash {
+      background-image: repeating-linear-gradient(to bottom,
+        var(--dim) 0 6px, transparent 6px 11px);
     }
     .legend-item .lg-name {
-      display: flex; align-items: center; gap: 8px;
       font-size: 14px; font-weight: 600; color: var(--dim); transition: color .14s ease;
     }
     .legend-item:hover .lg-name, .legend-item:focus-visible .lg-name { color: var(--white); }
@@ -546,17 +554,19 @@
     .step-btn:hover:not(:disabled) { color: var(--white); background: var(--surface-2); }
     .step-btn:disabled { opacity: .32; cursor: default; }
     .step-btn svg { width: 15px; height: 15px; }
-    .step-btn[data-step="-1"] svg { transform: rotate(180deg); }
+    .step-btn[data-step="-1"] svg, .step-btn[data-fact="-1"] svg { transform: rotate(180deg); }
     /* Key to the textured half of the plot, set as a legend entry rather than a
        footnote so it reads as part of the chart. */
     .chart-key { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0 0; max-width: 86ch; }
     .chart-key[hidden] { display: none; }
+    /* The same rail the series use, filled with the same texture the chart lays
+       over its projected months, on the same slope. */
+    .chart-key { align-items: stretch; }
     .key-swatch {
-      flex: none; width: 34px; height: 22px; margin-top: 1px;
-      border-radius: 3px; border-left: 1px dashed rgba(255, 255, 255, 0.28);
-      background-image: repeating-linear-gradient(45deg,
-        transparent 0 7px, rgba(255, 255, 255, 0.07) 7px 9px);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+      flex: none; width: 9px; border-radius: var(--r-full);
+      background-color: rgba(255, 255, 255, 0.05);
+      background-image: repeating-linear-gradient(-45deg,
+        transparent 0 4px, rgba(255, 255, 255, 0.30) 4px 6px);
     }
     .key-text { font-size: 13.5px; line-height: 1.6; color: var(--dim-2); margin: 0; }
     .key-text b { color: var(--dim); font-weight: 700; }
@@ -566,9 +576,12 @@
     .proj-switch .pills { padding: 3px; }
     .proj-switch .pill { font-size: 13.5px; padding: 6px 12px; }
 
-    @media (max-width: 560px) {
-      .chart-controls { position: static; margin-bottom: 14px; }
-      .pills.seg .pill { font-size: 13px; padding: 6px 11px; }
+    /* Below this the plot is rotated and every month owns a full row, so there
+       is no corner left to float the legend into. It goes back into the flow
+       above the chart, and drawChart stops reserving space for it. */
+    @media (max-width: 700px) {
+      .legend { position: static; justify-content: flex-start; margin-bottom: 12px; }
+      .legend-item { padding: 7px 10px 7px 0; }
     }
 
     /* ── Modal ──────────────────────────────────────────────────── */
@@ -589,7 +602,7 @@
     .modal.hazard {
       --hazard-ink: rgba(245, 194, 107, 0.06);
       background-image:
-        repeating-linear-gradient(45deg, transparent 0 8px, var(--hazard-ink) 8px 10px),
+        repeating-linear-gradient(-45deg, transparent 0 8px, var(--hazard-ink) 8px 10px),
         linear-gradient(165deg, var(--warn-surface-2), var(--warn-surface));
     }
     .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
@@ -769,11 +782,15 @@
       .row .hrs { flex: 0 0 auto; min-width: 60px; }
       .cat { margin-top: 22px; }
     }
-    /* Touch: 16px icons are legitimate targets only if their hit area is not. */
+    /* Touch: a 16px control is a legitimate target only if its hit area is not.
+       Text links keep their type size and grow their hit area around it. */
     @media (hover: none) {
       .flag-btn { position: relative; }
       .flag-btn:not(.labelled)::after { content: ""; position: absolute; inset: -11px; }
       .row .link { width: 34px; height: 34px; }
+      .export-link, .foot-link { position: relative; }
+      .export-link::after, .foot-link::after { content: ""; position: absolute; inset: -13px -6px; }
+      .step-btn { width: 38px; height: 38px; }
     }
 
     /* ── States + footer ────────────────────────────────────────── */
@@ -1293,7 +1310,9 @@
 
       var first = active[0], last = active[active.length - 1];
       state.range = state.months.slice(first, last + 1);
-      if (state.selected === null || state.selected < first || state.selected > last) state.selected = last;
+      // Closed on arrival. The table is a list of figures until the reader asks
+      // one of them a question.
+      if (state.selected !== null && (state.selected < first || state.selected > last)) state.selected = null;
 
       setRangeText(state.range.length + (state.range.length === 1 ? ' month' : ' months') +
         ' of tracked time · ' + MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR);
@@ -1441,20 +1460,24 @@
         '<button class="export-link" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>' +
         '<div class="menu" id="exportMenu" role="menu"></div></div>' +
         '</div>';
-      h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
-        'aria-label="Bar chart of Creative and Other hours, with a total hours line"></canvas>';
+      h += '<div class="chart-block">';
       h += '<div class="legend" id="legend">';
       CATS.forEach(function (c, i) {
         h += '<button class="legend-item" data-i="' + i + '" data-off="false" aria-pressed="true">' +
-          '<span class="lg-name"><span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>' +
-          '<span class="val">' + fmtH(t[c.hours]) + '</span></button>';
+          '<span class="swatch" style="background:' + c.inkVar + '"></span>' +
+          '<span class="lg-stack"><span class="lg-name">' + c.label + '</span>' +
+          '<span class="val">' + fmtH(t[c.hours]) + '</span></span></button>';
       });
       // A key rather than a control: the total is drawn from the other two, so
       // there is nothing to isolate it from.
       h += '<span class="legend-item is-key" data-i="total">' +
-        '<span class="lg-name"><span class="swatch dash" aria-hidden="true"></span>Total</span>' +
-        '<span class="val">' + fmtH(t.total) + '</span></span>';
-      h += '</div></div>';
+        '<span class="swatch dash" aria-hidden="true"></span>' +
+        '<span class="lg-stack"><span class="lg-name">Total</span>' +
+        '<span class="val">' + fmtH(t.total) + '</span></span></span>';
+      h += '</div>';
+      h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
+        'aria-label="Bar chart of Creative and Other hours, with a total hours line"></canvas></div>';
+      h += '</div>';
       h += '<div class="chart-key" id="chartNote"></div>';
       h += summaryHtml();
       h += '</section>';
@@ -1718,8 +1741,9 @@
     }
 
     function wireLegend() {
-      document.querySelectorAll('#legend .legend-item').forEach(function (b) {
+      document.querySelectorAll('#legend .legend-item:not(.is-key)').forEach(function (b) {
         var i = parseInt(b.dataset.i);
+        if (isNaN(i)) return;
         b.addEventListener('mouseenter', function () { if (!state.hidden[i]) applyEmphasis(i); });
         b.addEventListener('focus', function () { if (!state.hidden[i]) applyEmphasis(i); });
         b.addEventListener('mouseleave', function () { applyEmphasis(null); });
@@ -1815,7 +1839,8 @@
             g.font = '600 12.5px ' + font;
             g.textAlign = 'left';
             g.textBaseline = 'middle';
-            g.fillStyle = ghosted ? GHOST_LINE : (printing ? '#333333' : CATS[di].ink);
+            g.fillStyle = (ghosted || r.projected)
+              ? GHOST_LINE : (printing ? '#333333' : CATS[di].ink);
             g.fillText(fmtH(ds.data[bi]), x, bar.y);
             g.restore();
           });
@@ -1833,7 +1858,7 @@
       var c = document.createElement('canvas');
       c.width = c.height = 9;
       var x = c.getContext('2d');
-      x.strokeStyle = printing ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.055)';
+      x.strokeStyle = printing ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.11)';
       x.lineWidth = 2;
       x.beginPath();
       x.moveTo(-2, 11); x.lineTo(11, -2);
@@ -1853,16 +1878,25 @@
         var meta = c.getDatasetMeta(0);
         var bar = meta.data[i], prev = meta.data[i - 1];
         if (!bar || !prev) return;
-        var x = (bar.x + prev.x) / 2;
+        var horiz = c.options.indexAxis === 'y';
         var a = c.chartArea;
         var g = c.ctx;
         g.save();
         g.fillStyle = projGround(g);
-        g.fillRect(x, a.top, a.right - x, a.bottom - a.top);
         g.strokeStyle = printing ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.22)';
         g.setLineDash([4, 4]);
         g.lineWidth = 1;
-        g.beginPath(); g.moveTo(x, a.top); g.lineTo(x, a.bottom); g.stroke();
+        g.beginPath();
+        if (horiz) {
+          var y = (bar.y + prev.y) / 2;
+          g.fillRect(a.left, y, a.right - a.left, a.bottom - y);
+          g.moveTo(a.left, y); g.lineTo(a.right, y);
+        } else {
+          var x = (bar.x + prev.x) / 2;
+          g.fillRect(x, a.top, a.right - x, a.bottom - a.top);
+          g.moveTo(x, a.top); g.lineTo(x, a.bottom);
+        }
+        g.stroke();
         g.restore();
       }
     };
@@ -2030,8 +2064,8 @@
       var wrap = el.parentNode;
       // Height of the floating legend, reserved at the top of the plot area so
       // the tallest bar or the total line can never run underneath it.
-      var LEGEND_H = 78;
-      wrap.style.height = horiz ? (chartRows.length * 62 + 30 + LEGEND_H) + 'px' : '';
+      var LEGEND_H = window.matchMedia('(max-width: 700px)').matches ? 0 : 78;
+      wrap.style.height = horiz ? (chartRows.length * 52 + 26 + LEGEND_H) + 'px' : '';
 
       /* The widest bar and whether it carries a flag, which together size the
          right-hand gutter the end labels are written into. */
@@ -2044,7 +2078,7 @@
           }
         });
       });
-      var gutter = Math.ceil(fmtH(peak).length * 7.4) + END_GAP + 10 + (peakFlagged ? FLAG_W : 0);
+      var gutter = Math.ceil(fmtH(peak).length * 8.1) + END_GAP + 12 + (peakFlagged ? FLAG_W : 0);
 
       /* A bar squared off against nothing reads as cropped rather than as
          finished, so the plot is given a floor: gridlines heavy enough to
