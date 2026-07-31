@@ -47,6 +47,51 @@ Laid out high level → low level:
    two categories side by side above 860px, one task per row with a permalink out
    to ClickUp, and the people who worked the month. Nothing opens on arrival.
 
+### The drawer lede
+
+The first thing inside an open month, above the two task lists. The row it hangs
+from already carries the month, its split and its total, so the lede argues the
+three things the row cannot: **who** worked it, **how much of the retainer** it
+used, and **what mattered**. One third / two thirds, on the gutter the task lists
+below use, stacking at the same 860px they do.
+
+- **Your team.** The month's contributors, resolved through `roster.js`, as an
+  overlapping stack of faces with no names on them. Hover, focus or tap a face and
+  its `Name · Title` appears in a line under the stack whose height is reserved,
+  so nothing moves. Six faces then `+N`.
+- **Utilization.** The month's Creative hours, the monthly budget, and the share
+  of it used, over a meter that fills from zero each time the drawer opens (1.1s,
+  0.2s in). Reduced motion and print get the final width with no travel. **This
+  is the only place the report states a percentage per month**: it used to sit on
+  every Creative figure in the table, three columns from the budget it is a share
+  of, and it came out of the table and the year-to-date row with it.
+- **Highlights.** A hand-written sentence, the one piece of copy in the report
+  not derived from the data. See below.
+
+Two things in the task lists below belong to the same pass: a task carrying hours
+in more than one month of the year gets a **`YTD 9h` chip** hugging its name
+(whole hours, summed per task id across the payload, computed client-side), and
+task names truncate to one line at every width rather than wrapping on a phone.
+
+### Month highlights
+
+The editorial line at the top of an open month, from a config map near the top of
+the `<script>` in `index.html`, in the same spirit as `DATA_FLAGS`:
+
+```js
+var MONTH_HIGHLIGHTS = {
+  '2026-2': '<b>Shirt designs</b> led the month, the <b>brochure template</b> shipped.'
+};
+```
+
+Keyed `YEAR-monthIndex`, zero-indexed to match the payload. `<b>` marks the
+keywords and is the only markup that survives; everything else is escaped.
+Keywords are emphasised by **weight, not colour**, since a mint word in that
+sentence would read as a third series.
+
+A month with no entry renders no highlights block. The team column keeps its
+third of the row either way, so the drawer does not change shape month to month.
+
 ### Chart and table are linked
 
 Pointing at a month in either dims every other month in **both**. Clicking a bar
@@ -69,8 +114,17 @@ An estimate must never read as delivered hours in a client-facing report, so the
 projected stretch sits on its own textured ground behind a hairline boundary, its
 bars are hollow, its end labels and the total line ghost across it, and none of
 it is counted in the legend's totals. The key under the chart names the texture
-and states the basis, and is **built from the payload on every render**: in
-August it reads "Sep–Dec are projected" off the new data with no edit.
+and states the basis:
+
+> **Outlined bars represent future estimates, not actual time.** They are based on
+> YoY data (if available) or the average of past completed months. The shaded band
+> reflects a typical ±45% variance. These projections are excluded from the totals
+> above.
+
+The variance figure is **read off the payload on every render**, not written into
+the copy: it is the spread the tracked months actually show, clamped to 12–45%,
+so the sentence cannot claim a band the chart is not drawing. The band sentence
+drops out entirely when the total line is hidden, since the band goes with it.
 
 ### Categories
 
@@ -142,9 +196,11 @@ var DATA_FLAGS = [
 ```
 
 One entry drives every surface at once: a hatched fill on the chart, a note in
-that bar's tooltip, a labelled tag beside the **Creative** heading in the
-affected month's expanded detail, and a `Data note` column in both CSV exports.
-The tag opens a modal lined with the same diagonal, so one visual language runs
+that bar's tooltip, a label beside the **Creative** heading in the affected
+month's expanded detail (icon plus dotted-underlined text, no container: a pill
+there carried the weight of a status badge on the category it sits beside), and a
+`Data note` column in both CSV exports.
+The label opens a modal lined with the same diagonal, so one visual language runs
 from the chart through to the note explaining it. The closed table row carries no
 mark of its own: the chart shows it at a glance and the detail states it in full.
 
@@ -263,13 +319,15 @@ resolves them all to one avatar.
 while dropping them from the current year's contributors.
 
 Images live at `team/roster/<slug>.webp` (160px source) and
-`team/stack/<slug>.webp` (48px head crop). The report renders only the stack
-crop, in the avatar row inside each month's expanded detail, where the name and
-job title appear in a rendered tooltip below the face. The browser's own `title`
-attribute is deliberately not used: it waits about a second, styles itself, and
-never fires on touch. Never use a roster image there: it is four times the
-weight and the face is unreadable at that size. The API still returns both, so
-a future surface can use the larger one.
+`team/stack/<slug>.webp` (48px head crop). The faces in the drawer lede are 44px,
+which is 88 physical pixels on a retina screen, so they render the **roster**
+crop; the 48px stack file is soft at that size. The API returns both, and the
+stack crop is the fallback where a roster path is missing.
+
+Name and job title are rendered under the stack rather than into the browser's
+`title` attribute, which waits about a second, styles itself and never fires on
+touch. They are read out one at a time on hover, focus or tap, into a line whose
+height is reserved so the lede never shifts.
 
 The studio mark is deliberately never rendered as an avatar. Among faces it read
 as a person nobody could name, so unrostered contributors are simply not shown
