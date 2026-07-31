@@ -91,7 +91,9 @@
     }
 
     /* One badge geometry, shared by every chip and tag in the report. */
-    .badge, .flag-tag, .flag-btn.labelled {
+    /* The labelled flag button used to take this geometry too. It reads as bare
+       underlined text now: see .flag-btn.labelled below. */
+    .badge, .flag-tag {
       display: inline-flex; align-items: center; gap: 6px;
       font-family: var(--font-body); font-size: var(--badge-size);
       font-weight: var(--badge-weight); letter-spacing: .01em; line-height: 1.35;
@@ -363,6 +365,9 @@
       .grad { animation: none; }
       .ff-line { transition: none; }
       .live-dot { animation: none !important; }
+      /* The script sets the final width directly in this case; the transition
+         is dropped so nothing travels to it. */
+      .util-bar .fill { transition: none; }
     }
     .hero-ctx { font-size: 15.5px; color: var(--dim); line-height: 1.6; margin-top: 12px; }
     .hero-ctx strong { color: var(--ink-strong); font-weight: 600; }
@@ -419,49 +424,26 @@
     }
     .data-alarm svg { width: 16px; height: 16px; flex: none; }
 
-    /* ── Monthly contributor stack ──────────────────────────────── */
-    .stack { display: flex; align-items: center; }
-    /* The cut-out between overlapping avatars is the only edge they need. It
-       used to carry a hairline ring outside it as well, because the studio mark
-       is mostly black and read as a hole in the row; that mark no longer
-       appears here, and the second edge read as a stray white stroke. */
-    .stack { overflow: visible; }
+    /* ── Monthly contributor stack ──────────────────────────────────
+       Faces only. The cut-out between overlapping avatars is the only edge they
+       need: a hairline ring outside it read as a stray white stroke. The name
+       and title come out under the stack instead of into a tooltip, so touch
+       gets the same information hover does. */
+    .stack { display: flex; align-items: center; overflow: visible; margin-left: 14px; }
     .stack .av, .stack .av-more {
-      width: 60px; height: 60px; border-radius: var(--r-md);
+      width: 44px; height: 44px; border-radius: 10px;
       border: 2px solid var(--n-black); background: var(--surface-2);
-      display: block; position: relative;
+      display: block; position: relative; margin-left: -14px;
     }
     .stack .av img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
-    .stack > * + * { margin-left: -16px; }
-    .stack .av { transition: transform .14s ease; }
+    .stack .av { cursor: default; transition: transform .14s ease; }
     .stack .av:hover, .stack .av:focus-visible { transform: translateY(-4px); z-index: 3; outline: none; }
     .stack .av:focus-visible { box-shadow: 0 0 0 2px var(--action); }
-
-    /* Name and title, rendered rather than left to the browser's tooltip. */
-    /* Below the face, not above it: the avatars sit at the top of the drawer, so
-       a tooltip above would cover the month row the drawer belongs to. */
-    .stack .av::after {
-      content: attr(data-tip);
-      position: absolute; top: calc(100% + 9px); left: 50%; transform: translateX(-50%) translateY(-3px);
-      z-index: 4; pointer-events: none; white-space: nowrap;
-      font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--white);
-      background: #0E0E0E; border: 1px solid var(--line); border-radius: var(--r-sm);
-      padding: 7px 10px; box-shadow: var(--shadow-xl);
-      opacity: 0; transition: opacity .13s ease, transform .13s ease;
-    }
-    .stack .av:hover::after, .stack .av:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
-    /* The first avatar's tooltip would otherwise start off the left edge of a
-       narrow drawer. */
-    .stack .av:first-child::after { left: 0; transform: translateX(0) translateY(-3px); }
-    .stack .av:first-child:hover::after,
-    .stack .av:first-child:focus-visible::after { transform: translateX(0) translateY(0); }
     .av-more {
       display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 700; color: var(--dim);
+      font-size: 13px; font-weight: 700; color: var(--dim);
       background: var(--surface-2);
     }
-    .stack-wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .stack-label { font-size: 14px; color: var(--dim-2); }
 
     /* ── Data-integrity flag ────────────────────────────────────────
        The chart hatches a flagged bar. The same diagonal, at a fraction of the
@@ -556,12 +538,17 @@
     .flag-btn svg { width: 16px; height: 16px; display: block; }
     .flag-btn:hover { color: var(--warn-strong); transform: scale(1.12); }
     .flag-btn:focus-visible { outline: 2px solid var(--warn); outline-offset: 3px; border-radius: 3px; }
+    /* No container. Wearing the badge geometry, a data note sat beside the
+       category heading with the weight of a status pill on it, which is louder
+       than a footnote about the data deserves. A dotted underline says there is
+       something here to read and stops there. */
     .flag-btn.labelled {
-      gap: 6px; font-size: var(--badge-size); font-weight: var(--badge-weight);
-      padding: var(--badge-pad); border: 1px solid var(--warn-line);
-      background: var(--warn-surface); border-radius: var(--r-full);
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12.5px; font-weight: 600; line-height: 1.35; white-space: nowrap;
+      text-decoration: underline dotted; text-underline-offset: 4px;
+      text-decoration-thickness: 1px;
     }
-    .flag-btn.labelled:hover { transform: none; background: var(--warn-surface-2); border-color: var(--warn); }
+    .flag-btn.labelled:hover { transform: none; color: var(--warn-strong); }
     .flag-btn.labelled svg { width: 13px; height: 13px; }
 
     /* View control, opposite the legend in the band reserved above the plot. */
@@ -697,12 +684,9 @@
 
     .table .primary { font-weight: 600; color: var(--white); }
     .table .of { color: var(--dim-2); font-weight: 500; }
-    /* The share of the retainer, reading as an annotation on the figure it
-       follows rather than as a second number of equal standing. */
-    .table .use {
-      display: inline-block; min-width: 46px; margin-left: 10px;
-      font-size: 13.5px; font-weight: 700; text-align: right;
-    }
+    /* The share of the retainer used to sit beside the Creative figure on every
+       row. It is stated once now, on the meter in the open month's lede, where
+       it has the budget beside it to be a share of. */
     .table td.r, .table th.r { white-space: nowrap; }
     .table .col-gap { padding-right: 24px; }
     /* Sums are set apart by a rule and by weight, not by a tinted panel. */
@@ -734,7 +718,6 @@
       .table th:first-child, .table td:first-child { padding-left: 0; }
       .table th { font-size: 10.5px; letter-spacing: .06em; }
       .table .mo { gap: 6px; }
-      .table .use { display: block; min-width: 0; margin: 2px 0 0; font-size: 12.5px; }
       .table tfoot td { font-size: 15px; }
       .table tfoot td.col-total { font-size: 16px; }
       .mo-full { display: none; }
@@ -748,7 +731,6 @@
       .table th, .table td { padding: 10px 4px; }
       .table .col-gap { padding-right: 9px; }
       .table .caret { width: 13px; height: 13px; }
-      .table .use { font-size: 12px; }
     }
 
     @media (max-width: 640px) {
@@ -767,14 +749,84 @@
        cannot show: which tasks the hours went to, and who worked them. */
     .cat { margin-top: 18px; }
     .cat-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-    .acc-top {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 20px; flex-wrap: wrap; margin-bottom: 26px;
+
+    /* ── Drawer lede ─────────────────────────────────────────────────
+       The first thing in an open month, arguing the three things the row above
+       cannot: who worked it, how much of the retainer it used, and what
+       actually mattered. One third / two thirds, on the same gutter the task
+       lists below it use. */
+    .lede {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: 0 48px; align-items: stretch; margin: 14px 0 32px;
     }
-    .dh-meta { font-size: 14px; color: var(--dim-2); }
+    /* The team hugs the top of its column and the meter hugs the bottom, so the
+       meter lines up with the foot of the sentence beside it however long that
+       sentence runs. */
+    .lede-team { display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+    .eyebrow-sm {
+      display: block; font-size: 11px; font-weight: 700; letter-spacing: .11em;
+      text-transform: uppercase; color: var(--dim-2);
+    }
+    .lede-people .eyebrow-sm { margin-bottom: 10px; }
+    /* Height is reserved whether or not a name is showing: the line appears
+       under the cursor, and a lede that jumped every time it did would be
+       unusable. */
+    .stack-reveal {
+      min-height: 15px; margin-top: 6px;
+      font-size: 12.5px; line-height: 1.2; color: var(--dim-2);
+    }
+    .stack-reveal b { font-weight: 700; color: var(--white); }
+
+    .util-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+    .util-fig { font-size: 14.5px; font-weight: 600; color: var(--white); font-variant-numeric: tabular-nums; }
+    .util-fig .of { font-weight: 500; color: rgba(255, 255, 255, 0.45); }
+    .util-fig .pct { margin-left: 6px; font-weight: 700; }
+    .util-bar { display: block; height: 6px; border-radius: var(--r-full); background: var(--line); overflow: hidden; }
+    /* Filled from a width the script sets once the drawer is on screen, not from
+       a keyframe: a keyframe restarts on every re-render, and this is the one
+       moment the drawer has. */
+    .util-bar .fill {
+      display: block; height: 100%; width: 0; border-radius: var(--r-full);
+      background: var(--creative-fill);
+      transition: width 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) .2s;
+    }
+
+    .lede-hl .eyebrow-sm { margin-bottom: 12px; }
+    .hl-line {
+      font-family: var(--font-display); font-weight: 500; font-size: 26px; line-height: 1.4;
+      color: rgba(255, 255, 255, 0.7); margin: 0; text-wrap: pretty;
+    }
+    /* Weight, not colour. The sentence is already the loudest thing in the
+       drawer, and a mint keyword inside it would read as a third series. */
+    .hl-line b { font-weight: 600; color: var(--white); }
+
+    /* Same breakpoint the task lists stack at, so the whole drawer turns into
+       one column at once. The meter loses its bottom pin and simply follows the
+       faces. */
+    @media (max-width: 860px) {
+      .lede { grid-template-columns: minmax(0, 1fr); gap: 26px; margin-bottom: 26px; }
+      .lede-team { justify-content: flex-start; }
+      .hl-line { font-size: 20px; }
+    }
+    @media (max-width: 560px) { .hl-line { font-size: 18px; } }
+    /* The budget is stated in full at the top of the report, so the meter can
+       drop it rather than wrap the figure line. */
+    @media (max-width: 360px) { .util-fig .of { display: none; } }
 
     .row { display: flex; align-items: center; gap: 13px; padding: 9px 0; }
-    .row .name { flex: 1 1 0; min-width: 0; font-size: 15.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* Name and chip share one flexible slot: the name gives up width to the
+       ellipsis, the chip never does. */
+    .row .name-wrap { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 8px; }
+    .row .name { flex: 0 1 auto; min-width: 0; font-size: 15.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* A task that also carried hours earlier in the year. The drawer shows one
+       month, so this is the only place a line says it is part of something
+       longer running. */
+    .ytd-chip {
+      flex: none; font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
+      padding: 2px 7px; border-radius: var(--r-full);
+      border: 1px solid rgba(255, 255, 255, 0.18); color: var(--dim-2);
+      white-space: nowrap; font-variant-numeric: tabular-nums;
+    }
     .row .track { flex: 0 0 130px; height: 6px; background: rgba(255, 255, 255, 0.14); border-radius: var(--r-full); overflow: hidden; }
     .row .track .fill { display: block; height: 100%; border-radius: var(--r-full); }
     .row .hrs { flex: none; min-width: 72px; white-space: nowrap; font-size: 15.5px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
@@ -792,18 +844,19 @@
     @media (min-width: 861px) { .cat-grid .row .track { flex: 0 0 76px; } }
     @media (max-width: 560px) {
       .row .track { display: none; }
-      /* A truncated task name is the one thing on this page a client cannot
-         look up elsewhere, so it wraps instead of ending in an ellipsis. */
-      .row { align-items: flex-start; gap: 10px; padding: 11px 0; }
-      .row .name { white-space: normal; overflow: visible; line-height: 1.35; }
+      /* The name stays on one line at every width. It used to wrap here, which
+         kept the full title but turned a scannable list into a stack of
+         paragraphs; the title attribute and the ClickUp link still carry it. */
+      .row { gap: 10px; padding: 11px 0; }
       .row .hrs { flex: 0 0 auto; min-width: 60px; }
       .cat { margin-top: 22px; }
     }
     /* Touch: a 16px control is a legitimate target only if its hit area is not.
        Text links keep their type size and grow their hit area around it. */
     @media (hover: none) {
+      /* The labelled variant is bare text now, so it needs the hit area too. */
       .flag-btn { position: relative; }
-      .flag-btn:not(.labelled)::after { content: ""; position: absolute; inset: -11px; }
+      .flag-btn::after { content: ""; position: absolute; inset: -11px -6px; }
       .row .link { width: 34px; height: 34px; }
       .export-link, .foot-link { position: relative; }
       .export-link::after, .foot-link::after { content: ""; position: absolute; inset: -13px -6px; }
@@ -901,7 +954,17 @@
       .flag-btn:not(.labelled) { display: none !important; }
       /* The labelled flag is a tag, not a control: on paper it is the only thing
          naming what the hatching means. */
-      .flag-btn.labelled { color: #8A5A0F; border-color: var(--warn-line); background: var(--warn-surface-2); }
+      .flag-btn.labelled { color: #8A5A0F; }
+      /* The name under a face is a hover state, and there is no hovering on
+         paper. The meter prints at its final width, arrived at instantly. */
+      .stack-reveal { display: none; }
+      .util-bar .fill { transition: none; }
+      /* Three whites the tokens cannot reach, because the design sets them at
+         opacities the ramp does not carry. On paper each one is invisible ink,
+         so they are re-pointed here rather than loosened on screen. */
+      .hl-line { color: var(--dim); }
+      .util-fig .of { color: var(--dim-2); }
+      .ytd-chip { border-color: var(--line); }
       .hero { background: none !important; box-shadow: none; }
       .sec { break-inside: avoid; margin-bottom: 26px; }
       /* Selection is a screen state: on paper the open month is simply the one
@@ -1019,6 +1082,28 @@
       }
     ];
 
+    /* The editorial line at the top of an open month: what mattered, in a
+       sentence. Everything else in this report is derived from the data, which
+       is exactly why this one is not. Hand-written per month, keyed
+       'YEAR-monthIndex' with the index zero-based to match the payload, and
+       `<b>` marking the keywords. A month with no entry renders no highlights
+       and the drawer keeps its shape.
+
+       Same pattern as DATA_FLAGS above: a small config map at the top of the
+       script, edited by hand, that the render reads and never writes. */
+    var MONTH_HIGHLIGHTS = {
+      // '2026-2': 'Shirt designs led the month, the <b>brochure template</b> shipped.'
+    };
+
+    /* Only <b> survives. The values are ours, but they are copy rather than
+       markup, and a stray angle bracket in a sentence somebody typed at speed
+       should not be able to take the rest of the drawer with it. */
+    function highlightHtml(monthIdx) {
+      var raw = MONTH_HIGHLIGHTS[YEAR + '-' + monthIdx];
+      if (!raw) return '';
+      return esc(raw).replace(/&lt;(\/?)b&gt;/g, '<$1b>');
+    }
+
     function flagFor(year, monthIdx, seriesKey) {
       for (var i = 0; i < DATA_FLAGS.length; i++) {
         var f = DATA_FLAGS[i];
@@ -1037,7 +1122,7 @@
 
     var chart = null;
     var state = { months: [], range: [], selected: null, hidden: {}, generatedAt: null,
-                  team: [], teamById: {}, contributors: null };
+                  team: [], teamById: {}, contributors: null, ytdByTask: {} };
 
     var view = { mode: 'year' };
     var priorYear = { year: null, months: null, state: 'idle' };  // 'idle' | 'loading' | 'done' | 'none'
@@ -1330,6 +1415,7 @@
       BUDGET = data.retainerBudget || 50;
       state.generatedAt = data.generatedAt ? new Date(data.generatedAt) : new Date();
       state.months = normalize(data);
+      state.ytdByTask = buildYtdByTask();
       state.team = data.team || [];
       state.contributors = data.contributors || null;
       // The studio entry is skipped rather than stored: its mark is not shown.
@@ -1361,8 +1447,12 @@
 
       wireLegend();
       wireSummaryTable();
+      wireStacks();
       wireAvatarFallbacks();
       wireExport();
+      // A month can already be open on a manual refresh, and its meter has just
+      // been re-rendered back to zero.
+      if (state.selected !== null) runUtilFill(state.selected);
       // Chart.js only reports hovers it receives, so leaving the plot has to
        // clear the link itself. Bound on the wrapper as well as the canvas,
        // since the legend and the view control sit over the top of it.
@@ -1453,7 +1543,9 @@
       var out = [];
       (ids || []).forEach(function (id) {
         var p = state.teamById[id];
-        if (p) out.push({ img: p.stack, name: p.name, title: p.title });
+        // The roster crop, not the stack crop: these are 44px on the page and
+        // the stack file is only 48px square, which is soft on a retina screen.
+        if (p) out.push({ img: p.roster || p.stack, name: p.name, title: p.title });
       });
       return out;
     }
@@ -1462,20 +1554,46 @@
       var people = stackFor(ids);
       if (!people.length) return '';
       var shown = people.slice(0, 6), extra = people.length - shown.length;
-      var h = '<div class="stack-wrap"><div class="stack">';
+      var h = '<div class="stack">';
       shown.forEach(function (p) {
         /* The roster's job titles left the page with the roster; they come back
-           here, where the face is the thing that raises the question. Rendered
-           rather than left to the browser's title attribute, which waits a
-           second, styles itself and never appears on touch. */
+           here, where the face is the thing that raises the question. They are
+           read out in one line under the stack rather than into a tooltip: the
+           browser's own waits a second, styles itself and never appears on
+           touch, and a floating box over a face this size covered the row the
+           drawer hangs from. */
         var label = p.name + (p.title ? ' · ' + p.title : '');
-        h += '<span class="av" tabindex="0" data-tip="' + esc(label) + '" aria-label="' + esc(label) + '">' +
-             '<img src="' + esc(p.img) + '" alt="" width="60" height="60" loading="lazy" data-fallback="1">' +
+        h += '<span class="av" tabindex="0" role="img" aria-label="' + esc(label) + '"' +
+             ' data-name="' + esc(p.name) + '" data-title="' + esc(p.title || '') + '">' +
+             '<img src="' + esc(p.img) + '" alt="" width="44" height="44" loading="lazy" data-fallback="1">' +
              '</span>';
       });
       if (extra > 0) h += '<span class="av-more" title="' + extra + ' more">+' + extra + '</span>';
-      h += '</div><span class="stack-label">Your team this month</span></div>';
+      h += '</div>';
       return h;
+    }
+
+    /* One name showing at a time, and leaving the stack clears it: the line
+       belongs to the stack, not to any one face. Click carries touch, where
+       there is no hover to read. */
+    function wireStacks() {
+      document.querySelectorAll('.lede .stack').forEach(function (stack) {
+        var out = stack.parentNode.querySelector('.stack-reveal');
+        if (!out) return;
+        function show(av) {
+          var title = av.dataset.title || '';
+          out.innerHTML = '<b>' + esc(av.dataset.name || '') + '</b>' +
+            (title ? ' · ' + esc(title) : '');
+        }
+        function clear() { out.textContent = ''; }
+        stack.querySelectorAll('.av').forEach(function (av) {
+          av.addEventListener('mouseenter', function () { show(av); });
+          av.addEventListener('focus', function () { show(av); });
+          av.addEventListener('blur', clear);
+          av.addEventListener('click', function (e) { e.stopPropagation(); show(av); });
+        });
+        stack.addEventListener('mouseleave', clear);
+      });
     }
 
     /* A missing file used to fall back to the studio mark, which is exactly the
@@ -1526,8 +1644,12 @@
 
     /* ── Monthly summary table, with the task detail as a per-month
        accordion so a month's figures and its tasks read as one thing ── */
+    /* The share of the retainer is no longer in this table. It was on every
+       Creative figure and again on the year-to-date row, three columns from the
+       budget it is a share of; it is stated once now, on the meter in the open
+       month's lede, with the budget beside it. */
     function summaryHtml() {
-      var t = totals(), ytdPct = pctOf(t.creative, allowance());
+      var t = totals();
 
       var h = '<div class="table-scroll"><table class="table"><thead><tr>' +
         '<th>Month</th>' +
@@ -1537,7 +1659,6 @@
         '</tr></thead><tbody>';
 
       state.range.forEach(function (m) {
-        var pct = pctOf(m.creative, BUDGET);
         var open = m.month === state.selected;
         h += '<tr class="mrow" data-m="' + m.month + '" tabindex="0" aria-expanded="' + open +
              '" aria-controls="acc-' + m.month + '">';
@@ -1549,9 +1670,7 @@
              '<span class="mo-abbr">' + MONTH_ABBR[m.month] + '</span></span></td>';
         // Each figure carries its series colour, so a row's numbers and the
         // colour-coded task lists it opens onto are read as the same thing.
-        h += '<td class="r num">' +
-             '<span style="color:' + CATS[0].inkVar + '">' + fmtH(m.creative) + '</span>' +
-             '<span class="use" style="color:' + pctColor(pct) + '">' + pct + '%</span></td>';
+        h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(m.creative) + '</td>';
         h += '<td class="r num col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(m.nonCreative) + '</td>';
         h += '<td class="r num primary col-total">' + fmtH(m.total) + '</td>';
         h += '</tr>';
@@ -1561,8 +1680,7 @@
 
       h += '</tbody><tfoot><tr>';
       h += '<td class="ytd-label"><span class="mo-full">Year to date</span><span class="mo-abbr">Total</span></td>';
-      h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) +
-           '<span class="use" style="color:' + pctColor(ytdPct) + '">' + ytdPct + '%</span></td>';
+      h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) + '</td>';
       h += '<td class="r num col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</td>';
       h += '<td class="r num col-total"><span class="grad">' + fmtH(t.total) + '</span></td>';
       h += '</tr></tfoot></table></div>';
@@ -1586,6 +1704,7 @@
         r.hidden = parseInt(r.dataset.m) !== state.selected;
       });
       if (state.selected === null) return;
+      runUtilFill(state.selected);
       var row = document.querySelector('.table tbody tr.mrow[data-m="' + state.selected + '"]');
       // 'nearest' so a row already on screen does not jump under the reader.
       if (row && scroll !== false) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1617,26 +1736,61 @@
 
     }
 
-    /* What the row itself cannot show: where the hours went, and who worked
-       them. The month, its total and its Creative / Other split are all in the
-       row this hangs from, so none of them are repeated here. */
-    function taskCount(m) {
-      return (m.creativeItems || []).length + (m.nonCreativeItems || []).length;
+    /* ── Drawer lede ─────────────────────────────────────────────────
+       What the row itself cannot show. The month, its total and its Creative /
+       Other split are all in the row this hangs from, so none of them are
+       repeated: what is left is who worked it, how much of the retainer it
+       used, and what mattered.
+
+       The team column keeps its third of the row whether or not a highlights
+       sentence exists for the month, so the drawer does not change shape from
+       one month to the next. */
+    function ledeHtml(m) {
+      var pct = pctOf(m.creative, BUDGET);
+      var hl = highlightHtml(m.month);
+
+      var h = '<div class="lede"><div class="lede-team">';
+      h += '<div class="lede-people"><span class="eyebrow-sm">Your team</span>' +
+           stackHtml(m.contributorIds) +
+           '<p class="stack-reveal" aria-live="polite"></p></div>';
+      h += '<div><div class="util-head">' +
+           '<span class="eyebrow-sm">Utilization</span>' +
+           '<span class="util-fig">' + fmtH(m.creative) +
+           ' <span class="of">of ' + BUDGET + 'h</span>' +
+           '<span class="pct" style="color:' + pctColor(pct) + '">' + pct + '%</span>' +
+           '</span></div>' +
+           // The width is carried rather than set: the fill travels to it once
+           // the drawer is on screen.
+           '<span class="util-bar"><span class="fill" data-fill="' + Math.min(100, pct) + '"></span></span>' +
+           '</div>';
+      h += '</div>';
+      h += '<div class="lede-hl">' +
+           (hl ? '<span class="eyebrow-sm">Highlights</span><p class="hl-line">' + hl + '</p>' : '') +
+           '</div>';
+      h += '</div>';
+      return h;
     }
 
-    /* Top of the drawer: who worked the month on one side, how much there is to
-       read on the other. Neither is in the row above, which already carries the
-       month, its split and its total. */
-    function drawerHeadHtml(m) {
-      var n = taskCount(m);
-      return '<div class="acc-top">' +
-        (stackHtml(m.contributorIds) || '<span></span>') +
-        '<span class="dh-meta">' + n + (n === 1 ? ' task' : ' tasks') + ' this month</span>' +
-        '</div>';
+    /* Runs the meter each time a drawer opens. Reduced motion and print both
+       want the answer rather than the journey, so they are handed the final
+       width directly. */
+    var REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function runUtilFill(monthIdx) {
+      var row = document.querySelector('.table tbody tr.acc[data-m="' + monthIdx + '"]');
+      var el = row && row.querySelector('.util-bar .fill');
+      if (!el) return;
+      var w = el.dataset.fill + '%';
+      if (REDUCED_MOTION.matches || printing) { el.style.width = w; return; }
+      el.style.width = '0%';
+      // Two frames: the first commits the zero, the second is what the
+      // transition has to travel from.
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { el.style.width = w; });
+      });
     }
 
     function monthDetailHtml(m) {
-      var h = drawerHeadHtml(m);
+      var h = ledeHtml(m);
       h += '<div class="cat-grid">';
       CATS.forEach(function (c) {
         var items = m[c.items] || [];
@@ -1650,8 +1804,30 @@
         h += '</div>';
       });
       h += '</div>';
-      h += '<p class="acc-note">Sorted by most hours. Links open the ClickUp task where one exists.</p>';
+      h += '<p class="acc-note">Sorted by most hours. YTD marks a task’s hours across the year to ' +
+           'date. Links open the ClickUp task where one exists.</p>';
       return h;
+    }
+
+    /* Hours per task across every month in the year, for the tasks that ran
+       through more than one of them. A task appearing in a single month has
+       nothing to say here: its month figure is already its year figure. */
+    function buildYtdByTask() {
+      var hours = {}, monthsSeen = {};
+      state.months.forEach(function (m) {
+        CATS.forEach(function (c) {
+          (m[c.items] || []).forEach(function (t) {
+            if (!t.id) return;          // the rolled-up row is not one task
+            hours[t.id] = (hours[t.id] || 0) + t.hours;
+            (monthsSeen[t.id] = monthsSeen[t.id] || {})[m.month] = true;
+          });
+        });
+      });
+      var out = {};
+      Object.keys(hours).forEach(function (id) {
+        if (Object.keys(monthsSeen[id]).length > 1) out[id] = hours[id];
+      });
+      return out;
     }
 
     function taskRows(items, cat) {
@@ -1664,11 +1840,21 @@
         var name = t.aggregated
           ? t.name + ' (' + t.count + (t.count === 1 ? ' task' : ' tasks') + ')'
           : t.name;
+        // Whole hours: the chip is a sense of scale beside an exact figure, and
+        // two numbers to the minute on one line read as a discrepancy. Under
+        // half an hour across the year there is no scale to give.
+        var ytd = (t.id && state.ytdByTask[t.id]) || 0;
+        var chip = ytd >= 0.5
+          ? '<span class="ytd-chip" title="' + fmtH(ytd) + ' on this task so far this year">YTD ' +
+            Math.round(ytd) + 'h</span>'
+          : '';
         var link = t.url
           ? '<a class="link" href="' + esc(t.url) + '" target="_blank" rel="noopener" title="Open “' + esc(t.name) + '” in ClickUp" aria-label="Open ' + esc(t.name) + ' in ClickUp">' + ICONS.external + '</a>'
           : '<span class="link placeholder" title="No ClickUp link available" aria-hidden="true">' + ICONS.external + '</span>';
         return '<div class="row">' +
-          '<span class="name" title="' + esc(name) + '">' + esc(name) + '</span>' +
+          '<span class="name-wrap">' +
+            '<span class="name" title="' + esc(name) + '">' + esc(name) + '</span>' + chip +
+          '</span>' +
           '<span class="track"><span class="fill" style="width:' + w + '%;background:' + cat.fillVar + '"></span></span>' +
           '<span class="hrs">' + fmtH(t.hours) + '</span>' +
           link +
@@ -2056,11 +2242,11 @@
        came from, in the same breath as the bars. Written as a key to the
        textured ground rather than as a footnote.
 
-       It no longer names the months it covers: the chart already shows which
-       ones are textured, and repeating them spent the opening sentence on the
-       one thing the reader can see. What they cannot see is the arithmetic, so
-       the key states that instead: the basis, the seasonal adjustment, and how
-       wide the band is. */
+       It does not name the months it covers: the chart already shows which ones
+       are textured, and repeating them spent the opening sentence on the one
+       thing the reader can see. What they cannot see is the arithmetic, so the
+       key states that instead: the basis, the width of the band, and the fact
+       that none of it is counted anywhere else on the page. */
     function updateChartNote() {
       var el = document.getElementById('chartNote');
       var p = chartProjection;
@@ -2070,19 +2256,14 @@
         el.innerHTML = '';
         return;
       }
-      var h = '<b>The rest of the year is an estimate, not tracked time.</b> ' +
-        'Each remaining month is set to the average of the months tracked so far';
-      h += p.basis === 'prior-year'
-        ? ', then adjusted for how that month ran in ' + (YEAR - 1) + '. '
-        : '. ';
+      var h = '<b>Outlined bars represent future estimates, not actual time.</b> ' +
+        'They are based on YoY data (if available) or the average of past completed months. ';
+      // The band is only drawn when the total line is on, and the figure is the
+      // spread these months actually show rather than a fixed one.
       if (chartHasTotal && p.spread) {
-        h += 'The band around the total line is that estimate give or take ' +
-             Math.round(p.spread * 100) + '%, which is how far a tracked month has ' +
-             'typically sat from the average. ';
+        h += 'The shaded band reflects a typical ±' + Math.round(p.spread * 100) + '% variance. ';
       }
-      h += 'The month in progress is still filling up, so it is left out of that ' +
-           'average. Estimated months are drawn as outlines, and are never counted ' +
-           'in the totals above.';
+      h += 'These projections are excluded from the totals above.';
       el.innerHTML =
         '<span class="key-swatch" aria-hidden="true"></span>' +
         '<p class="key-text">' + h + '</p>';
