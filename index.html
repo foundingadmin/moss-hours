@@ -333,13 +333,6 @@
        the line is the loudest thing in the card on its own. */
     .funfact { font-size: 27px; }
 
-    /* TEMPORARY: labels for the stacked options. */
-    .opt-label { display: flex; align-items: baseline; gap: 12px; margin: 0 0 12px; font-size: 14px; color: var(--dim-2); }
-    .opt-n {
-      font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-      color: var(--n-black); background: var(--holo-cyan); border-radius: var(--r-full); padding: 4px 11px;
-    }
-    .opt-label + .sec { margin-bottom: 44px; }
 
     @media (prefers-reduced-motion: reduce) {
       .grad { animation: none; }
@@ -571,11 +564,6 @@
     .key-text { font-size: 13.5px; line-height: 1.6; color: var(--dim-2); margin: 0; }
     .key-text b { color: var(--dim); font-weight: 700; }
 
-    /* TEMPORARY: switch between the two projected-bar treatments. */
-    .proj-switch { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 14px; color: var(--dim-2); }
-    .proj-switch .pills { padding: 3px; }
-    .proj-switch .pill { font-size: 13.5px; padding: 6px 12px; }
-
     /* Below this the plot is rotated and every month owns a full row, so there
        is no corner left to float the legend into. It goes back into the flow
        above the chart, and drawChart stops reserving space for it. */
@@ -734,28 +722,12 @@
        cannot show: which tasks the hours went to, and who worked them. */
     .cat { margin-top: 18px; }
     .cat-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-    /* Top of the drawer. Three patterns under test; the winner keeps its rules
-       and the other two go. */
-    .acc-top { margin-bottom: 26px; }
-    .acc-top.opt-1 {
+    .acc-top {
       display: flex; align-items: center; justify-content: space-between;
-      gap: 20px; flex-wrap: wrap;
+      gap: 20px; flex-wrap: wrap; margin-bottom: 26px;
     }
     .dh-meta { font-size: 14px; color: var(--dim-2); }
-    .acc-top.opt-2 .eyebrow { display: block; margin-bottom: 12px; }
-    .acc-top.opt-2 .stack .av, .acc-top.opt-2 .stack .av-more { width: 72px; height: 72px; }
-    .acc-top.opt-2 .stack > * + * { margin-left: -18px; }
-    .dh-none { font-size: 14px; color: var(--dim-2); margin: 0; }
-    .acc-top.opt-3 { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-    .dh-names { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
-    .dh-person { display: flex; flex-direction: column; line-height: 1.35; }
-    .dh-person b { font-size: 14.5px; font-weight: 700; color: var(--white); }
-    .dh-person span { font-size: 13px; color: var(--dim-2); }
 
-    /* TEMPORARY: drawer headline switch. */
-    .dh-switch { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font-size: 14px; color: var(--dim-2); flex-wrap: wrap; }
-    .dh-switch .pills { padding: 3px; flex-wrap: wrap; max-width: 100%; }
-    .dh-switch .pill { font-size: 13.5px; padding: 6px 12px; white-space: normal; text-align: left; }
     .row { display: flex; align-items: center; gap: 13px; padding: 9px 0; }
     .row .name { flex: 1 1 0; min-width: 0; font-size: 15.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .row .track { flex: 0 0 130px; height: 6px; background: rgba(255, 255, 255, 0.14); border-radius: var(--r-full); overflow: hidden; }
@@ -880,7 +852,7 @@
       .page { max-width: none; padding: 0; }
       .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
       .lockup img, .report-title .client-mark { filter: invert(1); }
-      .foot-data, .pills, .sec-note, .row .link, .menu-wrap, .chart-controls, .proj-switch,
+      .foot-data, .pills, .sec-note, .row .link, .menu-wrap,
       .flag-btn:not(.labelled) { display: none !important; }
       /* The labelled flag is a tag, not a control: on paper it is the only thing
          naming what the hatching means. */
@@ -1285,9 +1257,7 @@
     /* ═══════════════════════════════════════════════════════════════
        Render
        ═══════════════════════════════════════════════════════════════ */
-    var lastData = null;
     function render(data) {
-      lastData = data;
       BUDGET = data.retainerBudget || 50;
       state.generatedAt = data.generatedAt ? new Date(data.generatedAt) : new Date();
       state.months = normalize(data);
@@ -1419,11 +1389,11 @@
       return out;
     }
 
-    function stackHtml(ids, big) {
+    function stackHtml(ids) {
       var people = stackFor(ids);
       if (!people.length) return '';
       var shown = people.slice(0, 6), extra = people.length - shown.length;
-      var h = '<div class="stack-wrap' + (big ? ' big' : '') + '"><div class="stack">';
+      var h = '<div class="stack-wrap"><div class="stack">';
       shown.forEach(function (p) {
         /* The roster's job titles left the page with the roster; they come back
            here, where the face is the thing that raises the question. Rendered
@@ -1435,7 +1405,7 @@
              '</span>';
       });
       if (extra > 0) h += '<span class="av-more" title="' + extra + ' more">+' + extra + '</span>';
-      h += '</div>' + (big ? '' : '<span class="stack-label">Your team this month</span>') + '</div>';
+      h += '</div><span class="stack-label">Your team this month</span></div>';
       return h;
     }
 
@@ -1490,15 +1460,7 @@
     function summaryHtml() {
       var t = totals(), ytdPct = pctOf(t.creative, allowance());
 
-      // TEMPORARY: drawer headline switch.
-      var h = '<div class="dh-switch">Drawer headline' +
-        '<div class="pills" role="group" aria-label="Drawer headline pattern">' +
-        DRAWER_OPTS.map(function (o) {
-          return '<button class="pill" data-dh="' + o.id + '" aria-pressed="' + (drawerOpt === o.id) +
-                 '">' + o.id + ' · ' + esc(o.label) + '</button>';
-        }).join('') + '</div></div>';
-
-      h += '<div class="table-scroll"><table class="table"><thead><tr>' +
+      var h = '<div class="table-scroll"><table class="table"><thead><tr>' +
         '<th>Month</th>' +
         '<th class="r">Creative</th>' +
         '<th class="r col-gap">' + CATS[1].label + '</th>' +
@@ -1584,61 +1546,23 @@
       var tbl = document.querySelector('.table');
       if (tbl) tbl.addEventListener('mouseleave', function () { linkHover(null); });
 
-      // TEMPORARY: drawer headline switch.
-      document.querySelectorAll('.dh-switch .pill').forEach(function (b) {
-        b.addEventListener('click', function () {
-          drawerOpt = parseInt(b.dataset.dh);
-          var keep = state.selected;
-          render(lastData);
-          if (keep !== null) openMonth(keep, false);
-        });
-      });
     }
 
     /* What the row itself cannot show: where the hours went, and who worked
        them. The month, its total and its Creative / Other split are all in the
        row this hangs from, so none of them are repeated here. */
-    /* TEMPORARY: three headline patterns for the drawer, switched together at the
-       top of the table. Keep one and delete DRAWER_OPTS with the switch. */
-    var DRAWER_OPTS = [
-      { id: 1, label: 'Roster left, month meta right' },
-      { id: 2, label: 'Eyebrow over the roster' },
-      { id: 3, label: 'Roster with names in line' }
-    ];
-    var drawerOpt = 1;
-
     function taskCount(m) {
       return (m.creativeItems || []).length + (m.nonCreativeItems || []).length;
     }
 
+    /* Top of the drawer: who worked the month on one side, how much there is to
+       read on the other. Neither is in the row above, which already carries the
+       month, its split and its total. */
     function drawerHeadHtml(m) {
-      var people = stackFor(m.contributorIds);
       var n = taskCount(m);
-      var tasks = n + (n === 1 ? ' task' : ' tasks') + ' this month';
-
-      if (drawerOpt === 2) {
-        // Quiet: a label above the faces, nothing competing across from it.
-        return '<div class="acc-top opt-2">' +
-          '<span class="eyebrow">Worked by</span>' +
-          (stackHtml(m.contributorIds, true) || '<p class="dh-none">No contributors recorded</p>') +
-          '</div>';
-      }
-      if (drawerOpt === 3) {
-        // Names in line, so the roster reads without hovering anything.
-        var names = people.map(function (p) {
-          return '<span class="dh-person"><b>' + esc(p.name) + '</b>' +
-                 (p.title ? '<span>' + esc(p.title) + '</span>' : '') + '</span>';
-        }).join('');
-        // The label is redundant when the names are right there.
-        return '<div class="acc-top opt-3">' +
-          (stackHtml(m.contributorIds, true) || '') +
-          '<div class="dh-names">' + names + '</div>' +
-          '</div>';
-      }
-      // Balanced: who on one side, what on the other.
-      return '<div class="acc-top opt-1">' +
+      return '<div class="acc-top">' +
         (stackHtml(m.contributorIds) || '<span></span>') +
-        '<span class="dh-meta">' + tasks + '</span>' +
+        '<span class="dh-meta">' + n + (n === 1 ? ' task' : ' tasks') + ' this month</span>' +
         '</div>';
     }
 
