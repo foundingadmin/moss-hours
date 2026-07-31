@@ -513,10 +513,23 @@
        other two, so there is nothing to hide it from. Hence the hover
        treatment of a series with the cursor of a label. */
     .legend-item.is-key { cursor: default; }
-    /* The total is a dashed line, so its rail is dashed down its length. */
+    /* The total is a dashed line, so its rail is dashed down its length.
+
+       Dashed from both ends rather than from the top down. The rail stretches
+       to whatever the label and figure beside it come to, so a single gradient
+       running top to bottom lands its last gap wherever the height happens to
+       fall, and a gap over a rounded end erases the cap: the rail reads as cut
+       off square. Each half repeats away from its own edge instead, which pins
+       a dash to the top and the bottom and leaves the two curves drawn. The
+       halves meet in the middle, where a dash landing slightly long is the one
+       place on a dashed rail nobody reads as a mistake. */
     .legend-item > .swatch.dash {
-      background-image: repeating-linear-gradient(to bottom,
-        var(--dim) 0 6px, transparent 6px 11px);
+      background-image:
+        repeating-linear-gradient(to bottom, var(--dim) 0 6px, transparent 6px 11px),
+        repeating-linear-gradient(to top, var(--dim) 0 6px, transparent 6px 11px);
+      background-size: 100% 50%;
+      background-position: left top, left bottom;
+      background-repeat: no-repeat;
     }
     .legend-item .lg-name {
       font-size: 14px; font-weight: 600; color: var(--dim); transition: color .14s ease;
@@ -1891,6 +1904,55 @@
       }
     };
 
+    /* Curvature for the total line and for everything drawn alongside it. Set
+       high enough that the projected half reads as a soft sweep rather than as
+       a set of ruled segments: an estimate should not look surveyed. */
+    var LINE_TENSION = 0.42;
+
+    /* Chart.js keeps its spline maths to itself, so the band drawn around the
+       total line would be a polygon laid over a curve, disagreeing with it
+       between every pair of months. This is the same calculation Chart.js runs
+       on the line (helpers.splineCurve): each point's control points sit along
+       the chord between its two neighbours, weighted by how far away each
+       neighbour is. An endpoint stands in as its own missing neighbour, which
+       is what leaves the first and last spans slack rather than straight. */
+    function splineCtrl(a, b, c, t) {
+      if (!a) a = b;
+      if (!c) c = b;
+      var d01 = Math.hypot(b.x - a.x, b.y - a.y);
+      var d12 = Math.hypot(c.x - b.x, c.y - b.y);
+      var sum = d01 + d12;
+      if (!sum) return { prev: b, next: b };
+      var fa = t * d01 / sum, fb = t * d12 / sum;
+      return {
+        prev: { x: b.x - fa * (c.x - a.x), y: b.y - fa * (c.y - a.y) },
+        next: { x: b.x + fb * (c.x - a.x), y: b.y + fb * (c.y - a.y) }
+      };
+    }
+    /* Appends a curve through `pts` to the open path. `join` continues from
+       wherever the path already is, which is what the filled band needs when it
+       turns the corner at the far end and comes back along its other edge.
+
+       Control points are held inside the plot, as Chart.js holds the line's:
+       a steep last month can throw one past the top of the frame, and the band
+       would billow out over the axis rather than following the line. */
+    function curveThrough(g, pts, t, area, join) {
+      if (!pts.length) return;
+      var clamp = function (v, lo, hi) { return Math.min(Math.max(v, lo), hi); };
+      var hold = function (p) {
+        return area
+          ? { x: clamp(p.x, area.left, area.right), y: clamp(p.y, area.top, area.bottom) }
+          : p;
+      };
+      if (join) g.lineTo(pts[0].x, pts[0].y);
+      else g.moveTo(pts[0].x, pts[0].y);
+      for (var i = 0; i < pts.length - 1; i++) {
+        var out = hold(splineCtrl(pts[i - 1], pts[i], pts[i + 1], t).next);
+        var into = hold(splineCtrl(pts[i], pts[i + 1], pts[i + 2], t).prev);
+        g.bezierCurveTo(out.x, out.y, into.x, into.y, pts[i + 1].x, pts[i + 1].y);
+      }
+    }
+
     /* The high/low band, drawn as a cone opening out of the last tracked total.
        The texture says "this half of the chart is estimated"; the band says how
        loosely, which is the part a single projected line cannot express. It
@@ -1924,10 +1986,14 @@
         // to, so the emphasis reads as one move rather than the band hanging on.
         var faded = hoverMonth !== null || (emphasis !== null && emphasis !== CATS.length);
         var g = c.ctx;
+        var hiPts = pts.map(function (pt) { return { x: pt.x, y: pt.hi }; });
+        var loPts = pts.map(function (pt) { return { x: pt.x, y: pt.lo }; });
         g.save();
+        // Out along the top edge, back along the bottom, both on the same
+        // curve the total line runs down the middle of.
         g.beginPath();
-        pts.forEach(function (pt, i) { i ? g.lineTo(pt.x, pt.hi) : g.moveTo(pt.x, pt.hi); });
-        for (var j = pts.length - 1; j >= 0; j--) g.lineTo(pts[j].x, pts[j].lo);
+        curveThrough(g, hiPts, LINE_TENSION, c.chartArea, false);
+        curveThrough(g, loPts.slice().reverse(), LINE_TENSION, c.chartArea, true);
         g.closePath();
         g.fillStyle = printing
           ? 'rgba(0,0,0,0.05)'
@@ -1940,9 +2006,9 @@
         g.strokeStyle = printing
           ? 'rgba(0,0,0,0.26)'
           : 'rgba(255,255,255,' + (faded ? 0.11 : 0.24) + ')';
-        ['hi', 'lo'].forEach(function (edge) {
+        [hiPts, loPts].forEach(function (edge) {
           g.beginPath();
-          pts.forEach(function (pt, i) { i ? g.lineTo(pt.x, pt[edge]) : g.moveTo(pt.x, pt[edge]); });
+          curveThrough(g, edge, LINE_TENSION, c.chartArea, false);
           g.stroke();
         });
         g.restore();
@@ -1972,7 +2038,7 @@
             return (r && r.projected) ? GHOST_LINE : undefined;
           }
         },
-        tension: 0.32,
+        tension: LINE_TENSION,
         pointRadius: 3.5,
         pointHoverRadius: 6,
         pointBackgroundColor: pointColors(),
