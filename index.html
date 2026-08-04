@@ -1129,7 +1129,7 @@
     function ensurePriorYear(then) {
       if (priorYear.year === YEAR - 1 && priorYear.state !== 'idle') return then && then();
       priorYear = { year: YEAR - 1, months: null, state: 'loading' };
-      fetch(API_BASE + '?year=' + (YEAR - 1) + '&_=' + Date.now(), { cache: 'no-store' })
+      fetch(API_BASE + '?year=' + (YEAR - 1))
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (!d || !d.months) { priorYear.state = 'none'; return; }
@@ -1202,7 +1202,10 @@
       if (s < 10) return 'just now';
       if (s < 60) return s + 's ago';
       if (s < 3600) return Math.round(s / 60) + 'm ago';
-      return Math.round(s / 3600) + 'h ago';
+      // A past year is cached for a day and served stale for up to a week, so
+      // ages beyond 24h are reachable and should not read as "168h ago".
+      if (s < 86400) return Math.round(s / 3600) + 'h ago';
+      return Math.round(s / 86400) + 'd ago';
     }
     function tickClock() {
       var narrow = isNarrow();
@@ -1306,9 +1309,12 @@
       setRangeText('');
       if (chart) { chart.destroy(); chart = null; }
 
-      // Cache-bust so the refresh button is a genuine round trip to ClickUp.
-      var url = API_BASE + '?year=' + YEAR + '&_=' + Date.now();
-      fetch(url, { cache: 'no-store' })
+      // An ordinary load is served from the edge cache, so it costs nothing at
+      // ClickUp. Only the refresh button asks for a genuine round trip. Nothing
+      // cache-busts: a unique URL per load is a unique cache key, which is what
+      // made every visit a fresh pull.
+      var url = API_BASE + '?year=' + YEAR + (manual ? '&fresh=1' : '');
+      fetch(url)
         .then(function (r) {
           return r.text().then(function (t) {
             if (!r.ok) throw new Error('API ' + r.status + ': ' + t.slice(0, 200));
@@ -1318,7 +1324,7 @@
         .then(render)
         .catch(function (e) {
           content.innerHTML = '<div class="state err">Couldn’t load data.<code>' + esc(e.message) + '</code>' +
-            '<div style="margin-top:12px;color:var(--dim);">Confirm <b>CLICKUP_TOKEN</b> is set in Vercel and the API is reachable at <code>' + esc(API_BASE) + '</code>.</div></div>';
+            '<div style="margin-top:12px;color:var(--dim);">Confirm <b>MOSS_CLICKUP_TOKEN</b> is set in Vercel and the API is reachable at <code>' + esc(API_BASE) + '</code>.</div></div>';
         })
         .then(function () { btn.removeAttribute('aria-busy'); });
     }

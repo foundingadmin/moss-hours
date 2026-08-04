@@ -8,7 +8,7 @@
  * wrong face is worse than a generic mark, so discovery happens once, a human
  * reviews the result, and the reviewed file is committed.
  *
- *   CLICKUP_TOKEN=pk_... node scripts/generate-roster.js
+ *   MOSS_CLICKUP_TOKEN=... node scripts/generate-roster.js
  *
  * Writes roster.js in the repository root. Titles are not discoverable and are
  * filled in by hand afterwards; regenerating discards them, so diff before
@@ -41,9 +41,9 @@ const IGNORE_SLUGS = ['cricket', 'quill', 'titus-pixel'];
 const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '');
 
 async function fetchMembers() {
-  const token = process.env.CLICKUP_TOKEN;
+  const token = process.env.MOSS_CLICKUP_TOKEN || process.env.CLICKUP_TOKEN;
   if (!token) {
-    console.error('CLICKUP_TOKEN is not set. Export it and re-run.');
+    console.error('Neither MOSS_CLICKUP_TOKEN nor CLICKUP_TOKEN is set. Export one and re-run.');
     process.exit(1);
   }
   const res = await fetch('https://api.clickup.com/api/v2/team', {
