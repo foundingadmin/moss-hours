@@ -2869,5 +2869,12 @@
     window.addEventListener('resize', syncMastheadHeight);
     load();
   </script>
+
+  <!-- Vercel Web Analytics. Pageviews only, no cookies and no custom events.
+       Vercel serves this path itself on a real deployment, so the request 404s
+       under `npm run dev` and on any other host. That is expected: nothing else
+       on the page depends on it. Adding a custom event later means adding the
+       window.va queue shim above this tag, per Vercel's HTML quickstart. -->
+  <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
