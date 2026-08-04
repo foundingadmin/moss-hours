@@ -16,3 +16,9 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Scratch API payload dumps. Pulling a live /api/time response to a file while
+# debugging is useful and that file is real client data, so it never lands in
+# the repo. Committed fixtures live in fixtures/ and are invented.
+.live-*.json
+*.live.json

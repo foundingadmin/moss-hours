@@ -1,0 +1,113 @@
+{
+  "_fixture": "Typical mid-year state. Eight tracked months, four projected, the Creative Jan-May data flag live, an aggregated tail row, a task with no ClickUp permalink, and three rostered contributors. This is the file to reach for when working on layout.",
+  "_note": "Invented task names and hours. Not client data. Safe to edit.",
+  "_omits": "The live API also returns retainerDaily and sowDaily per month (the day buckets the dormant day view would read) and listId on each item. Neither fixture carries them, because normalize() falls back to null and nothing currently rendered uses them. Add them here first if the day view is ever switched back on.",
+  "year": 2026,
+  "retainerBudget": 50,
+  "generatedAt": "2026-08-04T18:25:00.000Z",
+  "timezone": "America/Denver",
+  "totalEntries": 1732,
+  "unmatchedEntries": 1321,
+  "unmatchedHours": 13039.54,
+  "skippedEntries": 3,
+  "memberCount": 9,
+  "contributors": { "queried": 9, "contributing": 3 },
+  "team": [
+    { "id": "81552507", "name": "Jamie Lukey", "title": "Creative Team", "stack": "team/stack/jamie.webp", "roster": "team/roster/jamie.webp" },
+    { "id": "81327662", "name": "Josh Titus", "title": "Creative Team", "stack": "team/stack/titus.webp", "roster": "team/roster/titus.webp" },
+    { "id": "81327663", "name": "Tyler Rand", "title": "Creative Team", "stack": "team/stack/tyler.webp", "roster": "team/roster/tyler.webp" }
+  ],
+  "months": [
+    {
+      "month": 0,
+      "retainerHours": 6.73,
+      "sowHours": 52.23,
+      "contributorIds": ["81552507", "81327662"],
+      "retainerItems": [
+        { "id": "a1", "name": "Program Colour Palettes", "hours": 2.68, "url": "https://app.clickup.com/t/a1" },
+        { "id": "a2", "name": "Problem Solving Template for Vertical Markets", "hours": 1.68, "url": "https://app.clickup.com/t/a2" },
+        { "id": "a3", "name": "Custom Branding Word Doc", "hours": 0.67, "url": "https://app.clickup.com/t/a3" },
+        { "id": "a4", "name": "Update Brand Hub with New Homepage", "hours": 0.58, "url": null },
+        { "id": "a5", "name": "Other retainer support", "hours": 1.12, "aggregated": true, "count": 7, "url": null }
+      ],
+      "sowItems": [
+        { "id": "b1", "name": "Print Updates", "hours": 14.85, "url": "https://app.clickup.com/t/b1" },
+        { "id": "b2", "name": "Evergreen Animated Transition Package", "hours": 9.27, "url": "https://app.clickup.com/t/b2" },
+        { "id": "b3", "name": "Breakout Directional Poster (Signage)", "hours": 7.48, "url": "https://app.clickup.com/t/b3" },
+        { "id": "b4", "name": "Product Page Animations", "hours": 4.58, "url": "https://app.clickup.com/t/b4" },
+        { "id": "b5", "name": "Brochure Template", "hours": 4.25, "url": "https://app.clickup.com/t/b5" },
+        { "id": "b6", "name": "Countdown Clock Animation (15s)", "hours": 3.87, "url": "https://app.clickup.com/t/b6" },
+        { "id": "b7", "name": "Event Digital Loop", "hours": 3.6, "url": "https://app.clickup.com/t/b7" },
+        { "id": "b8", "name": "Landing Page Update and Video", "hours": 1.58, "url": "https://app.clickup.com/t/b8" },
+        { "id": "b9", "name": "Record Creative Brief", "hours": 0.78, "url": "https://app.clickup.com/t/b9" },
+        { "id": "b10", "name": "Present Template to Client", "hours": 1.97, "aggregated": true, "count": 4, "url": null }
+      ]
+    },
+    {
+      "month": 1,
+      "retainerHours": 18.63,
+      "sowHours": 113.07,
+      "contributorIds": ["81552507", "81327662", "81327663"],
+      "retainerItems": [
+        { "id": "c1", "name": "Brand Guide for AI Database", "hours": 12.4, "url": "https://app.clickup.com/t/c1" },
+        { "id": "c1b", "name": "Icon Set Expansion", "hours": 6.23, "url": "https://app.clickup.com/t/c1b" }
+      ],
+      "sowItems": [
+        { "id": "d1", "name": "Spring Campaign Build", "hours": 88.2, "url": "https://app.clickup.com/t/d1" },
+        { "id": "d1b", "name": "Campaign Motion Cutdowns", "hours": 24.87, "url": "https://app.clickup.com/t/d1b" }
+      ]
+    },
+    {
+      "month": 2,
+      "retainerHours": 11.98,
+      "sowHours": 14.02,
+      "contributorIds": ["81552507"],
+      "retainerItems": [{ "id": "c2", "name": "Home Awaits Logo Work", "hours": 11.98, "url": "https://app.clickup.com/t/c2" }],
+      "sowItems": [{ "id": "d2", "name": "Signage Refresh", "hours": 14.02, "url": null }]
+    },
+    {
+      "month": 3,
+      "retainerHours": 14.83,
+      "sowHours": 56.23,
+      "contributorIds": ["81552507", "81327663"],
+      "retainerItems": [{ "id": "c3", "name": "Template System", "hours": 14.83, "url": "https://app.clickup.com/t/c3" }],
+      "sowItems": [{ "id": "d3", "name": "Event Collateral", "hours": 56.23, "url": "https://app.clickup.com/t/d3" }]
+    },
+    {
+      "month": 4,
+      "retainerHours": 15.13,
+      "sowHours": 34.47,
+      "contributorIds": ["81327662"],
+      "retainerItems": [{ "id": "c4", "name": "Social Kit", "hours": 15.13, "url": "https://app.clickup.com/t/c4" }],
+      "sowItems": [{ "id": "d4", "name": "Video Edit Pass", "hours": 34.47, "url": "https://app.clickup.com/t/d4" }]
+    },
+    {
+      "month": 5,
+      "retainerHours": 65.42,
+      "sowHours": 11.57,
+      "contributorIds": ["81552507", "81327662", "81327663"],
+      "retainerItems": [{ "id": "c5", "name": "Rebrand Sprint", "hours": 65.42, "url": "https://app.clickup.com/t/c5" }],
+      "sowItems": [{ "id": "d5", "name": "Trade Show Booth", "hours": 11.57, "url": "https://app.clickup.com/t/d5" }]
+    },
+    {
+      "month": 6,
+      "retainerHours": 55.72,
+      "sowHours": 82.52,
+      "contributorIds": ["81552507", "81327662"],
+      "retainerItems": [{ "id": "c6", "name": "Site Refresh", "hours": 55.72, "url": "https://app.clickup.com/t/c6" }],
+      "sowItems": [{ "id": "d6", "name": "Product Launch Film", "hours": 82.52, "url": "https://app.clickup.com/t/d6" }]
+    },
+    {
+      "month": 7,
+      "retainerHours": 4.22,
+      "sowHours": 1.0,
+      "contributorIds": ["81552507"],
+      "retainerItems": [{ "id": "c7", "name": "August Kickoff", "hours": 4.22, "url": "https://app.clickup.com/t/c7" }],
+      "sowItems": [{ "id": "d7", "name": "Asset Handover", "hours": 1.0, "url": null }]
+    },
+    { "month": 8, "retainerHours": 0, "sowHours": 0, "retainerItems": [], "sowItems": [], "contributorIds": [] },
+    { "month": 9, "retainerHours": 0, "sowHours": 0, "retainerItems": [], "sowItems": [], "contributorIds": [] },
+    { "month": 10, "retainerHours": 0, "sowHours": 0, "retainerItems": [], "sowItems": [], "contributorIds": [] },
+    { "month": 11, "retainerHours": 0, "sowHours": 0, "retainerItems": [], "sowItems": [], "contributorIds": [] }
+  ]
+}

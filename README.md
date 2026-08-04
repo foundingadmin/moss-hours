@@ -1,6 +1,13 @@
 # Moss · Client Hours
 
-A tiny Vercel project that surfaces Moss client hours from ClickUp:
+A tiny Vercel project that surfaces Moss client hours from ClickUp.
+
+**Working on this? Start here.** `npm run dev`, then open the fixture URL it
+prints. No ClickUp token needed. `npm run check` before you commit. The
+[Repo map](#repo-map) says which file holds what, and
+[Local development](#local-development) covers the rest.
+
+## The pieces
 
 - **`api/time.js`**: a serverless proxy that fetches ClickUp time entries for a
   given year, buckets them by month across the Creative (retainer) and
@@ -12,6 +19,38 @@ A tiny Vercel project that surfaces Moss client hours from ClickUp:
   client wordmark used in the report title, vendored so the report never depends
   on a third-party host at render time.
 
+## Repo map
+
+`index.html` is one 2,700-line file, which is deliberate (no build step) and
+does mean knowing where to look. Everything in it sits under a banner comment,
+so the fastest way in is to grep for the banner rather than scroll.
+
+| Looking for | Where |
+| --- | --- |
+| Colour and type tokens, badge geometry | `:root` at the top of the `<style>` |
+| Data-integrity flags | `var DATA_FLAGS`, near the top of the `<script>` |
+| What Creative and Other mean, retainer terms | `defsHtml()` |
+| Hero panel, the headline total | `heroHtml()` |
+| The rotating comparison lines | `var FUN_FACTS` |
+| Chart colours, ghosting, flag outlines | `barColors()`, `fade()`, `GHOST_A` |
+| Chart construction, axes, tooltips | `drawChart()` |
+| The key under the chart | `updateChartNote()` |
+| Projection maths | `projectRest()` |
+| Summary table and its month rows | `summaryHtml()` |
+| A month's task detail drawer | `monthDetailHtml()`, `taskRows()` |
+| Chart and table dimming each other | `linkHover()`, `paintBars()` |
+| The data-note modal | `openFlagModal()` |
+| CSV builders and the export menu | `exportSummary()`, `wireExport()` |
+| Freshness readout in the footer | `tickClock()` |
+
+| Non-production file | What it is for |
+| --- | --- |
+| `fixtures/*.json` | Committed API payloads, so the report runs with no token |
+| `scripts/serve.mjs` | Zero-dependency static server for those fixtures |
+| `scripts/check.mjs` | The pre-commit checks, as one command |
+| `scripts/generate-roster.js` | One-off ClickUp to `roster.js` generator |
+| `scripts/clickup-oauth.js` | One-off minter for `MOSS_CLICKUP_TOKEN` |
+
 ## The report
 
 Laid out high level → low level:
@@ -19,14 +58,23 @@ Laid out high level → low level:
 1. **Masthead**: the Founding Creative wordmark, on its own. Only the agency
    mark is chrome here, which is what makes the template reusable for another
    retainer client.
-2. **Title**: the client wordmark, then the report title, then the range and the
-   export link. The mark sits in a container of its own, centred on its **cap
-   band** rather than on its bounding box: measured from Moss's artwork, the caps
-   run 1.15 to 138.2 inside a 245.976 artboard while the spear descends to
-   160.45, leaving 35% of the box empty below the mark, so centring the box
-   floats the letters high. The shift is 21.7% of the rendered height. Doing it
-   with a container rather than a per-logo baseline nudge is what survives
-   swapping in a different client's artwork.
+2. **Title**: the client wordmark, then the report title, then the range. The
+   mark sits in a **square tile** carrying the same surface as the summary card
+   below it, a gradient fill and a hairline, so the client's mark reads as a
+   plate of the report's own material. One custom property (`--slot` on
+   `.client-slot`) sizes the tile, and the mark is capped to a width that leaves
+   it visibly square at every breakpoint.
+
+   Inside the tile the mark is centred on its **cap band** rather than on its
+   bounding box: measured from Moss's artwork, the caps run 1.15 to 138.2 inside
+   a 245.976 artboard while the spear descends to 160.45, leaving 35% of the box
+   empty below the mark, so centring the box floats the letters high. The shift
+   is 21.7% of the rendered height. Doing it with a container rather than a
+   per-logo baseline nudge is what survives swapping in a different client's
+   artwork.
+
+   There is no rule between the mark and the title. The tile already closes the
+   mark off, and a divider beside it drew a second edge saying the same thing.
 3. **Year to date**: total hours delivered, the range beneath it, a rotating
    comparison line in a labelled second column beside it, and underneath, the
    two categories named and explained. That is the one place the retainer terms
@@ -39,7 +87,8 @@ Laid out high level → low level:
    projected (see below). The legend floats in the plot's top-right corner above
    700px and returns to the flow above the chart below that, where the plot
    rotates and every month owns a full row. Hovering a legend entry ghosts every
-   other series; clicking hides it. The `Total` entry is a key, not a control.
+   other series; clicking hides it. The `Combined` entry is a key, not a
+   control.
 
    Then a per-month table, deliberately plain: no rules between rows, no tinted
    columns, no selected surface. Hierarchy is weight, colour, and one rule above
@@ -47,13 +96,54 @@ Laid out high level → low level:
    two categories side by side above 860px, one task per row with a permalink out
    to ClickUp, and the people who worked the month. Nothing opens on arrival.
 
+   **The open month is one surface.** The row and its drawer are two `<tr>`s and
+   cannot be wrapped in a single element, so the outline is drawn in halves: top
+   and sides on the row, sides and bottom on the drawer, with the join left
+   open. Both carry the same background and the same radius on their outer
+   corners, so the halves read as one plate. `border-collapse: separate` is what
+   makes the radius possible, and is the only reason the table is not collapsed.
+   The outline is the action colour, because "this is the month you opened" is
+   interface state and the two series colours are spoken for.
+
+   Each task list ends with that category's own total, in the series colour and
+   at the weight of the figures above it. The figure is the month's stored total
+   rather than a fresh sum of the rows, so the drawer can never disagree with
+   the row it hangs from. Creative adds a line stating what the month came to
+   against its allowance: the month row carries that percentage too, and it is
+   repeated here because the reader has just finished going down the Creative
+   rows and this is where the question comes up.
+
 ### Chart and table are linked
 
-Pointing at a month in either dims every other month in **both**. Clicking a bar
-opens that month's row in the table and closes whichever was open. The two are
-views of one set of months, so they behave like it.
+Clicking a bar opens that month's row in the table and closes whichever was
+open. The open month is then named in **both**: outlined in the table, and set
+in the action colour on the chart's month axis.
+
+**Dimming runs one way only.** Pointing at a month in the summary table dims
+every other month in the table and in the chart above it. Pointing at a bar does
+not dim anything. It used to do the same thing in reverse, which rearranged the
+page under a reader who was only running the mouse across the plot; the tooltip
+already answers what a bar is. Hovering a table row is a deliberate act on a
+named month, so that direction stays.
+
+Dimming is a **20% drop in opacity**, and only that. Everything ghosted keeps
+its own colour and steps back one notch. It used to swap the bars for a flat
+grey and take the table rows to 26%, which read as the page breaking rather than
+as one month being singled out; 10% was then too slight to register at all, so
+this sits between the two. `fade()` applies it to whatever a mark already is, so
+there is one ghosting rule rather than a parallel palette to keep in step. The
+CSS half of it, on the table rows, has to be kept in step with `GHOST_A` by
+hand. Projected months are a separate treatment and do not ghost.
 
 ### Projections
+
+**Projections are currently hidden.** `SHOW_PROJECTIONS` at the top of the
+`<script>` is the only switch. With it off the chart stops at the last tracked
+month, the textured ground, the boundary and the estimate band are never drawn,
+and the key naming them is suppressed. `projectRest()` and every plugin below
+are untouched, so switching it back on is one word.
+
+What follows describes the feature as it behaves when shown.
 
 The chart runs to December. Months after the last tracked one are estimated:
 
@@ -67,12 +157,30 @@ The chart runs to December. Months after the last tracked one are estimated:
 
 An estimate must never read as delivered hours in a client-facing report, so the
 projected stretch sits on its own textured ground behind a hairline boundary, its
-bars are hollow, its end labels and the total line ghost across it, and none of
-it is counted in the legend's totals. The key under the chart names the texture
-and states the basis, and is **built from the payload on every render**: in
-August it reads "Sep–Dec are projected" off the new data with no edit.
+bars are hollow, its end labels and the total line drop back across it, and none
+of it is counted in the legend's totals.
+
+The key under the chart is a **definition of the texture and nothing more**:
+"Estimated, not tracked time. Projected from how the year has run so far." It
+once explained the whole method, the basis, the seasonal adjustment, the width
+of the band and why the month in progress is excluded. All of it was true and
+none of it was asked, and at the foot of a chart it read as a disclaimer, which
+is the one thing an estimate in a client-facing report must not look like. The
+method is still in `projectRest()` and still summarised in the tooltip on every
+projected bar.
+
+The diagonal texture now means exactly one thing in this report: projected. Do
+not reuse it for anything else.
 
 ### Categories
+
+The sum of the two is **Combined**, everywhere a reader can see it: the headline
+eyebrow, the chart legend's third entry, the summary table's last column, and
+the chart tooltip. It used to be "Total", which had to do double duty for the
+sum of the two categories and for the sum down a column of months, so a reader
+meeting "Total" twice in one table was reading two different things. "Total"
+still names a single category's own sum, at the foot of each task list in an
+open month, where there is nothing to confuse it with.
 
 The report uses two terms throughout, mapped from the ClickUp folder structure:
 
@@ -131,20 +239,40 @@ which is exactly what made every visit a fresh pull before.
 request arrived. On a cached response those differ, which is the point: the
 footer states the data's real age instead of claiming to be current.
 
-The **footer** carries the current date and time
-alongside `generatedAt` from the API response, plus the refresh control. It is a
+The **footer** is one row: the agency on the left, how fresh the data is on the
+right, and the refresh control. Both items are set the same way, 14px body face,
+so they read as a matched pair closing the page; colour is what keeps the link
+the more prominent of the two, since only one of them is a place to go. It is a
 note on how fresh the data is, which is a closing remark rather than the first
-thing on the page. The readout is set in the platform monospace face: Manrope
-ships no tabular-figure feature (measured, its digits run 7.47px to 8.00px
-wide), so a proportional ticking seconds field twitched the whole line once a
-second.
+thing on the page.
+
+The readout states `generatedAt` and nothing else. It used to sit under a live
+wall clock, which told the reader the time on their own machine, a moving part
+answering a question nobody had. That clock was also why the readout was set in
+monospace, since Manrope ships no tabular-figure feature (measured, its digits
+run 7.47px to 8.00px wide) and a proportional ticking seconds field twitched the
+whole line once a second. No ticking field, no reason, so it joins the rest of
+the footer.
+
+Because a cached payload can be genuinely old, the readout carries a date once
+the data is not from today. "3d ago · 6:25 PM" states an hour on an unnamed day,
+which is worse than saying nothing; "3d ago · Aug 1, 6:25 PM" is the same figure
+made answerable. Relative age alone is refreshed on a 30-second interval, which
+is as often as a string measured in minutes can change.
 
 ### Export
 
-The export menu offers a monthly-summary CSV, a task-level line-item CSV
-(including the ClickUp URL and any data note for each row), and Print / Save as
-PDF. The print stylesheet re-points the design tokens to a light palette and
-re-themes the chart canvas via the `beforeprint` / `afterprint` events.
+**The export control is currently hidden.** `SHOW_EXPORT` at the top of the
+`<script>` is the only thing standing between the feature and the page. The CSV
+builders, the menu wiring and the print stylesheet are all still here and still
+correct, so bringing it back is one word.
+
+When shown, the menu offers a year-summary CSV, a monthly-summary CSV, a
+task-level line-item CSV (including the ClickUp URL and any data note for each
+row), and Print / Save as PDF. The print stylesheet re-points the design tokens
+to a light palette and re-themes the chart canvas via the `beforeprint` /
+`afterprint` events. Print still works from the browser's own menu while the
+control is hidden.
 
 ### Data-integrity annotations
 
@@ -159,30 +287,44 @@ var DATA_FLAGS = [
     months: [0, 1, 2, 3, 4],   // Jan–May, zero-indexed
     series: 'creative',        // 'creative' | 'nonCreative'
     label: 'Under-reported',
-    detail: 'Creative hours for January–May 2026 come from a partially corrupt …'
+    detail: 'Some Creative time was not fully captured in our time tracking, …'
   }
 ];
 ```
 
-One entry drives every surface at once: a hatched fill on the chart, a note in
-that bar's tooltip, a labelled tag beside the **Creative** heading in the
-affected month's expanded detail, and a `Data note` column in both CSV exports.
-The tag opens a modal lined with the same diagonal, so one visual language runs
-from the chart through to the note explaining it. The closed table row carries no
-mark of its own: the chart shows it at a glance and the detail states it in full.
+One entry drives every surface at once:
+
+- a **warn-coloured outline** on that month's bar in the chart, drawn heavier
+  than the hairline every other bar carries so it reads as deliberate
+- a **warn triangle** on the canvas beside the bar's end label, in the rotated
+  layout
+- a **warn triangle** to the left of that month's Creative figure in the summary
+  table, so the flagged months are findable without opening a row
+- a note in the bar's tooltip
+- a labelled tag beside the **Creative** heading in the month's expanded detail,
+  which opens the modal
+- a `Data note` column in both CSV exports
+
+The flag language is warn yellow, and only warn yellow. Flagged bars used to be
+filled with a diagonal hatch, which made those months read as a different kind
+of measurement rather than as the same hours with a note attached, and collided
+with the texture the projections use. The modal was lined with the same diagonal
+for the same reason, and lost it for the same reason.
 
 The flag sits with the series it applies to rather than with the month, since
 under-reporting never applied to the non-Creative side.
 
-Everywhere the diagonal appears outside the canvas it is drawn at `-45deg`: the
-canvas hatch runs bottom-left to top-right, and CSS at `45deg` lays its bands the
-other way, which silently mirrors it.
+`detail` **names no months and no dates.** The chart outlines the flagged months
+and the table marks them, so a span written into the copy was a third copy of
+the same fact and one more thing to keep in step with the `months` array above
+it. The copy explains why the figures are low, and nothing else.
 
 **Delete the entry once the underlying data is repaired.** Nothing else needs
-to change.
+to change. `npm run check` will tell you if a flag names a month outside 0 to 11
+or a series the report does not draw.
 
-The currently shipped flag covers **Creative, Jan–May 2026**, whose ClickUp
-export is partially corrupt and understates real usage.
+The currently shipped flag covers **Creative, Jan–May 2026**, where time was not
+fully captured and real usage is understated.
 
 ## API
 
@@ -266,7 +408,7 @@ person. It is **generated** by `scripts/generate-roster.js`, hand-edited for
 titles, then committed and reviewed like any other source file.
 
 ```bash
-MOSS_CLICKUP_TOKEN=... node scripts/generate-roster.js
+MOSS_CLICKUP_TOKEN=... npm run roster
 ```
 
 ClickUp is authoritative for exactly one thing: **which user ids logged matched
@@ -408,17 +550,51 @@ The report calls the API at the same origin (`/api/time`), so once deployed it
 works without further configuration. To point it at a different API, append
 `?api=https://your-deploy.vercel.app/api/time`.
 
-## Local notes
+## Local development
 
-The report is a single static file; Chart.js and the brand tokens load from a
-CDN. Open it through `vercel dev` so the `/api/time` route resolves. To work on
-the layout without a ClickUp token, serve the directory statically and point the
-page at a local fixture:
+Most work here is layout and copy, which needs no ClickUp token and no network
+round trip. Use the committed fixtures:
 
-```
-index.html?api=./mock.json&year=2026
+```bash
+npm run dev      # zero-dependency static server, prints the fixture URLs
 ```
 
+```
+index.html?api=./fixtures/2026-typical.json&year=2026
+index.html?api=./fixtures/2026-edge.json&year=2026
+```
+
+| Fixture | What it is for |
+| --- | --- |
+| `2026-typical` | Mid-year. Eight tracked months, four projected, the data flag live, an aggregated tail row, a task with no permalink. Reach for this one by default. |
+| `2026-edge` | The states real data rarely reaches. The one-account-reporting alarm, a single tracked month, an empty category on each side, no permalinks anywhere, and a contributor id missing from the roster. |
+
+The fixtures are the API contract written down. Changing the shape of
+`api/time.js`'s response means changing them too, and `npm run check` will catch
+a fixture that has stopped parsing or lost a month.
+
+`npm run dev:api` (`vercel dev`) is for work that actually touches
+`api/time.js`. The static server answers `/api/time` with a 501 and a pointer to
+the fixtures, so a forgotten `?api=` fails loudly rather than looking like a
+broken API. It serves everything `no-store`, so it never stands in for the edge
+cache described under [Freshness](#freshness); testing cache windows means
+`vercel dev` or a preview deployment.
+
+**Chart.js and the brand tokens load from CDNs**, so an offline or
+network-restricted machine renders an unstyled page with no chart. Vendoring
+local copies to get around that is fine while you work and a disaster to commit:
+`npm run check` fails if `index.html` has stopped pointing at either CDN.
+
+### Before committing
+
+```bash
+npm run check
+```
+
+It checks for em dashes (a standing house rule, see `CLAUDE.md`), that the CDN
+URLs are intact, that the fixtures parse and carry all twelve months, and that
+every `DATA_FLAGS` entry names real months and a real series. These are the
+mistakes that have actually been made here, not a general linter.
 ## Minting the token
 
 ClickUp issues exactly **one personal token per user account**, so every project

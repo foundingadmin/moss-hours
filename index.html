@@ -141,28 +141,6 @@
     /* Locked square: the icon is centred rather than the box sized by padding. */
     #refreshBtn { width: 42px; height: 42px; padding: 0; border-radius: var(--r-md); }
     #refreshBtn svg { width: 18px; height: 18px; }
-    /* A ticking seconds field in Manrope twitched the whole masthead once a
-       second: measured, its digits run 7.47px to 8.00px wide, and it ships no
-       tnum feature to even them out. So the readout is set in the platform's
-       monospace face, where every digit is one advance by definition. It also
-       suits what this is: a live instrument reading, not report copy. */
-    .clock {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-      font-size: 12px; line-height: 1.4; text-align: right; letter-spacing: -0.01em;
-    }
-    .clock .now { color: var(--white); font-weight: 600; }
-    .clock .now .live-dot {
-      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--mint); margin-right: 6px; vertical-align: middle;
-      box-shadow: 0 0 0 0 rgba(126, 248, 147, 0.6); animation: pulse 2.4s ease-out infinite;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(126, 248, 147, 0.5); }
-      70% { box-shadow: 0 0 0 7px rgba(126, 248, 147, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(126, 248, 147, 0); }
-    }
-    .clock .fetched { color: var(--dim-2); }
 
     @media (max-width: 700px) {
       .masthead { padding: 12px 0 14px; margin-bottom: 24px; }
@@ -208,12 +186,20 @@
     /* Baseline-matching a wordmark to a text baseline only ever half-works:
        every client's artwork sits differently inside its own artboard, so the
        fix does not survive swapping the logo. Instead the mark gets a container
-       of its own, centred inside a box that is the full height of the title
-       stack beside it. The box does the alignment, not the artwork. */
-    .title-id { display: flex; align-items: stretch; gap: 22px; min-width: 0; }
+       of its own and is centred inside it. The box does the alignment, not the
+       artwork.
+
+       That box is a square tile carrying the same surface as the summary card
+       below it, so the client's mark reads as a plate of the report's own
+       material rather than as loose artwork. One number sizes it, and the mark
+       is capped to a width that leaves the tile visibly square at every step. */
+    .title-id { display: flex; align-items: center; gap: 22px; min-width: 0; }
     .client-slot {
+      --slot: 104px;
       display: flex; align-items: center; justify-content: center; flex: none;
-      padding-right: 22px; border-right: 1px solid var(--line);
+      width: var(--slot); height: var(--slot);
+      background: linear-gradient(158deg, rgba(255,255,255,0.062), rgba(255,255,255,0.022));
+      border: 1px solid var(--line); border-radius: var(--r-lg);
     }
     /* Measured from the artwork: the caps run 1.15 to 138.2 inside a 245.976
        artboard and the spear descends to 160.45, leaving 35% of the box empty
@@ -222,7 +208,7 @@
        cap band's centre (69.7), which is 21.7% of the rendered height, so the
        caps sit on the container's centre line instead of the box. */
     .client-slot .client-mark {
-      display: block; width: auto; height: 38px; max-width: 190px;
+      display: block; height: auto; width: 100%; max-width: calc(var(--slot) - 26px);
       transform: translateY(21.7%);
     }
     .report-title {
@@ -234,8 +220,7 @@
 
     @media (max-width: 560px) {
       .title-id { gap: 16px; }
-      .client-slot { padding-right: 16px; }
-      .client-slot .client-mark { height: 30px; max-width: 130px; }
+      .client-slot { --slot: 78px; border-radius: var(--r-md); }
     }
 
     /* Export sits in the heading of the section it exports, not in the masthead:
@@ -362,7 +347,6 @@
     @media (prefers-reduced-motion: reduce) {
       .grad { animation: none; }
       .ff-line { transition: none; }
-      .live-dot { animation: none !important; }
     }
     .hero-ctx { font-size: 15.5px; color: var(--dim); line-height: 1.6; margin-top: 12px; }
     .hero-ctx strong { color: var(--ink-strong); font-weight: 600; }
@@ -464,20 +448,31 @@
     .stack-label { font-size: 14px; color: var(--dim-2); }
 
     /* ── Data-integrity flag ────────────────────────────────────────
-       The chart hatches a flagged bar. The same diagonal, at a fraction of the
-       contrast, marks the cell that opens onto it and lines the modal that
-       explains it, so one language says "something is different here" from the
-       chart through to the note. It replaced a warning icon floating over every
-       flagged bar, which shouted the same thing five times before anyone had
-       asked. */
-    /* Same slope as the canvas hatch, which runs bottom-left to top-right.
-       CSS 45deg lays its bands the other way, so this is -45deg. */
-    .hazard {
-      background-image: repeating-linear-gradient(-45deg,
-        transparent 0 7px, var(--hazard-ink, rgba(245, 194, 107, 0.14)) 7px 9px);
-    }
+       The flag language is warn yellow, and only warn yellow: an outline round
+       the flagged bar, a triangle beside its figure in the table, a labelled
+       tag in the open row, and a warn-toned modal behind the note.
+
+       The diagonal is deliberately not part of it any more. It now means one
+       thing in this report, the projected stretch of the chart, and lining a
+       modal about under-reported months in the texture that says "estimated"
+       pointed the reader at the wrong idea. */
     /* Compact inline flag: pill in tables, superscript beside a figure. */
     .flag-tag { color: var(--warn); background: var(--warn-surface); border-color: var(--warn-line); cursor: help; }
+
+    /* A mark, not a control: it sits to the left of a flagged month's Creative
+       figure and says the same thing the bar's warn outline says, so a reader
+       scanning the table finds the flagged months without opening a row. The
+       row it sits in stays clickable through it, since the note itself is
+       stated in full inside that row. */
+    .flag-mark {
+      display: inline-flex; vertical-align: middle; color: var(--warn);
+      margin-right: 7px; opacity: .95;
+    }
+    .flag-mark svg { width: 13px; height: 13px; display: block; }
+    @media (max-width: 430px) {
+      .flag-mark { margin-right: 5px; }
+      .flag-mark svg { width: 11px; height: 11px; }
+    }
 
 
     /* ── Chart + interactive legend ─────────────────────────────────
@@ -631,14 +626,6 @@
       border: 1px solid var(--warn-line); border-radius: var(--r-lg);
       box-shadow: var(--shadow-2xl); padding: 22px 24px 24px;
     }
-    /* Set after .modal so the stripes layer over its gradient rather than being
-       replaced by it: the shorthand there writes background-image too. */
-    .modal.hazard {
-      --hazard-ink: rgba(245, 194, 107, 0.06);
-      background-image:
-        repeating-linear-gradient(-45deg, transparent 0 8px, var(--hazard-ink) 8px 10px),
-        linear-gradient(165deg, var(--warn-surface-2), var(--warn-surface));
-    }
     .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
     .modal-title {
       font-family: var(--font-display); font-size: 20px; font-weight: 600; margin: 0;
@@ -657,7 +644,10 @@
        columns, no selected surface. Every one of those was scaffolding for a
        denser page, and with the density gone they were the only noise left.
        Hierarchy is carried by weight, colour and one rule above the totals. */
-    .table { --sel: var(--action); width: 100%; border-collapse: collapse; font-size: 15.5px; }
+    /* Separate rather than collapsed, so the open month's outline can carry a
+       radius. Nothing else in the table draws a border, so there is no pair of
+       edges for the separate model to double up. */
+    .table { --sel: var(--action); width: 100%; border-collapse: separate; border-spacing: 0; font-size: 15.5px; }
     .table th, .table td { padding: 13px 12px; text-align: left; }
     .table th {
       font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
@@ -669,8 +659,16 @@
     .table tbody tr.mrow:hover .caret { color: var(--action); }
     .table tbody tr.mrow:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
     /* Pointing at a month in the chart above dims every other month here, and
-       the year-to-date row with them: it is not the month being asked about. */
-    .table tbody tr.mrow.is-dim td, .table tfoot.is-dim td { opacity: .26; }
+       the year-to-date row with them: it is not the month being asked about.
+
+       A slight step back, not a fade-out. At .26 the unhovered rows dropped so
+       far that the table read as broken rather than as focused, and a client
+       glancing at it lost the figures they were not pointing at. A tenth was
+       then too little to register, so this sits between the two.
+
+       Keep in step with GHOST_A in the script, which does the same job on the
+       chart. */
+    .table tbody tr.mrow.is-dim td, .table tfoot.is-dim td { opacity: .8; }
     .table tfoot { transition: opacity .14s ease; }
     .table tbody tr.mrow[aria-expanded="true"] .mo { font-weight: 700; color: var(--white); }
     .table .mo { font-weight: 600; display: flex; align-items: center; gap: 8px; transition: color .12s ease; }
@@ -680,13 +678,46 @@
     .table .caret svg { width: 100%; height: 100%; }
     .table tbody tr.mrow[aria-expanded="true"] .caret { transform: rotate(90deg); color: var(--sel); }
 
-    /* The open month's detail. No surface of its own and no left rail: it is set
-       apart by the space around it, and the padding under it is what makes the
-       next month's row obviously the next thing. */
+    /* The open month is one surface, not a row and a panel underneath it.
+
+       The month row and its drawer are two `<tr>`s and cannot be wrapped in a
+       single element, so the outline is drawn in halves: top and sides on the
+       row, sides and bottom on the drawer, with the join between them left
+       open. They carry the same background and the same radius on their outer
+       corners, so the two halves read as one plate. `border-collapse: separate`
+       is what makes the radius possible at all, and is the only reason the
+       table is not collapsed.
+
+       It is the action colour rather than a series colour, because "this is the
+       month you opened" is interface state, and mint and lavender are spoken
+       for. */
+    .table tbody tr.mrow[aria-expanded="true"] > td {
+      background: var(--sel-row);
+      border-top: 1px solid var(--action);
+    }
+    .table tbody tr.mrow[aria-expanded="true"] > td:first-child {
+      border-left: 1px solid var(--action);
+      border-top-left-radius: var(--r-md);
+      padding-left: 14px;
+    }
+    .table tbody tr.mrow[aria-expanded="true"] > td:last-child {
+      border-right: 1px solid var(--action);
+      border-top-right-radius: var(--r-md);
+      padding-right: 14px;
+    }
     .table tbody tr.acc > td { padding: 0; }
-    .acc-inner { padding: 6px 2px 52px; }
+    .table tbody tr.acc:not([hidden]) > td {
+      background: var(--sel-row);
+      border: 1px solid var(--action);
+      border-top: 0;
+      border-bottom-left-radius: var(--r-md);
+      border-bottom-right-radius: var(--r-md);
+    }
+    /* Roomier than it was, because the drawer now has edges of its own to sit
+       inside rather than open space to be set apart by. */
+    .acc-inner { padding: 4px 16px 26px; }
     .acc-note { font-size: 13px; color: var(--dim-2); margin: 26px 0 0; }
-    @media (max-width: 680px) { .acc-inner { padding: 4px 0 40px; } }
+    @media (max-width: 680px) { .acc-inner { padding: 4px 10px 22px; } }
 
     /* Both categories side by side, so the two task lists that add up to the
        row's total are visible at once instead of one scrolling past the other.
@@ -697,6 +728,11 @@
 
     .table .primary { font-weight: 600; color: var(--white); }
     .table .of { color: var(--dim-2); font-weight: 500; }
+    /* The two series figures in a month row are the same numbers the drawer
+       below repeats per task, so they are set at the same weight. At the body
+       default they read as lighter than the task rows they summarise, which
+       inverts the hierarchy. */
+    .table tbody tr.mrow td.col-series { font-weight: 600; }
     /* The share of the retainer, reading as an annotation on the figure it
        follows rather than as a second number of equal standing. */
     .table .use {
@@ -787,6 +823,38 @@
     .row .link svg { width: 14px; height: 14px; }
     .row .link.placeholder { opacity: .22; pointer-events: none; }
     .empty-note { font-size: 15px; color: var(--dim-2); font-style: italic; margin: 10px 0 0; }
+
+    /* The sum of the task list above it, in that series' colour and at the
+       weight of the figures it adds up, so it reads as the last line of the
+       list rather than as a new thing. The rule spans the full width the rows
+       do; the figures are inset by the link column so they land under the hours
+       above them. */
+    .cat-foot {
+      margin-top: 8px; padding: 12px 26px 0 0;
+      border-top: 1px solid var(--line);
+    }
+    .cat-total { display: flex; align-items: baseline; gap: 13px; }
+    .cat-total .ct-label { flex: 1 1 0; min-width: 0; font-size: 14px; color: var(--dim-2); }
+    .cat-total .ct-val {
+      flex: none; min-width: 72px; text-align: right; white-space: nowrap;
+      font-size: 15.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+    }
+    /* The one figure in the drawer that is not hours. Stated here because this
+       is where a reader has just finished adding the Creative rows up and is in
+       a position to ask what it came to against the month's allowance. */
+    .ct-note {
+      margin: 5px 0 0; text-align: right;
+      font-size: 13px; line-height: 1.4; color: var(--dim-2);
+    }
+    .ct-note b { font-weight: 700; }
+    @media (max-width: 560px) {
+      .cat-foot { padding-right: 0; }
+      .cat-total .ct-val { min-width: 60px; }
+    }
+    /* Touch grows the link column, so the inset grows with it. */
+    @media (hover: none) and (min-width: 561px) {
+      .cat-foot { padding-right: 34px; }
+    }
     /* Half the width means half the room for a task name, which is the one
        thing here worth protecting. The mini-bar is the first thing to go. */
     @media (min-width: 861px) { .cat-grid .row .track { flex: 0 0 76px; } }
@@ -816,17 +884,16 @@
     .err { color: var(--over); }
     .err code { display: block; margin-top: 12px; color: var(--dim); font-size: 14.5px; word-break: break-word; }
 
-    /* One type scale across the whole footer: 14px everywhere, one accent
-       weight, one dim colour. The freshness readout is the page's last word
-       rather than its first, which is what it actually is: a footnote on the
-       data, not a headline. */
+    /* One row, two items: the agency on the left and how fresh the data is on
+       the right. Both are set the same way, so they read as a matched pair
+       closing the page rather than as a footer and a readout that happen to
+       share a rule. The freshness note is the page's last word, which is what
+       it actually is: a footnote on the data, not a headline. */
     .foot {
       margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line-soft);
-      display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap;
+      display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;
       font-size: 14px; line-height: 1.65; color: var(--dim-2);
     }
-    .foot-brand { display: flex; flex-direction: column; gap: 7px; }
-    .foot-fine { font-size: 14px; line-height: 1.65; color: var(--dim-2); margin: 0; }
     .foot-link {
       color: var(--action); text-decoration: underline; text-underline-offset: 3px;
       text-decoration-thickness: 1px; text-decoration-color: rgba(105, 238, 255, 0.45);
@@ -842,7 +909,15 @@
     .foot img { height: 15px; width: auto; display: block; }
 
     .foot-data { display: flex; align-items: center; gap: 14px; }
-    .foot-data .clock { align-items: flex-end; font-size: 12px; }
+    /* Same face, size and weight as the link opposite it. The readout was set
+       in monospace to stop a ticking seconds field twitching the line once a
+       second; there is no ticking field any more, so the reason is gone and it
+       joins the rest of the footer. Colour is what keeps the link the more
+       prominent of the two, since only one of them is a place to go. */
+    .foot-data .fetched {
+      font-size: 14px; font-weight: 700; line-height: 1.65; color: var(--dim);
+      font-variant-numeric: tabular-nums; text-align: right;
+    }
     .foot-data #refreshBtn { width: 34px; height: 34px; }
     .foot-data #refreshBtn svg { width: 15px; height: 15px; }
     @media (max-width: 560px) {
@@ -905,9 +980,23 @@
       .hero { background: none !important; box-shadow: none; }
       .sec { break-inside: avoid; margin-bottom: 26px; }
       /* Selection is a screen state: on paper the open month is simply the one
-         with its detail printed under it. */
+         with its detail printed under it. That covers the caret, the outline
+         and surface the open month wears on screen, and its highlight on the
+         chart's month axis, which catTickColor drops while `printing`. */
       .acc-inner { padding: 8px 0 24px; }
       .table .caret { display: none; }
+      /* The :first-child and :last-child halves of the outline out-specify a
+         plain `> td`, so they are named here too or the corners survive as two
+         cyan arcs with nothing joining them. */
+      .table tbody tr.mrow[aria-expanded="true"] > td,
+      .table tbody tr.mrow[aria-expanded="true"] > td:first-child,
+      .table tbody tr.mrow[aria-expanded="true"] > td:last-child,
+      .table tbody tr.acc:not([hidden]) > td {
+        background: none; border: 0; border-radius: 0;
+        padding-left: 12px; padding-right: 12px;
+      }
+      .table tbody tr.mrow[aria-expanded="true"] > td:first-child { padding-left: 0; }
+      .table tbody tr.acc:not([hidden]) > td { padding-left: 0; padding-right: 0; }
       .table tfoot td { border-top-color: rgba(0, 0, 0, 0.35); }
       a { color: #111 !important; }
     }
@@ -941,20 +1030,12 @@
     <div id="content"></div>
 
     <footer class="foot">
-      <div class="foot-brand">
-        <a class="foot-link primary" href="https://foundingcreative.com" target="_blank" rel="noopener">
-          <img src="assets/fc-icon-white.svg" alt="" />
-          <span>foundingcreative.com</span>
-        </a>
-        <p class="foot-fine">Happy to
-          <a class="foot-link" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ05BDuPiNgyfpK6HRFzchDUrBoX2SjOj_dGFp47_xWtYoovrxOv1kLTSdDIoXCudPLii9WVIFpX" target="_blank" rel="noopener">walk through any line item</a>
-          with you.</p>
-      </div>
+      <a class="foot-link primary" href="https://foundingcreative.com" target="_blank" rel="noopener">
+        <img src="assets/fc-icon-white.svg" alt="" />
+        <span>foundingcreative.com</span>
+      </a>
       <div class="foot-data">
-        <div class="clock">
-          <span class="now"><span class="live-dot" aria-hidden="true"></span><span id="clockNow">…</span></span>
-          <span class="fetched" id="clockFetched">Loading data…</span>
-        </div>
+        <span class="fetched" id="clockFetched">Loading data…</span>
         <button class="btn icon-only" id="refreshBtn" title="Refresh data from ClickUp" aria-label="Refresh data from ClickUp"></button>
       </div>
     </footer>
@@ -982,6 +1063,18 @@
     var YEAR_OPTIONS = [CURRENT_YEAR, CURRENT_YEAR - 1];
     var BUDGET = 50;
 
+    /* Export is hidden, not removed. The CSV builders, the print stylesheet and
+       the menu wiring are all still here and still correct; this switch is the
+       only thing standing between them and the page, so bringing the feature
+       back is one word. */
+    var SHOW_EXPORT = false;
+
+    /* Projections are hidden, not removed. With this off the chart stops at the
+       last tracked month, the textured ground and the estimate band are never
+       drawn, and the key naming them is suppressed. projectRest() and its
+       plugins are untouched, so switching this back on is one word. */
+    var SHOW_PROJECTIONS = false;
+
     var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -1002,10 +1095,17 @@
     ];
 
     /* Data-integrity annotations. Each entry flags a (year, months, series)
-       slice as not fully trustworthy, and surfaces as: a hatched bar + marker
-       on the chart, a note in its tooltip, a labelled tag at the top of the
+       slice as not fully trustworthy, and surfaces as a warn-outlined bar and
+       marker on the chart, a mark beside that month's figure in the summary
+       table, a note in the bar's tooltip, a labelled tag at the top of the
        month's expanded detail, and a Data note row in the CSV exports. Remove
-       an entry once its data is repaired. */
+       an entry once its data is repaired.
+
+       `detail` names no months and no dates. The chart already shows which
+       months are flagged, and the summary table marks them again, so writing a
+       span into the copy only fixed a second thing to keep in step with the
+       `months` array above. It explains why the figures are low, and nothing
+       else. */
     var DATA_FLAGS = [
       {
         id: 'moss-2026-creative-jan-may',
@@ -1013,9 +1113,9 @@
         months: [0, 1, 2, 3, 4],           // Jan–May
         series: 'creative',
         label: 'Under-reported',
-        detail: 'Creative hours for January–May 2026 come from a partially corrupt ' +
-                'time-tracking export. Actual usage was higher than shown; we are ' +
-                'reconstructing the missing entries and will restate these months.'
+        detail: 'Some Creative time was not fully captured in our time tracking, so ' +
+                'the hours shown here are lower than the work actually delivered. We ' +
+                'are recovering the missing entries and will restate these figures.'
       }
     ];
 
@@ -1185,18 +1285,12 @@
 
 
     /* ═══════════════════════════════════════════════════════════════
-       Live clock + freshness
+       Freshness
        ═══════════════════════════════════════════════════════════════ */
-    /* The full stamp is "Thu, Jul 30 at 11:37:12 AM MDT", which on a phone
-       wrapped the masthead onto a third row on its own. The compact form drops
-       the weekday, seconds and zone: the reader is in that zone, and a ticking
-       seconds field is noise at this size. */
-    function fmtDateTime(d, compact) {
-      return d.toLocaleString(undefined, compact
-        ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
-        : { weekday: 'short', month: 'short', day: 'numeric',
-            hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
-    }
+    /* One readout, not two. The footer used to carry a live wall clock above
+       the freshness note, which told the reader the time on their own machine:
+       a moving part that answered a question nobody had. What is left is the
+       only thing here worth stating, which is how old the data is. */
     function relTime(d) {
       var s = Math.max(0, Math.round((Date.now() - d.getTime()) / 1000));
       if (s < 10) return 'just now';
@@ -1207,15 +1301,26 @@
       if (s < 86400) return Math.round(s / 3600) + 'h ago';
       return Math.round(s / 86400) + 'd ago';
     }
+    /* The stamp beside the relative age. Responses are cached at the edge, and a
+       past year is held for days, so `generatedAt` is not always today: "3d ago
+       · 6:25 PM" states an hour on an unnamed day, which is worse than saying
+       nothing. The date is added as soon as the payload is not from today, and
+       left off when it is, since naming today back to the reader is noise. */
+    function fmtStamp(d) {
+      var now = new Date();
+      var sameDay = d.getFullYear() === now.getFullYear() &&
+                    d.getMonth() === now.getMonth() &&
+                    d.getDate() === now.getDate();
+      return d.toLocaleString(undefined, sameDay
+        ? { hour: 'numeric', minute: '2-digit' }
+        : { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
     function tickClock() {
-      var narrow = isNarrow();
-      document.getElementById('clockNow').textContent = fmtDateTime(new Date(), narrow);
       var el = document.getElementById('clockFetched');
       if (state.generatedAt) {
-        el.textContent = narrow
+        el.textContent = isNarrow()
           ? 'Updated ' + relTime(state.generatedAt)
-          : 'Data updated ' + relTime(state.generatedAt) + ' · ' +
-            state.generatedAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+          : 'Data updated ' + relTime(state.generatedAt) + ' · ' + fmtStamp(state.generatedAt);
       }
       syncMastheadHeight();
     }
@@ -1369,13 +1474,6 @@
       wireSummaryTable();
       wireAvatarFallbacks();
       wireExport();
-      // Chart.js only reports hovers it receives, so leaving the plot has to
-       // clear the link itself. Bound on the wrapper as well as the canvas,
-       // since the legend and the view control sit over the top of it.
-      ['#overviewChart', '.chart-wrap'].forEach(function (sel) {
-        var el = document.querySelector(sel);
-        if (el) el.addEventListener('mouseleave', function () { linkHover(null, 'chart-out'); });
-      });
       drawChart();
       updateChartNote();
       startFunFacts(totals().total);
@@ -1389,7 +1487,7 @@
 
       var h = '<section class="sec"><div class="hero">';
       h += '<div class="hero-top">';
-      h += '<div class="hero-total"><div class="eyebrow">Total hours delivered · ' + YEAR + '</div>' +
+      h += '<div class="hero-total"><div class="eyebrow">Combined hours delivered · ' + YEAR + '</div>' +
            '<div class="v grad num">' + fmtH(t.total) + '</div>' +
            '<div class="hero-ctx"><strong>Year to date</strong> · ' +
            months + ' ' + (months === 1 ? 'month' : 'months') + '</div></div>';
@@ -1501,9 +1599,11 @@
       var t = totals();
       var h = '<section class="sec"><div class="sec-head">' +
         '<h2 class="sec-title">Monthly overview</h2>' +
-        '<div class="menu-wrap">' +
-        '<button class="export-link" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>' +
-        '<div class="menu" id="exportMenu" role="menu"></div></div>' +
+        (SHOW_EXPORT
+          ? '<div class="menu-wrap">' +
+            '<button class="export-link" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export</button>' +
+            '<div class="menu" id="exportMenu" role="menu"></div></div>'
+          : '') +
         '</div>';
       h += '<div class="chart-block">';
       h += '<div class="legend" id="legend">';
@@ -1517,11 +1617,11 @@
       // there is nothing to isolate it from.
       h += '<span class="legend-item is-key" data-i="total">' +
         '<span class="swatch dash" aria-hidden="true"></span>' +
-        '<span class="lg-stack"><span class="lg-name">Total</span>' +
+        '<span class="lg-stack"><span class="lg-name">Combined</span>' +
         '<span class="val">' + fmtH(t.total) + '</span></span></span>';
       h += '</div>';
       h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
-        'aria-label="Bar chart of Creative and Other hours, with a total hours line"></canvas></div>';
+        'aria-label="Bar chart of Creative and Other hours, with a combined hours line"></canvas></div>';
       h += '</div>';
       h += '<div class="chart-key" id="chartNote"></div>';
       h += summaryHtml();
@@ -1539,7 +1639,7 @@
         '<th>Month</th>' +
         '<th class="r">Creative</th>' +
         '<th class="r col-gap">' + CATS[1].label + '</th>' +
-        '<th class="r col-total">Total</th>' +
+        '<th class="r col-total">Combined</th>' +
         '</tr></thead><tbody>';
 
       state.range.forEach(function (m) {
@@ -1555,10 +1655,14 @@
              '<span class="mo-abbr">' + MONTH_ABBR[m.month] + '</span></span></td>';
         // Each figure carries its series colour, so a row's numbers and the
         // colour-coded task lists it opens onto are read as the same thing.
-        h += '<td class="r num">' +
+        // A flagged month leads its figure with the warn mark, which is the
+        // same triangle the chart draws and the drawer's tag carries.
+        var cFlag = flagFor(YEAR, m.month, CATS[0].key);
+        h += '<td class="r num col-series">' +
+             (cFlag ? '<span class="flag-mark" aria-hidden="true">' + ICONS.alert + '</span>' : '') +
              '<span style="color:' + CATS[0].inkVar + '">' + fmtH(m.creative) + '</span>' +
              '<span class="use" style="color:' + pctColor(pct) + '">' + pct + '%</span></td>';
-        h += '<td class="r num col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(m.nonCreative) + '</td>';
+        h += '<td class="r num col-series col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(m.nonCreative) + '</td>';
         h += '<td class="r num primary col-total">' + fmtH(m.total) + '</td>';
         h += '</tr>';
         h += '<tr class="acc" id="acc-' + m.month + '" data-m="' + m.month + '"' + (open ? '' : ' hidden') +
@@ -1591,6 +1695,9 @@
       document.querySelectorAll('.table tbody tr.acc').forEach(function (r) {
         r.hidden = parseInt(r.dataset.m) !== state.selected;
       });
+      // The category axis names the open month, so it is repainted whenever the
+      // open month changes, including on closing.
+      if (chart) chart.update('none');
       if (state.selected === null) return;
       var row = document.querySelector('.table tbody tr.mrow[data-m="' + state.selected + '"]');
       // 'nearest' so a row already on screen does not jump under the reader.
@@ -1653,11 +1760,36 @@
              '<span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>' +
              (flag ? flagBtnHtml(flag, true) : '') + '</div>';
         h += taskRows(items, c) || '<p class="empty-note">No ' + c.label.toLowerCase() + ' time tracked this month.</p>';
+        h += catFootHtml(m, c);
         h += '</div>';
       });
       h += '</div>';
       h += '<p class="acc-note">Sorted by most hours. Links open the ClickUp task where one exists.</p>';
       return h;
+    }
+
+    /* The foot of one category's task list. The figure is the month's own total
+       for that series rather than a fresh sum of the rows, so the drawer can
+       never disagree with the row it hangs from. The two reconcile by
+       construction anyway: the API derives its monthly hours from the same
+       items it emits.
+
+       Creative also states what the month came to against its allowance. The
+       month row above carries that percentage too, and it is repeated here
+       because the reader has just finished going down the Creative rows and
+       this is where the question comes up. */
+    function catFootHtml(m, cat) {
+      var v = m[cat.hours] || 0;
+      var h = '<div class="cat-foot"><div class="cat-total">' +
+        '<span class="ct-label">' + cat.label + ' total</span>' +
+        '<span class="ct-val" style="color:' + cat.inkVar + '">' + fmtH(v) + '</span>' +
+        '</div>';
+      if (cat.budgeted) {
+        var pct = pctOf(v, BUDGET);
+        h += '<p class="ct-note"><b style="color:' + pctColor(pct) + '">' + pct + '%</b>' +
+             ' of monthly budget</p>';
+      }
+      return h + '</div>';
     }
 
     function taskRows(items, cat) {
@@ -1683,29 +1815,51 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════
-       Chart: grouped bars, hatched where data is flagged
+       Chart: grouped bars, outlined in warn ink where data is flagged
        ═══════════════════════════════════════════════════════════════ */
-    var patternCache = {};
-    function hatch(color) {
-      if (patternCache[color]) return patternCache[color];
-      var c = document.createElement('canvas');
-      c.width = c.height = 8;
-      var g = c.getContext('2d');
-      g.fillStyle = color; g.fillRect(0, 0, 8, 8);
-      g.strokeStyle = 'rgba(255,255,255,0.42)'; g.lineWidth = 2;
-      g.beginPath();
-      g.moveTo(-2, 10); g.lineTo(10, -2);
-      g.moveTo(2, 14); g.lineTo(14, 2);
-      g.moveTo(-6, 6); g.lineTo(6, -6);
-      g.stroke();
-      patternCache[color] = g.createPattern(c, 'repeat');
-      return patternCache[color];
-    }
-
     // emphasis: index of the isolated series, or null for "show everything".
     var emphasis = null;
-    var GHOST = 'rgba(255,255,255,0.06)';
-    var GHOST_LINE = 'rgba(255,255,255,0.14)';
+
+    /* Ghosting is a step back, not a change of material. Everything dimmed
+       keeps its own colour and drops a fifth of its opacity, which is enough to
+       say "not this one" without the rest of the chart going dark. The old flat
+       greys took a green bar down to a smudge, so pointing at one month cost
+       the reader every other month on the page. A tenth was then too little to
+       register at all, so this sits between the two. The CSS side of the same
+       effect, on the summary table's rows, has to be kept in step by hand. */
+    var GHOST_A = 0.8;
+    /* Projected months are a separate treatment, not a ghost: they stay at the
+       weight they have always had, whatever is hovered. */
+    var PROJ_INK = 'rgba(255,255,255,0.14)';
+    // Flagged bars wear the warn ink as their outline, the same yellow the
+    // markers and the summary table use.
+    var WARN_INK = '#F5C26B';
+    // The action colour, as a canvas literal. Same value as --action / the
+    // brand's holo-cyan, which the canvas cannot read from CSS.
+    var ACTION_INK = '#69EEFF';
+
+    /* The open month is named on the category axis as well as outlined in the
+       summary table, so the chart says which row is open without the reader
+       having to hold the two together. Scriptable rather than baked in, so
+       opening a different month is a chart.update and not a rebuild. */
+    var chartHoriz = false;
+    // Not on paper. Which month is open is a screen state, and the print
+    // stylesheet drops the rest of it for the same reason.
+    function tickSelected(ctx) {
+      if (printing || state.selected === null) return false;
+      var r = chartRows[ctx.index];
+      return !!r && r.month === state.selected;
+    }
+    function catTickColor(ctx) {
+      if (tickSelected(ctx)) return ACTION_INK;
+      return printing ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.62)';
+    }
+    function catTickFont(ctx) {
+      var on = tickSelected(ctx);
+      return chartHoriz
+        ? { size: 13.5, weight: on ? '700' : '600' }
+        : { size: 13, weight: on ? '700' : '400' };
+    }
 
     /* The total overlay is the one series that is not a category, so it is
        drawn in neutral ink rather than competing with Creative or Other. */
@@ -1720,17 +1874,42 @@
       var n = parseInt(hex.slice(1), 16);
       return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
     }
+    /* Drop a colour's opacity by a factor, whichever notation it arrives in, so
+       ghosting is one operation applied to whatever a mark already is rather
+       than a second palette to keep in step with the first. */
+    function fade(color, a) {
+      if (a >= 1) return color;
+      if (color.charAt(0) === '#') return rgba(color, a);
+      var m = color.match(/^rgba?\(([^)]+)\)$/);
+      if (!m) return color;
+      var p = m[1].split(',').map(function (s) { return s.trim(); });
+      var base = p.length > 3 ? parseFloat(p[3]) : 1;
+      return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + (base * a) + ')';
+    }
 
     function barColors(catIdx, which) {
       var c = CATS[catIdx];
       var ghosted = emphasis !== null && emphasis !== catIdx;
       return chartRows.map(function (r) {
         var dim = ghosted || (hoverMonth !== null && !(r.kind === 'month' && r.month === hoverMonth));
-        if (dim) return which === 'fill' ? GHOST : GHOST_LINE;
-        if (r.projected) return which === 'fill' ? projFill() : projLine(c);
+        var a = dim ? GHOST_A : 1;
+        if (r.projected) return which === 'fill' ? projFill() : fade(projLine(c), a);
         var flagged = r.kind === 'month' && !!flagFor(YEAR, r.month, c.key);
-        if (which === 'fill') return flagged ? hatch(c.fill) : c.fill;
-        return c.ink;
+        // A flagged month is a normal bar wearing a warn outline. It used to be
+        // filled with a diagonal hatch, which made those months read as a
+        // different kind of measurement rather than as the same hours with a
+        // note attached, and collided with the texture the projections use.
+        if (which === 'fill') return fade(c.fill, a);
+        return fade(flagged ? WARN_INK : c.ink, a);
+      });
+    }
+
+    /* The warn outline has to read as deliberate rather than as the hairline
+       every other bar carries, so a flagged bar's stroke is drawn heavier. */
+    function barWidths(catIdx) {
+      var c = CATS[catIdx];
+      return chartRows.map(function (r) {
+        return (r.kind === 'month' && !r.projected && flagFor(YEAR, r.month, c.key)) ? 2.4 : 1.5;
       });
     }
 
@@ -1778,7 +1957,10 @@
       // Which axis carries the months flips with the orientation.
       var horiz = chart.options.indexAxis === 'y';
       var cat = horiz ? s.y : s.x, val = horiz ? s.x : s.y;
-      cat.ticks.color = isPrint ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.62)';
+      // Left as the scriptable function, which reads `printing` itself and also
+      // carries the open month's highlight. Overwriting it with a flat colour
+      // here is what used to drop that highlight on the way to the printer.
+      cat.ticks.color = catTickColor;
       val.ticks.color = isPrint ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)';
       val.grid.color = isPrint ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.13)';
       // The floor the bars stand on, which is on the category axis.
@@ -1839,17 +2021,18 @@
             var r = chartRows[bi];
             if (!r) return;
             var x = bar.x + END_GAP;
+            var a = ghosted ? GHOST_A : 1;
             if (r.kind === 'month' && flagFor(YEAR, r.month, CATS[di].key)) {
               drawWarnIcon(g, x + 7, bar.y, 14,
-                ghosted ? GHOST_LINE : (printing ? '#9A6512' : '#F5C26B'));
+                fade(printing ? '#9A6512' : WARN_INK, a));
               x += FLAG_W;
             }
             g.save();
             g.font = '600 12.5px ' + font;
             g.textAlign = 'left';
             g.textBaseline = 'middle';
-            g.fillStyle = (ghosted || r.projected)
-              ? GHOST_LINE : (printing ? '#333333' : CATS[di].ink);
+            g.fillStyle = r.projected
+              ? PROJ_INK : fade(printing ? '#333333' : CATS[di].ink, a);
             g.fillText(fmtH(ds.data[bi]), x, bar.y);
             g.restore();
           });
@@ -2041,7 +2224,7 @@
           borderColor: function (ctx) {
             var i = ctx.p1DataIndex;
             var r = chartRows[i];
-            return (r && r.projected) ? GHOST_LINE : undefined;
+            return (r && r.projected) ? PROJ_INK : undefined;
           }
         },
         tension: LINE_TENSION,
@@ -2058,15 +2241,15 @@
     /* The legend's figures are the totals for whatever the chart is showing, so
        dropping into a single month re-totals them to that month. Projected
        months are never counted: they are not delivered hours. */
-    /* A projection in a client-facing report has to say what it is and where it
-       came from, in the same breath as the bars. Written as a key to the
-       textured ground rather than as a footnote.
+    /* A key to the texture, and nothing more. This spent four sentences
+       explaining the arithmetic behind the projection: the basis, the seasonal
+       adjustment, the width of the band, why the month in progress is left out.
+       All of it was true and none of it was asked, and at the foot of the chart
+       it read as a disclaimer, which is the one thing an estimate in a
+       client-facing report must not look like.
 
-       It no longer names the months it covers: the chart already shows which
-       ones are textured, and repeating them spent the opening sentence on the
-       one thing the reader can see. What they cannot see is the arithmetic, so
-       the key states that instead: the basis, the seasonal adjustment, and how
-       wide the band is. */
+       What the mark needs is a definition. The reader who wants the method has
+       the tooltip on every projected bar and a person to ask. */
     function updateChartNote() {
       var el = document.getElementById('chartNote');
       var p = chartProjection;
@@ -2076,22 +2259,10 @@
         el.innerHTML = '';
         return;
       }
-      var h = '<b>The rest of the year is an estimate, not tracked time.</b> ' +
-        'Each remaining month is set to the average of the months tracked so far';
-      h += p.basis === 'prior-year'
-        ? ', then adjusted for how that month ran in ' + (YEAR - 1) + '. '
-        : '. ';
-      if (chartHasTotal && p.spread) {
-        h += 'The band around the total line is that estimate give or take ' +
-             Math.round(p.spread * 100) + '%, which is how far a tracked month has ' +
-             'typically sat from the average. ';
-      }
-      h += 'The month in progress is still filling up, so it is left out of that ' +
-           'average. Estimated months are drawn as outlines, and are never counted ' +
-           'in the totals above.';
       el.innerHTML =
         '<span class="key-swatch" aria-hidden="true"></span>' +
-        '<p class="key-text">' + h + '</p>';
+        '<p class="key-text"><b>Estimated, not tracked time.</b> ' +
+        'Projected from how the year has run so far.</p>';
       el.hidden = false;
     }
 
@@ -2107,12 +2278,16 @@
       });
     }
 
-    /* The chart and the table are two views of one set of months, so pointing at
-       a month in either dims every other month in both. The chart side is
-       redrawn through the existing ghost colours; the table side is a class,
-       so it costs nothing while nothing is hovered. */
+    /* Pointing at a month in the summary table dims every other month in the
+       table and in the chart above it. The chart side is redrawn through the
+       existing ghost colours; the table side is a class, so it costs nothing
+       while nothing is hovered.
+
+       The link runs one way only. Pointing at a bar used to do the same thing
+       in reverse, which rearranged the page under a reader who was only running
+       the mouse across the plot. */
     var hoverMonth = null;
-    function linkHover(month, source) {
+    function linkHover(month) {
       if (hoverMonth === month) return;
       hoverMonth = month;
       document.querySelectorAll('.table tbody tr.mrow').forEach(function (r) {
@@ -2120,8 +2295,7 @@
       });
       var foot = document.querySelector('.table tfoot');
       if (foot) foot.classList.toggle('is-dim', month !== null);
-      // A hover that started on the chart has already moved the bars.
-      if (source !== 'chart') paintBars();
+      paintBars();
     }
 
     /* Re-colours the bars in place. Cheaper than a redraw and keeps the tooltip
@@ -2131,13 +2305,14 @@
       chart.data.datasets.forEach(function (ds, i) {
         if (isTotalSeries(i)) {
           var ghost = hoverMonth !== null || (emphasis !== null && emphasis !== i);
-          ds.borderColor = ghost ? GHOST_LINE : totalInk();
+          ds.borderColor = fade(totalInk(), ghost ? GHOST_A : 1);
           ds.pointBackgroundColor = pointColors();
           ds.pointBorderColor = pointColors();
           return;
         }
         ds.backgroundColor = barColors(i, 'fill');
         ds.borderColor = barColors(i, 'line');
+        ds.borderWidth = barWidths(i);
       });
       chart.update('none');
     }
@@ -2146,10 +2321,9 @@
       // Isolating the total itself is the one case where these stay lit.
       var ghosted = emphasis !== null && emphasis !== CATS.length;
       return chartRows.map(function (r) {
-        if (r.projected) return GHOST_LINE;
-        if (ghosted) return GHOST_LINE;
-        if (hoverMonth !== null && r.month !== hoverMonth) return GHOST_LINE;
-        return ink;
+        if (r.projected) return PROJ_INK;
+        var dim = ghosted || (hoverMonth !== null && r.month !== hoverMonth);
+        return fade(ink, dim ? GHOST_A : 1);
       });
     }
 
@@ -2160,14 +2334,20 @@
     var chartRows = [];
     function buildRows() {
       var p = projectRest();
-      chartProjection = p;
-      return state.months.map(function (m) {
+      // Null rather than the projection object, because every projected surface
+      // (the ground, the boundary, the band, the key) reads this to decide
+      // whether it has anything to draw.
+      chartProjection = SHOW_PROJECTIONS ? p : null;
+      var rows = state.months.map(function (m) {
         var projected = m.month >= p.from;
         var c = projected ? (p.creative[m.month] || 0) : m.creative;
         var o = projected ? (p.nonCreative[m.month] || 0) : m.nonCreative;
         return { kind: 'month', month: m.month, projected: projected,
                  creative: c, nonCreative: o, total: c + o };
       });
+      // Dropped rather than drawn empty, so the plot ends where tracked time
+      // ends instead of running on into four blank months.
+      return SHOW_PROJECTIONS ? rows : rows.filter(function (r) { return !r.projected; });
     }
     var chartProjection = null;
     /* The total line, and so the band hanging off it, only exists in the
@@ -2235,6 +2415,8 @@
          itself for the bars to stand on. */
       var TICK = 'rgba(255,255,255,0.62)', GRID = 'rgba(255,255,255,0.13)';
       var AXIS = 'rgba(255,255,255,0.34)';
+
+      chartHoriz = horiz;
       var scales = horiz
         ? {
             /* Value axis: gridlines only, since the numbers are on the bars.
@@ -2244,14 +2426,14 @@
                does not silently rescale the bars still on screen. */
             x: { ticks: { display: false }, grid: { color: GRID },
                  border: { display: false }, beginAtZero: true, max: peak || undefined },
-            y: { ticks: { font: { size: 13.5, weight: '600' }, color: TICK, padding: 4 },
+            y: { ticks: { font: catTickFont, color: catTickColor, padding: 4 },
                  grid: { display: false }, border: { display: true, color: AXIS, width: 1 } }
           }
         : {
             /* A month of days will not carry 31 labels at this width, so the day
                axis thins them out rather than rotating them to fit. */
             x: { ticks: { autoSkip: day, maxTicksLimit: day ? 10 : undefined,
-                          maxRotation: 0, font: { size: 13 }, color: TICK },
+                          maxRotation: 0, font: catTickFont, color: catTickColor },
                  grid: { display: false }, border: { display: true, color: AXIS, width: 1 },
                  stacked: day },
             y: { ticks: { font: { size: 12.5 }, color: 'rgba(255,255,255,0.55)',
@@ -2273,7 +2455,7 @@
               data: chartRows.map(function (r) { return r[c.hours]; }),
               backgroundColor: barColors(i, 'fill'),
               borderColor: barColors(i, 'line'),
-              borderWidth: 1.5,
+              borderWidth: barWidths(i),
               borderRadius: 4,
               // Square off the axis end, round the value end.
               borderSkipped: horiz ? 'left' : 'bottom',
@@ -2308,12 +2490,16 @@
             if (!r || r.projected) return;
             openMonth(r.month, true);
           },
+          /* Pointing at a bar changes the cursor and nothing else. It used to
+             dim every other month in the chart and the table both, which meant
+             the page rearranged itself under a reader who was only running the
+             mouse across the plot. The tooltip already answers what a bar is,
+             and the link the other way (a table row dimming the chart) is a
+             deliberate act on a specific month, so that one stays. */
           onHover: function (evt, elements) {
             var r = elements.length ? chartRows[elements[0].index] : null;
             var live = !!(r && r.kind === 'month' && !r.projected);
             evt.native.target.style.cursor = live ? 'pointer' : 'default';
-            // Pointing at a bar dims every month but that one, in both places.
-            linkHover(live ? r.month : null, 'chart');
           },
           plugins: {
             legend: { display: false },
@@ -2337,7 +2523,7 @@
                   // The value lives on whichever axis is not the category one.
                   var v = c.chart.options.indexAxis === 'y' ? c.parsed.x : c.parsed.y;
                   var cat = CATS[c.datasetIndex];
-                  if (!cat) return ' Total: ' + fmtH(v);
+                  if (!cat) return ' Combined: ' + fmtH(v);
                   var txt = ' ' + cat.label + ': ' + fmtH(v);
                   if (cat.budgeted) txt += '  ·  ' + pctOf(v, BUDGET) + '% of ' + BUDGET + 'h';
                   return txt;
@@ -2498,9 +2684,8 @@
        Modal
        ═══════════════════════════════════════════════════════════════ */
     var lastFocus = null;
-    function openModal(titleHtml, bodyHtml, hazard) {
+    function openModal(titleHtml, bodyHtml) {
       lastFocus = document.activeElement;
-      document.querySelector('.modal').classList.toggle('hazard', !!hazard);
       document.getElementById('modalTitle').innerHTML = titleHtml;
       document.getElementById('modalBody').innerHTML = bodyHtml;
       document.getElementById('modalBackdrop').hidden = false;
@@ -2515,11 +2700,15 @@
       var flag = null;
       DATA_FLAGS.forEach(function (f) { if (f.id === flagId) flag = f; });
       if (!flag) return;
+      /* No headline naming a span of months. The chart shows which months carry
+         the flag and the summary table marks them, so a date range written in
+         here was a third copy of the same fact and the first thing the reader
+         had to get past to reach the explanation. */
       openModal(ICONS.alert + esc(flag.label),
-        '<p><b>' + esc(monthSpanLabel(flag)) + '</b></p><p>' + esc(flag.detail) + '</p>' +
-        '<p>Line items for these months link to ClickUp where a task exists. Some of the ' +
-        'missing time was never logged against a task at all, which is part of what we are ' +
-        'reconstructing.</p>', true);
+        '<p>' + esc(flag.detail) + '</p>' +
+        '<p>Line items here link to their tasks in ClickUp. There is also missing time ' +
+        'that was never logged against any task. That is the reporting we are working ' +
+        'to recover.</p>');
     }
 
     function wireModal() {
@@ -2565,7 +2754,7 @@
 
     function exportSummary() {
       var t = totals(), allow = allowance();
-      var rows = [['Month', 'Creative hours', 'Retainer budget (h)', 'Creative % used', 'Other hours (SOW)', 'Total hours', 'Data note']];
+      var rows = [['Month', 'Creative hours', 'Retainer budget (h)', 'Creative % used', 'Other hours (SOW)', 'Combined hours', 'Data note']];
       state.range.forEach(function (m) {
         var f = flagFor(YEAR, m.month, 'creative');
         rows.push([MONTH_NAMES[m.month] + ' ' + YEAR, m.creative.toFixed(2), BUDGET,
@@ -2589,12 +2778,12 @@
       rows.push(['Months of retainer', months]);
       rows.push(['Retainer budget (h/month)', BUDGET]);
       rows.push([]);
-      rows.push(['Category', 'Hours', 'Available (h)', '% used', 'Share of total']);
+      rows.push(['Category', 'Hours', 'Available (h)', '% used', 'Share of combined']);
       rows.push(['Creative (retainer)', t.creative.toFixed(2), allow, pctOf(t.creative, allow) + '%',
                  (t.total > 0 ? Math.round((t.creative / t.total) * 100) : 0) + '%']);
       rows.push(['Other (SOW / project work)', t.nonCreative.toFixed(2), '', '',
                  (t.total > 0 ? Math.round((t.nonCreative / t.total) * 100) : 0) + '%']);
-      rows.push(['Total delivered', t.total.toFixed(2), '', '', '100%']);
+      rows.push(['Combined delivered', t.total.toFixed(2), '', '', '100%']);
       rows.push([]);
       rows.push(['Retainer months consumed', fmtMonths(t.creative / BUDGET) + ' of ' + months]);
 
@@ -2674,7 +2863,9 @@
     wireModal();
     renderYears();
     tickClock();
-    setInterval(tickClock, 1000);
+    /* The readout is now the coarsest of relative times, so a second-by-second
+       interval was redrawing the same string 30 times over to change it once. */
+    setInterval(tickClock, 30000);
     window.addEventListener('resize', syncMastheadHeight);
     load();
   </script>
