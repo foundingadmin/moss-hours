@@ -29,6 +29,7 @@ so the fastest way in is to grep for the banner rather than scroll.
 | --- | --- |
 | Colour and type tokens, badge geometry | `:root` at the top of the `<style>` |
 | Data-integrity flags | `var DATA_FLAGS`, near the top of the `<script>` |
+| Which years the selector offers | `var YEAR_OPTIONS`, `renderYears()` |
 | What Creative and Other mean, retainer terms | `defsHtml()` |
 | Hero panel, the headline total | `heroHtml()` |
 | The rotating comparison lines | `var FUN_FACTS` |
@@ -273,6 +274,18 @@ row), and Print / Save as PDF. The print stylesheet re-points the design tokens
 to a light palette and re-themes the chart canvas via the `beforeprint` /
 `afterprint` events. Print still works from the browser's own menu while the
 control is hidden.
+
+### Year selector
+
+**Only the current year is offered.** `YEAR_OPTIONS` at the top of the
+`<script>` is the list of years the pills render, and it currently holds
+`CURRENT_YEAR` alone, so the prior-year tab is hidden. Nothing else was
+changed: the loader, the API and the pill rendering all still take any year, so
+bringing the tab back is putting `CURRENT_YEAR - 1` back in the list.
+
+`?year=` still reaches a year the selector does not offer, and `renderYears()`
+adds that year to the pills when it does, so the control never names a year the
+report is not showing.
 
 ### Data-integrity annotations
 
