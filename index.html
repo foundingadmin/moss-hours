@@ -1060,7 +1060,11 @@
     var API_BASE = new URLSearchParams(location.search).get('api') || '/api/time';
     var CURRENT_YEAR = new Date().getFullYear();
     var YEAR = parseInt(new URLSearchParams(location.search).get('year')) || CURRENT_YEAR;
-    var YEAR_OPTIONS = [CURRENT_YEAR, CURRENT_YEAR - 1];
+    /* Which years the selector offers. The prior-year tab is hidden, not
+       removed: the loader, the API and the pill rendering all still take any
+       year, and ?year= still reaches one that is not listed here, so putting
+       the tab back is adding CURRENT_YEAR - 1 to this list. */
+    var YEAR_OPTIONS = [CURRENT_YEAR];
     var BUDGET = 50;
 
     /* Export is hidden, not removed. The CSV builders, the print stylesheet and
@@ -1388,8 +1392,14 @@
     // Rendered into every .years container, so the two title-row layouts can be
     // compared with a working selector in each.
     function renderYears() {
+      // ?year= can reach a year the selector does not offer. The year on screen
+      // has to be one of the pills, or the control names a year the report is
+      // not showing, so it is added back when that happens.
+      var opts = YEAR_OPTIONS.indexOf(YEAR) === -1
+        ? YEAR_OPTIONS.concat([YEAR]).sort(function (a, b) { return b - a; })
+        : YEAR_OPTIONS;
       document.querySelectorAll('.years').forEach(function (el) {
-        el.innerHTML = YEAR_OPTIONS.map(function (y) {
+        el.innerHTML = opts.map(function (y) {
           return '<button class="pill" data-y="' + y + '" aria-pressed="' + (y === YEAR) + '">' + y + '</button>';
         }).join('');
         el.querySelectorAll('button').forEach(function (b) {
