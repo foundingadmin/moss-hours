@@ -67,12 +67,18 @@ across `index.html`, `api/time.js`, `roster.js`, the scripts and this README.
   ClickUp folder names and never appear in the interface.
 - The retainer allowance accrues monthly whether or not hours are tracked, so
   `allowanceMonths()` counts elapsed months, not months that carry time.
+- The sum of Creative and Other is **Combined**, never "Total", anywhere a
+  client can read it. "Total" is still correct for one category's own sum.
 - **Colour is reserved.** Mint means Creative and lavender means Other,
-  everywhere, so neither can carry interface state. Cyan is the action colour.
-  Warn yellow means data integrity and never utilisation. The diagonal texture
-  means projected, and now means only that.
-- Ghosting is a **10% opacity drop**, applied through `fade()`. Anything that
-  dims on hover keeps its own colour and steps back one notch.
+  everywhere, so neither can carry interface state. Cyan is the action colour
+  and carries interface state, including the open month's outline and its label
+  on the chart axis. Warn yellow means data integrity and never utilisation. The
+  diagonal texture means projected, and now means only that.
+- Ghosting is a **20% opacity drop**, applied through `fade()` on the chart and
+  a matching `.is-dim` rule in CSS. The two have to be changed together.
+  Hovering a table row dims the chart; hovering the chart dims nothing.
+- Two features are hidden behind a one-word switch rather than deleted:
+  `SHOW_EXPORT` and `SHOW_PROJECTIONS`. Leave the code they gate alone.
 - Copy in this report is plain and unhedged. No semicolons or colons stacked
   into a sentence, no date ranges hardcoded into prose that the chart already
   shows, and nothing that reads as a disclaimer.

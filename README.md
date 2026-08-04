@@ -86,7 +86,8 @@ Laid out high level → low level:
    projected (see below). The legend floats in the plot's top-right corner above
    700px and returns to the flow above the chart below that, where the plot
    rotates and every month owns a full row. Hovering a legend entry ghosts every
-   other series; clicking hides it. The `Total` entry is a key, not a control.
+   other series; clicking hides it. The `Combined` entry is a key, not a
+   control.
 
    Then a per-month table, deliberately plain: no rules between rows, no tinted
    columns, no selected surface. Hierarchy is weight, colour, and one rule above
@@ -94,22 +95,54 @@ Laid out high level → low level:
    two categories side by side above 860px, one task per row with a permalink out
    to ClickUp, and the people who worked the month. Nothing opens on arrival.
 
+   **The open month is one surface.** The row and its drawer are two `<tr>`s and
+   cannot be wrapped in a single element, so the outline is drawn in halves: top
+   and sides on the row, sides and bottom on the drawer, with the join left
+   open. Both carry the same background and the same radius on their outer
+   corners, so the halves read as one plate. `border-collapse: separate` is what
+   makes the radius possible, and is the only reason the table is not collapsed.
+   The outline is the action colour, because "this is the month you opened" is
+   interface state and the two series colours are spoken for.
+
+   Each task list ends with that category's own total, in the series colour and
+   at the weight of the figures above it. The figure is the month's stored total
+   rather than a fresh sum of the rows, so the drawer can never disagree with
+   the row it hangs from. Creative adds a line stating what the month came to
+   against its allowance: the month row carries that percentage too, and it is
+   repeated here because the reader has just finished going down the Creative
+   rows and this is where the question comes up.
+
 ### Chart and table are linked
 
-Pointing at a month in either dims every other month in **both**. Clicking a bar
-opens that month's row in the table and closes whichever was open. The two are
-views of one set of months, so they behave like it.
+Clicking a bar opens that month's row in the table and closes whichever was
+open. The open month is then named in **both**: outlined in the table, and set
+in the action colour on the chart's month axis.
 
-Dimming is a **10% drop in opacity**, and only that. Everything ghosted keeps
-its own colour and steps back one notch, which is enough to name the month being
-asked about. It used to swap the bars for a flat grey and take the table rows to
-26%, which read as the page breaking rather than as one month being singled out,
-and cost the reader every figure they were not pointing at. `fade()` applies it
-to whatever a mark already is, so there is one ghosting rule rather than a
-parallel palette to keep in step. Projected months are a separate treatment and
-do not ghost.
+**Dimming runs one way only.** Pointing at a month in the summary table dims
+every other month in the table and in the chart above it. Pointing at a bar does
+not dim anything. It used to do the same thing in reverse, which rearranged the
+page under a reader who was only running the mouse across the plot; the tooltip
+already answers what a bar is. Hovering a table row is a deliberate act on a
+named month, so that direction stays.
+
+Dimming is a **20% drop in opacity**, and only that. Everything ghosted keeps
+its own colour and steps back one notch. It used to swap the bars for a flat
+grey and take the table rows to 26%, which read as the page breaking rather than
+as one month being singled out; 10% was then too slight to register at all, so
+this sits between the two. `fade()` applies it to whatever a mark already is, so
+there is one ghosting rule rather than a parallel palette to keep in step. The
+CSS half of it, on the table rows, has to be kept in step with `GHOST_A` by
+hand. Projected months are a separate treatment and do not ghost.
 
 ### Projections
+
+**Projections are currently hidden.** `SHOW_PROJECTIONS` at the top of the
+`<script>` is the only switch. With it off the chart stops at the last tracked
+month, the textured ground, the boundary and the estimate band are never drawn,
+and the key naming them is suppressed. `projectRest()` and every plugin below
+are untouched, so switching it back on is one word.
+
+What follows describes the feature as it behaves when shown.
 
 The chart runs to December. Months after the last tracked one are estimated:
 
@@ -139,6 +172,14 @@ The diagonal texture now means exactly one thing in this report: projected. Do
 not reuse it for anything else.
 
 ### Categories
+
+The sum of the two is **Combined**, everywhere a reader can see it: the headline
+eyebrow, the chart legend's third entry, the summary table's last column, and
+the chart tooltip. It used to be "Total", which had to do double duty for the
+sum of the two categories and for the sum down a column of months, so a reader
+meeting "Total" twice in one table was reading two different things. "Total"
+still names a single category's own sum, at the foot of each task list in an
+open month, where there is nothing to confuse it with.
 
 The report uses two terms throughout, mapped from the ClickUp folder structure:
 
