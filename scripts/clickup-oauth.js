@@ -8,9 +8,13 @@
  * revoked independently. An OAuth app gets its own token, scoped to the
  * workspaces approved during authorization and revocable on its own.
  *
- *   node scripts/clickup-oauth.js 000 000 https://your-report.vercel.app
+ *   node scripts/clickup-oauth.js 000 https://your-report.vercel.app
  *
- * where the first 000 is the app's client id and the second is its secret.
+ * where 000 is the app's client id. Run it from the repository root.
+ *
+ * The client secret is deliberately NOT an argument. It is read from a hidden
+ * prompt so it never reaches shell history, a screenshot, or a terminal
+ * scrollback. Set CLICKUP_CLIENT_SECRET instead only if you have no TTY.
  *
  * The redirect URI must match the one registered on the app in ClickUp exactly,
  * trailing slash included. It is only used during the handshake and never
@@ -19,10 +23,6 @@
  * Prints an access token. Per ClickUp's docs that token does not expire, uses
  * the same raw `Authorization: {token}` header as a personal token, and is a
  * drop-in replacement for one. Put it in Vercel as MOSS_CLICKUP_TOKEN.
- *
- * The token is a live credential. Do not commit it, do not paste it into a
- * ticket, and do not leave it in shell history (see the note the script prints
- * when it finishes).
  */
 
 import readline from 'node:readline/promises';
@@ -36,15 +36,79 @@ const TOKEN_URL = 'https://api.clickup.com/api/v2/oauth/token';
 function usage(message) {
   if (message) console.error(`\n  ${message}`);
   console.error(`
-  Usage, where each 000 is a placeholder to paste over:
-    node scripts/clickup-oauth.js 000 000 https://your-report.vercel.app
+  Usage, where 000 is a placeholder to paste over:
+    node scripts/clickup-oauth.js 000 https://your-report.vercel.app
 
-  Get the client id and secret from ClickUp:
-    Settings -> Apps -> Create an App
+  000 is the client id from ClickUp: Settings -> Apps -> your app.
+  The secret is asked for at a hidden prompt, not passed on the command line.
 
-  The redirect URI must match what you registered on that app, exactly.
+  Run this from the repository root. The redirect URI must match what you
+  registered on that app, exactly.
 `);
   process.exit(1);
+}
+
+/**
+ * Reads a line without echoing it. Raw mode rather than readline's private
+ * _writeToOutput hook, so this does not depend on Node internals. Backspace is
+ * handled because a mistyped secret is otherwise invisible and unfixable.
+ */
+function askHidden(query) {
+  return new Promise((resolve) => {
+    output.write(query);
+    input.setRawMode(true);
+    input.resume();
+    input.setEncoding('utf8');
+
+    let value = '';
+    const done = (result) => {
+      input.setRawMode(false);
+      input.pause();
+      input.removeListener('data', onData);
+      output.write('\n');
+      resolve(result);
+    };
+    const onData = (chunk) => {
+      for (const ch of chunk) {
+        const code = ch.charCodeAt(0);
+        if (code === 13 || code === 10) return done(value);
+        if (code === 3) {                       // ctrl-c
+          output.write('\n');
+          process.exit(130);
+        }
+        if (code === 127 || code === 8) {       // backspace
+          value = value.slice(0, -1);
+          continue;
+        }
+        if (code < 32) continue;                // ignore arrows, tabs, escapes
+        value += ch;
+      }
+    };
+    input.on('data', onData);
+  });
+}
+
+async function readSecret() {
+  const fromEnv = process.env.CLICKUP_CLIENT_SECRET;
+  if (fromEnv) {
+    console.log('  Using CLICKUP_CLIENT_SECRET from the environment.');
+    return fromEnv.trim();
+  }
+  if (!input.isTTY) {
+    console.error(`
+  No TTY, so the secret cannot be prompted for. Either run this in a real
+  terminal, or set CLICKUP_CLIENT_SECRET for this one command:
+
+    CLICKUP_CLIENT_SECRET=000 node scripts/clickup-oauth.js 000 https://...
+`);
+    process.exit(1);
+  }
+  const secret = await askHidden('  Client secret (hidden, paste and press return): ');
+  if (!secret.trim()) {
+    console.error('\n  No secret entered.');
+    process.exit(1);
+  }
+  return secret.trim();
 }
 
 /**
@@ -74,14 +138,13 @@ async function exchange(clientId, clientSecret, code) {
   if (!res.ok) {
     console.error(`\n  ClickUp returned ${res.status} exchanging the code.`);
     console.error(`  ${body}`);
-    if (res.status === 400) {
-      console.error(`
+    console.error(`
   The usual causes, in order of likelihood:
     - the code was already used (they are single use, start over)
     - the code expired (they are short lived, start over)
+    - the secret was mistyped, or belongs to a different app
     - the redirect URI does not match the one registered on the app
 `);
-    }
     process.exit(1);
   }
 
@@ -134,11 +197,16 @@ async function verify(token) {
 }
 
 async function main() {
-  const [clientId, clientSecret, redirectUri] = process.argv.slice(2);
-  if (!clientId || !clientSecret || !redirectUri) usage('Missing arguments.');
+  const [clientId, redirectUri] = process.argv.slice(2);
+  if (!clientId || !redirectUri) usage('Missing arguments.');
   if (!/^https?:\/\//.test(redirectUri)) {
     usage(`Redirect URI must be a full URL. Got: ${redirectUri}`);
   }
+  if (/^https?:\/\//.test(clientId)) {
+    usage('First argument is the client id, not a URL. The secret is prompted for.');
+  }
+
+  const clientSecret = await readSecret();
 
   const authorizeUrl =
     `${AUTHORIZE_BASE}?client_id=${encodeURIComponent(clientId)}` +
@@ -175,13 +243,12 @@ async function main() {
 
   Next:
     vercel env add MOSS_CLICKUP_TOKEN     (Production, then Preview)
-    vercel deploy --prod
 
   Confirm the report loads, then remove CLICKUP_TOKEN from THIS project only.
   Other projects still use it.
 
-  This token is a live credential and is now in your shell scrollback. Clear it
-  when you are done, and do not commit it.
+  The token above is a live credential and is now in your terminal scrollback.
+  Clear it when you are done, and do not commit it.
 `);
 
   process.exit(ok ? 0 : 2);
