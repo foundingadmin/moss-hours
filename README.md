@@ -550,6 +550,29 @@ The report calls the API at the same origin (`/api/time`), so once deployed it
 works without further configuration. To point it at a different API, append
 `?api=https://your-deploy.vercel.app/api/time`.
 
+### Traffic (Vercel Web Analytics)
+
+`index.html` loads `/_vercel/insights/script.js` just before `</body>`. That is
+the whole integration: there is no build step here, so the `@vercel/analytics`
+package and its `<Analytics />` component do not apply, and the script tag from
+Vercel's [HTML quickstart](https://vercel.com/docs/analytics/quickstart?framework=html)
+is the supported path for a static site.
+
+The tag alone collects nothing. Web Analytics has to be switched on for the
+project once, either in the Vercel dashboard under **Analytics** or with:
+
+```bash
+vercel project web-analytics moss-hours
+```
+
+Vercel serves that script path itself, so the request 404s under `npm run dev`
+and reports nothing for preview URLs opened outside the deployment. Only
+production traffic lands in the dashboard.
+
+It records pageviews, not custom events, and the report sends nothing of its
+own. Worth knowing before turning it on: this URL is shared with the client, so
+the numbers are the client reading their own report.
+
 ## Local development
 
 Most work here is layout and copy, which needs no ClickUp token and no network
