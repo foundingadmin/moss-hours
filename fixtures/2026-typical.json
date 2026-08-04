@@ -1,6 +1,7 @@
 {
   "_fixture": "Typical mid-year state. Eight tracked months, four projected, the Creative Jan-May data flag live, an aggregated tail row, a task with no ClickUp permalink, and three rostered contributors. This is the file to reach for when working on layout.",
   "_note": "Invented task names and hours. Not client data. Safe to edit.",
+  "_omits": "The live API also returns retainerDaily and sowDaily per month (the day buckets the dormant day view would read) and listId on each item. Neither fixture carries them, because normalize() falls back to null and nothing currently rendered uses them. Add them here first if the day view is ever switched back on.",
   "year": 2026,
   "retainerBudget": 50,
   "generatedAt": "2026-08-04T18:25:00.000Z",
