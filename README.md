@@ -49,6 +49,7 @@ so the fastest way in is to grep for the banner rather than scroll.
 | `scripts/serve.mjs` | Zero-dependency static server for those fixtures |
 | `scripts/check.mjs` | The pre-commit checks, as one command |
 | `scripts/generate-roster.js` | One-off ClickUp to `roster.js` generator |
+| `scripts/clickup-oauth.js` | One-off minter for `MOSS_CLICKUP_TOKEN` |
 
 ## The report
 
@@ -213,22 +214,51 @@ against 50h.
 
 ### Freshness
 
-`api/time.js` sends `Cache-Control: no-store` and the report cache-busts every
-request, so each page load (and each press of the refresh button) is a real
-round trip to ClickUp.
+Responses are cached at Vercel's CDN, so an ordinary page load costs nothing at
+ClickUp. `api/time.js` states its own window and the edge does the rest; there
+is no database and nothing to provision.
+
+| Request               | Window                                     |
+| --------------------- | ------------------------------------------ |
+| current year          | fresh 5 min, then stale-while-revalidate 1h |
+| a past year           | fresh 24h, then stale-while-revalidate 7d   |
+| `?fresh=1`, `?debug=1`| never cached, always a real round trip      |
+| any error             | never cached                                |
+
+Within the window a reader is served from the edge instantly. Past the window
+the stale copy is still served instantly while a fresh one is fetched in the
+background, so in practice only the first load after a quiet spell waits on
+ClickUp. A past year cannot change, hence the much longer window.
+
+The **refresh button** sends `?fresh=1`, which bypasses the cache entirely and
+is the only thing in the UI that forces a live pull. Nothing cache-busts:
+appending a unique parameter per load would make every load a unique cache key,
+which is exactly what made every visit a fresh pull before.
+
+`generatedAt` reports when the payload was pulled from ClickUp, **not** when the
+request arrived. On a cached response those differ, which is the point: the
+footer states the data's real age instead of claiming to be current.
 
 The **footer** is one row: the agency on the left, how fresh the data is on the
 right, and the refresh control. Both items are set the same way, 14px body face,
 so they read as a matched pair closing the page; colour is what keeps the link
-the more prominent of the two, since only one of them is a place to go.
+the more prominent of the two, since only one of them is a place to go. It is a
+note on how fresh the data is, which is a closing remark rather than the first
+thing on the page.
 
-The readout states `generatedAt` from the API response and nothing else. It used
-to sit under a live wall clock, which told the reader the time on their own
-machine, a moving part answering a question nobody had. That clock was also why
-the readout was set in monospace, since Manrope ships no tabular-figure feature
-(measured, its digits run 7.47px to 8.00px wide) and a proportional ticking
-seconds field twitched the whole line once a second. No ticking field, no
-reason, so it joins the rest of the footer.
+The readout states `generatedAt` and nothing else. It used to sit under a live
+wall clock, which told the reader the time on their own machine, a moving part
+answering a question nobody had. That clock was also why the readout was set in
+monospace, since Manrope ships no tabular-figure feature (measured, its digits
+run 7.47px to 8.00px wide) and a proportional ticking seconds field twitched the
+whole line once a second. No ticking field, no reason, so it joins the rest of
+the footer.
+
+Because a cached payload can be genuinely old, the readout carries a date once
+the data is not from today. "3d ago · 6:25 PM" states an hour on an unnamed day,
+which is worse than saying nothing; "3d ago · Aug 1, 6:25 PM" is the same figure
+made answerable. Relative age alone is refreshed on a 30-second interval, which
+is as often as a string measured in minutes can change.
 
 ### Export
 
@@ -300,7 +330,11 @@ fully captured and real usage is understated.
 
 ```
 GET /api/time?year=2026
+GET /api/time?year=2026&fresh=1   # bypass the cache, pull from ClickUp now
 ```
+
+`fresh=1` is what the report's refresh button sends. See
+[Freshness](#freshness) for the cache windows.
 
 Response:
 
@@ -374,7 +408,7 @@ person. It is **generated** by `scripts/generate-roster.js`, hand-edited for
 titles, then committed and reviewed like any other source file.
 
 ```bash
-CLICKUP_TOKEN=pk_... npm run roster
+MOSS_CLICKUP_TOKEN=... npm run roster
 ```
 
 ClickUp is authoritative for exactly one thing: **which user ids logged matched
@@ -426,12 +460,18 @@ Three things about the fetch are load-bearing:
 1. **`assignee` is always passed.** ClickUp's `/team/{id}/time_entries` silently
    scopes to the token holder unless `assignee` is supplied. Without it the
    report showed one person's hours and hid the rest of the team. Member IDs are
-   resolved per request from `GET /team` rather than hardcoded, so staffing
-   changes need no code change.
+   resolved from `GET /team` rather than hardcoded, so staffing changes need no
+   code change. The result is held at module scope for 10 minutes, so a warm
+   function skips that round trip; only a successful lookup is cached, and a new
+   hire appears within the window at worst.
 2. **The year is walked one month at a time.** A single call is capped in how
    many entries it returns, and with every member included the payload is large
-   enough to hit that cap and under-report silently. Twelve sequential calls are
-   merged and de-duplicated by entry id.
+   enough to hit that cap and under-report silently. The twelve calls are issued
+   **concurrently** and merged in month order, de-duplicated by entry id. They
+   were sequential once, which meant twelve round trips end to end before the
+   first byte and was the bulk of an uncached response. Merge order matters: an
+   entry falling inside two overlapping boundary pads must be kept from the
+   earlier window, as it was when this ran serially.
 3. **Months resolve in `America/Denver`, not UTC.** Vercel runs in UTC, so
    late-evening work landed on the following day and anything near a month
    boundary landed in the wrong month. Each fetch window is padded by 48 hours on
@@ -492,9 +532,13 @@ you can verify the mapping without redeploying. If `memberCount` is 1, the
 1. Set the ClickUp token as an environment variable (never hardcoded):
 
    ```bash
-   vercel env add CLICKUP_TOKEN
-   # paste the pk_… token when prompted (Production + Preview)
+   vercel env add MOSS_CLICKUP_TOKEN
+   # paste the token when prompted (Production + Preview), and mark it Sensitive
    ```
+
+   See [Minting the token](#minting-the-token) for where that value comes from.
+   Environment variables only apply to **new** deployments, so redeploy after
+   adding it.
 
 2. Deploy:
 
@@ -532,7 +576,9 @@ a fixture that has stopped parsing or lost a month.
 `npm run dev:api` (`vercel dev`) is for work that actually touches
 `api/time.js`. The static server answers `/api/time` with a 501 and a pointer to
 the fixtures, so a forgotten `?api=` fails loudly rather than looking like a
-broken API.
+broken API. It serves everything `no-store`, so it never stands in for the edge
+cache described under [Freshness](#freshness); testing cache windows means
+`vercel dev` or a preview deployment.
 
 **Chart.js and the brand tokens load from CDNs**, so an offline or
 network-restricted machine renders an unstyled page with no chart. Vendoring
@@ -549,9 +595,44 @@ It checks for em dashes (a standing house rule, see `CLAUDE.md`), that the CDN
 URLs are intact, that the fixtures parse and carry all twelve months, and that
 every `DATA_FLAGS` entry names real months and a real series. These are the
 mistakes that have actually been made here, not a general linter.
+## Minting the token
+
+ClickUp issues exactly **one personal token per user account**, so every project
+built against that account shares a key that cannot be rotated or revoked
+independently. This project uses its own OAuth app instead. The client ID and
+secret are not themselves a credential: they are what you exchange, once, for an
+access token. That token uses the same raw `Authorization: {token}` header as a
+personal token and (per ClickUp's docs) does not expire, so nothing in
+`api/time.js` knows the difference.
+
+What you gain is a credential scoped to the workspaces approved during
+authorization, revocable on its own without touching anything else. A second
+project gets a second app.
+
+1. ClickUp: **Settings → Apps → Create an App**. Name it, and set the redirect
+   URL to the deployed report URL. That URL is only used during the handshake
+   and does not need to resolve to a working page, but it must match exactly.
+2. Run the helper from the repository root:
+
+   ```bash
+   node scripts/clickup-oauth.js <client_id> https://your-report.vercel.app
+   ```
+
+   It prompts for the secret without echoing it, prints an authorize link, takes
+   the `?code=…` you are redirected with, and exchanges it. It then verifies the
+   token against `GET /team` and lists the workspaces it can actually see: a
+   token authorized against the wrong workspace succeeds at the handshake and
+   only shows up later as an empty report.
+3. `vercel env add MOSS_CLICKUP_TOKEN`, then redeploy.
+4. Once the report is confirmed working, remove `CLICKUP_TOKEN` from **this**
+   project. Other projects still use it.
+
+The authorization code is single-use and expires within minutes. If the exchange
+fails, start again from the authorize link.
 
 ## Environment
 
-| Variable        | Required | Description                          |
-| --------------- | -------- | ------------------------------------ |
-| `CLICKUP_TOKEN` | yes      | ClickUp personal API token (`pk_…`). |
+| Variable             | Required | Description                                                                 |
+| -------------------- | -------- | --------------------------------------------------------------------------- |
+| `MOSS_CLICKUP_TOKEN` | yes      | Token for this project's ClickUp OAuth app. See [Minting the token](#minting-the-token). |
+| `CLICKUP_TOKEN`      | no       | Deprecated fallback: the shared personal token (`pk_…`). Used only when `MOSS_CLICKUP_TOKEN` is unset, so a deploy cannot land before the new variable is set. Remove once migrated. |

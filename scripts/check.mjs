@@ -21,8 +21,10 @@ const lineOf = (text, index) => text.slice(0, index).split('\n').length;
 /* 1. Em dashes. A standing house rule, and the one thing most likely to slip
       into a paragraph of UI copy written in a hurry. */
 {
+  // CLAUDE.md is deliberately absent: it quotes the character in the rule that
+  // forbids it, so scanning it would fail on its own documentation.
   const files = ['index.html', 'api/time.js', 'roster.js', 'README.md',
-                 'scripts/serve.mjs', 'scripts/generate-roster.js'];
+                 'scripts/serve.mjs', 'scripts/generate-roster.js', 'scripts/clickup-oauth.js'];
   for (const f of files) {
     const text = await read(f).catch(() => null);
     if (text === null) continue;

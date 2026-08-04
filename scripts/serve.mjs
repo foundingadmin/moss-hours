@@ -37,7 +37,7 @@ const server = createServer(async (req, res) => {
     res.writeHead(501, { 'content-type': 'application/json' });
     res.end(JSON.stringify({
       error: 'This is the static dev server, which has no ClickUp token.',
-      hint: 'Point the report at a fixture with ?api=./fixtures/2026-typical.json, or run `vercel dev` for the real API.'
+      hint: 'Point the report at a fixture with ?api=./fixtures/2026-typical.json, or run `npm run dev:api` for the real API.'
     }));
     return;
   }
