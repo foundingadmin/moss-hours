@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Moss · Hours Report</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="https://brand.foundingcreative.com/favicon.svg" />
+
+  <!-- Founding Creative design-system tokens, same source as the report. Every
+       token below carries a fallback: this page is what a visitor sees when the
+       report is off, so it has to stand up on its own if the CDN does not
+       answer. -->
+  <link rel="stylesheet" href="https://brand.foundingcreative.com/css/tokens.css" />
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      /* The report's own ground, so switching the routes off is a change of
+         content rather than a change of site. */
+      margin: 0;
+      background:
+        radial-gradient(1100px 560px at 82% -8%, rgba(126, 248, 147, 0.10), transparent 60%),
+        radial-gradient(820px 460px at -10% 6%, rgba(198, 162, 255, 0.08), transparent 55%),
+        var(--n-black, #0A0A0A);
+      background-attachment: fixed;
+      color: rgba(255, 255, 255, 0.78);
+      font-family: var(--font-body, 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif);
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* One centred column. There is no masthead here because there is nothing
+       under it: the mark, the message and the way back are the whole page. */
+    .page {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 34px;
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 64px 28px;
+      text-align: center;
+    }
+
+    .lockup img { display: block; height: 30px; width: auto; }
+
+    .card {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--r-lg, 18px);
+      padding: 48px 34px;
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.62);
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-family: var(--font-display, 'Gelasio', Georgia, serif);
+      /* Sized like the report title, which is the heading this one stands in
+         for. */
+      font-size: clamp(30px, 5vw, 44px);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: var(--tracking-display, -0.01em);
+      color: var(--white, #FFFFFF);
+    }
+
+    p { margin: 0; max-width: 34ch; margin-inline: auto; }
+
+    .foot-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white, #FFFFFF);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      text-decoration-color: rgba(255, 255, 255, 0.28);
+      transition: color .14s ease, text-decoration-color .14s ease;
+    }
+    .foot-link:hover {
+      color: var(--holo-cyan, #69EEFF);
+      text-decoration-color: var(--holo-cyan, #69EEFF);
+    }
+    .foot-link img { display: block; height: 15px; width: auto; }
+
+    @media (max-width: 560px) {
+      .page { gap: 28px; padding: 48px 18px; }
+      .card { padding: 36px 22px; }
+      .lockup img { height: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="lockup">
+      <img src="assets/fc-wordmark-white.svg" alt="Founding Creative" />
+    </div>
+
+    <div class="card">
+      <p class="eyebrow">Moss · Hours Report</p>
+      <h1>Under construction</h1>
+      <p>This report is being updated. It will be back shortly.</p>
+    </div>
+
+    <a class="foot-link" href="https://foundingcreative.com" target="_blank" rel="noopener">
+      <img src="assets/fc-icon-white.svg" alt="" />
+      <span>foundingcreative.com</span>
+    </a>
+  </main>
+</body>
+</html>

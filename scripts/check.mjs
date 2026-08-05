@@ -23,7 +23,7 @@ const lineOf = (text, index) => text.slice(0, index).split('\n').length;
 {
   // CLAUDE.md is deliberately absent: it quotes the character in the rule that
   // forbids it, so scanning it would fail on its own documentation.
-  const files = ['index.html', 'api/time.js', 'roster.js', 'README.md',
+  const files = ['index.html', 'construction.html', 'api/time.js', 'roster.js', 'README.md',
                  'scripts/serve.mjs', 'scripts/generate-roster.js', 'scripts/clickup-oauth.js'];
   for (const f of files) {
     const text = await read(f).catch(() => null);
@@ -96,6 +96,32 @@ const lineOf = (text, index) => text.slice(0, index).split('\n').length;
       if (!['creative', 'nonCreative'].includes(m[1])) {
         errors.push(`index.html DATA_FLAGS series '${m[1]}' is not a series the report draws.`);
       }
+    }
+  }
+}
+
+/* 5. Under-construction mode. It hides the whole report from the client, which
+      makes it the one setting nobody notices is still on. Loud, but a warning
+      rather than a failure: it has to be committable, since committing it is
+      how it ships. */
+{
+  const text = await read('vercel.json').catch(() => null);
+  if (text === null) {
+    warnings.push('vercel.json is missing.');
+  } else {
+    let config = null;
+    try {
+      config = JSON.parse(text);
+    } catch (e) {
+      errors.push(`vercel.json is not valid JSON. ${e.message}`);
+    }
+    const holding = (config?.routes || []).some((r) => r.dest === '/construction.html');
+    if (holding) {
+      warnings.push(
+        'UNDER CONSTRUCTION is on. vercel.json routes every request to construction.html, ' +
+        'so the report and the API are unreachable in production. Delete the routes array ' +
+        'to put the report back. (Local preview: /construction.html under `npm run dev`.)'
+      );
     }
   }
 }
