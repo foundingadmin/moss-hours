@@ -31,7 +31,7 @@ const lineOf = (text, index) => text.slice(0, index).split('\n').length;
   // CLAUDE.md and this file are deliberately absent: both quote the character
   // in the rule that forbids it, so scanning them fails on the rule itself.
   const files = ['index.html', 'report-b.html', 'construction.html', 'api/time.js', 'README.md',
-                 'data/sows.json', 'scripts/serve.mjs',
+                 'ROADMAP.md', 'data/sows.json', 'scripts/serve.mjs',
                  'scripts/build-fixtures.mjs', 'scripts/test-api.mjs',
                  'scripts/validate-sows.js', 'scripts/clickup-oauth.js'];
   for (const f of files) {

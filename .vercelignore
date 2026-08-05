@@ -7,3 +7,7 @@ _archive/
 # ids and works through the commercial reasoning behind the rebuild, none of
 # which should be fetchable from the URL the client has.
 RUNDOC.md
+
+# The roadmap, for the same reason. It names clause numbers, what we have not
+# finished yet, and how the renewal conversation is being approached.
+ROADMAP.md
