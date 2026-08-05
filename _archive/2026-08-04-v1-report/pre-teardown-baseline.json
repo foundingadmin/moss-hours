@@ -1,0 +1,317 @@
+{
+  "_what": "Pre-teardown baseline of the retainer API, captured before the ZZ FIXTURE entries were removed from ClickUp.",
+  "_includes": "This INCLUDES the 666h of fixture time on task 868kmdh0u: 111 logged, 222 documented, 333 estimated, all dated January 2026. January therefore reads 688.75h against a 50h allowance.",
+  "_why": "Prompt 07.1 of RUNDOC.md. After Josh deletes those three entries, January total must fall by exactly 666 and task 868kmdh0u must disappear from every month item list. This file is what that is checked against.",
+  "_capturedFrom": "preview deployment of PR #22, /api/time?year=2026",
+  "_capturedAt": "2026-08-05T03:05:00Z",
+  "year": 2026,
+  "timezone": "America/Denver",
+  "retainerBudget": 50,
+  "generatedAt": "2026-08-05T03:05:52.249Z",
+  "totals": {
+    "hours": {
+      "logged": 329.97,
+      "documented": 222,
+      "estimated": 333
+    },
+    "reconstructed": 555,
+    "total": 884.97
+  },
+  "months": [
+    {
+      "month": 0,
+      "hours": {
+        "logged": 133.75,
+        "documented": 222,
+        "estimated": 333
+      },
+      "reconstructed": 555,
+      "total": 688.75,
+      "itemCount": 12
+    },
+    {
+      "month": 1,
+      "hours": {
+        "logged": 22.07,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 22.07,
+      "itemCount": 8
+    },
+    {
+      "month": 2,
+      "hours": {
+        "logged": 16.45,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 16.45,
+      "itemCount": 8
+    },
+    {
+      "month": 3,
+      "hours": {
+        "logged": 14.84,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 14.84,
+      "itemCount": 7
+    },
+    {
+      "month": 4,
+      "hours": {
+        "logged": 15.14,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 15.14,
+      "itemCount": 7
+    },
+    {
+      "month": 5,
+      "hours": {
+        "logged": 65.42,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 65.42,
+      "itemCount": 16
+    },
+    {
+      "month": 6,
+      "hours": {
+        "logged": 55.71,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 55.71,
+      "itemCount": 16
+    },
+    {
+      "month": 7,
+      "hours": {
+        "logged": 6.59,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 6.59,
+      "itemCount": 3
+    },
+    {
+      "month": 8,
+      "hours": {
+        "logged": 0,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0,
+      "itemCount": 0
+    },
+    {
+      "month": 9,
+      "hours": {
+        "logged": 0,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0,
+      "itemCount": 0
+    },
+    {
+      "month": 10,
+      "hours": {
+        "logged": 0,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0,
+      "itemCount": 0
+    },
+    {
+      "month": 11,
+      "hours": {
+        "logged": 0,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0,
+      "itemCount": 0
+    }
+  ],
+  "januaryItems": [
+    {
+      "id": "868kmdh0u",
+      "name": "ZZ FIXTURE / DASHBOARD WIRING / DELETE BEFORE CLIENT VIEW",
+      "url": "https://app.clickup.com/t/868kmdh0u",
+      "listId": "901109719902",
+      "hours": {
+        "logged": 111,
+        "documented": 222,
+        "estimated": 333
+      },
+      "reconstructed": 555,
+      "total": 666
+    },
+    {
+      "id": "868h4c3b8",
+      "name": "Create 2026 moss creative retainer projects' task cards",
+      "url": "https://app.clickup.com/t/868h4c3b8",
+      "listId": "901109719902",
+      "hours": {
+        "logged": 6.35,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 6.35
+    },
+    {
+      "id": "868h15w5k",
+      "name": "Ceros URL Update + Video",
+      "url": "https://app.clickup.com/t/868h15w5k",
+      "listId": "901114268181",
+      "hours": {
+        "logged": 3.89,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 3.89
+    },
+    {
+      "id": "868h3vgk1",
+      "name": "Update needed",
+      "url": "https://app.clickup.com/t/868h3vgk1",
+      "listId": "901109719902",
+      "hours": {
+        "logged": 3.45,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 3.45
+    },
+    {
+      "id": "868h15w1x",
+      "name": "Program Color Palettes",
+      "url": "https://app.clickup.com/t/868h15w1x",
+      "listId": "901109719902",
+      "hours": {
+        "logged": 2.68,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 2.68
+    },
+    {
+      "id": "868h37bam",
+      "name": "Brand Guide for AI Database",
+      "url": "https://app.clickup.com/t/868h37bam",
+      "listId": "901109719902",
+      "hours": {
+        "logged": 2.56,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 2.56
+    },
+    {
+      "id": "868gkhb07",
+      "name": "Problem Solving Template for Veronica",
+      "url": "https://app.clickup.com/t/868gkhb07",
+      "listId": "901109719902",
+      "hours": {
+        "logged": 1.68,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 1.68
+    },
+    {
+      "id": "868gcp1gq",
+      "name": "Custom Branding Word Doc.",
+      "url": "https://app.clickup.com/t/868gcp1gq",
+      "listId": "901111788672",
+      "hours": {
+        "logged": 0.67,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0.67
+    },
+    {
+      "id": "868h9pgt6",
+      "name": "Update Brand Hub with New Home Awaits Logos & Animations",
+      "url": "https://app.clickup.com/t/868h9pgt6",
+      "listId": "901109719902",
+      "hours": {
+        "logged": 0.58,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0.58
+    },
+    {
+      "id": "868h4cnq5",
+      "name": "quick fix",
+      "url": "https://app.clickup.com/t/868h4cnq5",
+      "listId": "901114268181",
+      "hours": {
+        "logged": 0.35,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0.35
+    },
+    {
+      "id": "868h9bdu4",
+      "name": "Home Awaits Logo Work",
+      "url": "https://app.clickup.com/t/868h9bdu4",
+      "listId": "901109719902",
+      "hours": {
+        "logged": 0.3,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0.3
+    },
+    {
+      "id": null,
+      "name": "Additional retainer support",
+      "url": null,
+      "listId": null,
+      "count": 6,
+      "aggregated": true,
+      "hours": {
+        "logged": 0.24,
+        "documented": 0,
+        "estimated": 0
+      },
+      "reconstructed": 0,
+      "total": 0.24
+    }
+  ],
+  "memberCount": 48,
+  "totalEntries": 4152,
+  "skippedEntries": 0
+}
