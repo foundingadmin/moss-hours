@@ -2,8 +2,28 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "routes": [
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
+
     {
       "src": "/(.*)",
+      "has": [{ "type": "host", "value": "moss.foundingcreative.com" }],
+      "dest": "/construction.html",
+      "headers": { "cache-control": "no-store" }
+    },
+    {
+      "src": "/(.*)",
+      "has": [{ "type": "host", "value": "moss-hours.vercel.app" }],
+      "dest": "/construction.html",
+      "headers": { "cache-control": "no-store" }
+    },
+    {
+      "src": "/(.*)",
+      "has": [{ "type": "host", "value": "moss-hours-foundingadmins-projects.vercel.app" }],
+      "dest": "/construction.html",
+      "headers": { "cache-control": "no-store" }
+    },
+    {
+      "src": "/(.*)",
+      "has": [{ "type": "host", "value": "moss-hours-git-main-foundingadmins-projects.vercel.app" }],
       "dest": "/construction.html",
       "headers": { "cache-control": "no-store" }
     }

@@ -1,25 +1,58 @@
-# Moss · Client Hours
+# Moss · Client Reporting
 
-A tiny Vercel project that surfaces Moss client hours from ClickUp.
+Two client-facing reports for Moss, on one tiny Vercel project.
 
 **Working on this? Start here.** `npm run dev`, then open the fixture URL it
 prints. No ClickUp token needed. `npm run check` before you commit. The
 [Repo map](#repo-map) says which file holds what, and
 [Local development](#local-development) covers the rest.
 
+## Two reports, two sources
+
+The most important thing to understand about this repo is that the two reports
+**never share a data source**, and that this is architectural rather than a
+filter.
+
+| | **Report A** | **Report B** |
+| --- | --- | --- |
+| Page | `index.html` | `report-b.html` |
+| Title | Fractional Creative Usage | Ad Hoc Creative Support |
+| Source | ClickUp time entries, two retainer folders | `data/sows.json`, hand-maintained from signed documents |
+| Unit | Hours against a monthly allowance | Days and dollars |
+| Cut | Month, then task | Region, then document |
+
+Report A covers the retainer: 50 agency hours a month, which is a thing Moss
+bought and can hold us to. Report B covers work scoped, priced and signed one
+project at a time.
+
+These used to be one report with two series in one chart, in one unit. That
+invited a comparison that was never valid: the second series was Founding
+Creative's internal cost of goods, never priced and never a contract term, drawn
+in the same unit as the hours Moss actually purchased.
+
+**Report B contains no code path to ClickUp.** Not a disabled one, not a
+filtered one: none. If it ever read a time entry, hours would be one flag away
+from a client surface forever, and the separation would depend on nobody ever
+flipping that flag. `npm run check` fails if the word appears in
+`report-b.html` or `data/sows.json` at all.
+
 ## The pieces
 
 - **`api/time.js`**: a serverless proxy that fetches ClickUp time entries for a
-  given year, buckets them by month across the Creative (retainer) and
-  Non-Creative (SOW) folders, with a per-task breakdown, including each task's
-  ClickUp permalink, and returns clean JSON (CORS enabled).
-- **`index.html`**: a self-contained, client-facing hours **report** (no build
+  given year from the two Moss retainer folders, buckets them by month, splits
+  each hour into logged or reconstructed, and returns clean JSON (CORS enabled).
+  Anything outside those two folders is discarded before it reaches a bucket.
+- **`index.html`**: Report A. A self-contained, client-facing report (no build
   step) styled with the [Founding Creative brand system](https://brand.foundingcreative.com).
+- **`report-b.html`**: Report B. Self-contained in the same way, reading
+  `data/sows.json` and nothing else.
+- **`data/sows.json`**: the committed index of signed statements of work.
+  Hand-maintained, validated by `npm run sows`.
 - **`construction.html`**: a self-contained holding page. While
-  [under construction mode](#under-construction-mode) is on it is the only thing
-  the deployed site serves.
+  [under construction mode](#under-construction-mode) is on it is what the
+  client-facing hostnames serve.
 - **`assets/`**: the Founding Creative wordmark used in the masthead and the
-  client wordmark used in the report title, vendored so the report never depends
+  client wordmark used in each report title, vendored so neither report depends
   on a third-party host at render time.
 
 ## Repo map
@@ -33,15 +66,22 @@ so the fastest way in is to grep for the banner rather than scroll.
 | Colour and type tokens, badge geometry | `:root` at the top of the `<style>` |
 | Data-integrity flags | `var DATA_FLAGS`, near the top of the `<script>` |
 | Which years the selector offers | `var YEAR_OPTIONS`, `renderYears()` |
-| What Creative and Other mean, retainer terms | `defsHtml()` |
+| What the retainer is, the terms, the clause numbers | `defsHtml()` |
+| The static team block | `var TEAM`, `teamHtml()` |
+| The note explaining the reconstruction | `reconNoteHtml()` |
 | Hero panel, the headline total | `heroHtml()` |
 | The rotating comparison lines | `var FUN_FACTS` |
+| The three evidence classes and their labels | `var SERIES` |
 | Chart colours, ghosting, flag outlines | `barColors()`, `fade()`, `GHOST_A` |
+| The two reconstruction hatches | `hatchPattern()`, `--hatch-*` in `:root` |
+| The 50 hour allowance line | `allowanceLine` |
 | Chart construction, axes, tooltips | `drawChart()` |
 | The key under the chart | `updateChartNote()` |
 | Projection maths | `projectRest()` |
 | Summary table and its month rows | `summaryHtml()` |
 | A month's task detail drawer | `monthDetailHtml()`, `taskRows()` |
+| The overage treatment and its clause note | `usePctHtml()`, `summaryHtml()` |
+| The signed-agreement footer link | `SLA_DOCUMENT_URL`, `renderSlaLink()` |
 | Chart and table dimming each other | `linkHover()`, `paintBars()` |
 | The data-note modal | `openFlagModal()` |
 | CSV builders and the export menu | `exportSummary()`, `wireExport()` |
@@ -49,13 +89,16 @@ so the fastest way in is to grep for the banner rather than scroll.
 
 | Non-production file | What it is for |
 | --- | --- |
-| `fixtures/*.json` | Committed API payloads, so the report runs with no token |
+| `fixtures/*.json` | Committed API payloads, so Report A runs with no token |
+| `scripts/build-fixtures.mjs` | Regenerates those fixtures so their arithmetic holds |
 | `scripts/serve.mjs` | Zero-dependency static server for those fixtures |
 | `scripts/check.mjs` | The pre-commit checks, as one command |
-| `scripts/generate-roster.js` | One-off ClickUp to `roster.js` generator |
+| `scripts/test-api.mjs` | Runs `api/time.js` against a stubbed ClickUp |
+| `scripts/validate-sows.js` | Validates `data/sows.json` |
 | `scripts/clickup-oauth.js` | One-off minter for `MOSS_CLICKUP_TOKEN` |
+| `_archive/` | The frozen v1 report. Inert, and excluded from every deploy |
 
-## The report
+## Report A: Fractional Creative Usage
 
 Laid out high level → low level:
 
@@ -79,26 +122,40 @@ Laid out high level → low level:
 
    There is no rule between the mark and the title. The tile already closes the
    mark off, and a divider beside it drew a second edge saying the same thing.
-3. **Year to date**: total hours delivered, the range beneath it, a rotating
+3. **Year to date**: retainer hours delivered, the range beneath it, a rotating
    comparison line in a labelled second column beside it, and underneath, the
-   two categories named and explained. That is the one place the retainer terms
-   are stated. The comparison line has arrows to step it by hand; interacting
-   with the panel holds the auto-advance and lets go on the way out.
-4. **Monthly overview**: the chart and the table under one heading, because they
+   retainer defined. That is the one place the terms are stated, and every claim
+   in it cites a numbered clause, because this report is read by people with no
+   context and a stake in the outcome. The comparison line has arrows to step it
+   by hand; interacting with the panel holds the auto-advance and lets go on the
+   way out.
+4. **Your team**: a hardcoded block of faces, names and titles. No hours, no
+   percentages, no ordering by contribution, and no network call. See
+   [The team block](#the-team-block).
+5. **Monthly overview**: the chart and the table under one heading, because they
    are the same year drawn and then written out.
 
-   The chart shows the **whole year**, with the months that have not happened yet
-   projected (see below). The legend floats in the plot's top-right corner above
-   700px and returns to the flow above the chart below that, where the plot
-   rotates and every month owns a full row. Hovering a legend entry ghosts every
-   other series; clicking hides it. The `Combined` entry is a key, not a
-   control.
+   The chart is a **stacked bar per month**, split into hours logged as they
+   happened and hours reconstructed from records, with a dashed line at the 50h
+   allowance. The legend carries three entries, each with its swatch **and its
+   label in words**: the pattern is holding the entire honesty claim of this
+   report, and a texture nobody has named is just a texture. It floats in the
+   plot's top-right corner above 700px and returns to the flow above the chart
+   below that, where the plot rotates and every month owns a full row. Hovering a
+   legend entry ghosts the other two; clicking hides it.
+
+   Then a **note** stating that January through May were rebuilt from records and
+   what the two reconstruction classes mean. It sits between the chart and the
+   table on purpose: a reader who has just seen striped bars asks what they are
+   before they start reading figures, and an answer parked in a footnote arrives
+   after they have already decided what to think.
 
    Then a per-month table, deliberately plain: no rules between rows, no tinted
    columns, no selected surface. Hierarchy is weight, colour, and one rule above
-   the totals. Every row expands in place into that month's task detail, with the
-   two categories side by side above 860px, one task per row with a permalink out
-   to ClickUp, and the people who worked the month. Nothing opens on arrival.
+   the totals. Five columns: month, logged, reconstructed, total and allowance
+   used. Every row expands in place into that month's task detail, one task per
+   row with its own logged / reconstructed split drawn the same way the chart
+   draws a month, and a permalink out to ClickUp. Nothing opens on arrival.
 
    **The open month is one surface.** The row and its drawer are two `<tr>`s and
    cannot be wrapped in a single element, so the outline is drawn in halves: top
@@ -109,13 +166,13 @@ Laid out high level → low level:
    The outline is the action colour, because "this is the month you opened" is
    interface state and the two series colours are spoken for.
 
-   Each task list ends with that category's own total, in the series colour and
-   at the weight of the figures above it. The figure is the month's stored total
-   rather than a fresh sum of the rows, so the drawer can never disagree with
-   the row it hangs from. Creative adds a line stating what the month came to
-   against its allowance: the month row carries that percentage too, and it is
-   repeated here because the reader has just finished going down the Creative
-   rows and this is where the question comes up.
+   The task list ends with the month's own total, in the series colour and at the
+   weight of the figures above it. The figure is the month's stored total rather
+   than a fresh sum of the rows, so the drawer can never disagree with the row it
+   hangs from. Under it, what the month came to against its allowance: the month
+   row carries that percentage too, and it is repeated here because the reader
+   has just finished going down the rows and this is where the question comes
+   up.
 
 ### Chart and table are linked
 
@@ -176,45 +233,98 @@ projected bar.
 The diagonal texture now means exactly one thing in this report: projected. Do
 not reuse it for anything else.
 
-### Categories
+### Logged, documented, estimated
 
-The sum of the two is **Combined**, everywhere a reader can see it: the headline
-eyebrow, the chart legend's third entry, the summary table's last column, and
-the chart tooltip. It used to be "Total", which had to do double duty for the
-sum of the two categories and for the sum down a column of months, so a reader
-meeting "Total" twice in one table was reading two different things. "Total"
-still names a single category's own sum, at the foot of each task list in an
-open month, where there is nothing to confuse it with.
+Report A's second dimension is not a second kind of work. It is how well each
+hour is evidenced, which is a distinction **inside** the retainer rather than
+between the retainer and something else.
 
-The report uses two terms throughout, mapped from the ClickUp folder structure:
+| Class | Means |
+| --- | --- |
+| **Logged** | Tracked as the work happened |
+| **Documented** | Reconstructed, and traceable to a record: an invoice, a calendar event, an email thread, a dated work log |
+| **Estimated** | Reconstructed from the team's direct knowledge of the work, with no surviving record |
 
-| Term             | Means                                                   |
-| ---------------- | ------------------------------------------------------- |
-| **Creative**     | Retainer work, drawn against the monthly retainer budget |
-| **Non-Creative** | Separately scoped project work (SOW), outside the retainer |
+Documented and estimated together are **reconstructed**. January through May
+2026 were not tracked as they happened and are being rebuilt from real sources;
+from June 2026 forward everything is tracked to the minute.
+
+Classification happens in `api/time.js`, per time entry, in a fixed order:
+a ClickUp tag named `documented`, then a tag named `estimate` (note: not
+`estimated`), then a `[RECON:DOC]` description prefix, then `[RECON:EST]`, then
+logged. Two write paths need two levers, because the API connector used for bulk
+writes cannot attach tags at all: it sends them as plain strings where ClickUp
+expects objects, and the tagged write fails after the entry already exists.
+
+**Absence means logged, deliberately.** None of the correctly logged hours have
+to be touched, and a forgotten marker defaults to the truthful class rather than
+inflating the reconstruction. An entry carrying both markers classifies as
+documented and its id lands in `debug.classificationConflicts`, never silently
+resolved.
+
+The markers themselves never leave the function. `[RECON:EST]` on a client's
+screen would teach them nothing, so descriptions are read by the classifier and
+discarded. `npm run check` fails if the string reaches either report or a
+fixture.
+
+The sum of logged and reconstructed is **Total**. It is a per-row helper rather
+than a headline: it renders only where both are non-zero, so January through May
+show it and June onward does not, and that silence is the signal that nothing
+needed adding.
+
+**Colour is reserved, and the reconstruction does not get a colour.** Mint means
+retainer hours, all three classes of them, and the classes are separated by
+pattern density on that one green: denser where the evidence is stronger. A
+second hue would have said these are two different things. The action colour is
+the brand cyan and carries every interactive element (year selector, links,
+focus rings, the open-row marker). Yellow is reserved for data integrity and is
+never used for utilisation. The diagonal texture of the projection feature means
+projected and nothing else, which is why the reconstruction hatches run at 45
+degrees in the series green rather than reusing it.
+
+The canvas patterns in `hatchPattern()` and the `--hatch-*` custom properties in
+`:root` are the same two textures, one for the chart and one for the DOM. They
+have to be changed together.
 
 Percentages are always *used*, never *unused* or *remaining*.
 
-**Colour is reserved.** Mint means Creative and lavender means Other, everywhere,
-so neither can be used for interface state: an affordance wearing a series colour
-reads as data. The action colour is the brand cyan, and it carries every
-interactive element (year selector, links, focus rings, the open-row marker).
-Selected surfaces use a cool grey ramp. Yellow is reserved for data integrity and
-is never used for utilisation.
+### Allowance, pace and overage
 
-### Retainer allowance and pace
+The allowance is `50h × allowanceMonths()`. Those months are the ones the client
+has **paid for**, not the ones that happen to carry tracked time: the retainer
+accrues on the 1st whether or not anyone logs hours, so for the current year the
+count runs from the first tracked month through the month we are in now. A quiet
+August still adds 50h to the denominator.
 
-The Creative allowance is `50h × allowanceMonths()`. Those months are the ones
-the client has **paid for**, not the ones that happen to carry tracked time: the
-retainer accrues on the 1st whether or not anyone logs hours, so for the current
-year the count runs from the first tracked month through the month we are in
-now. A quiet August still adds 50h to the denominator.
+Per-month pace is the `Allowance used` column, measured against the **contracted
+50** (clause 3.1), flat, every month.
 
-Per-month pace lives in the summary table, as the percentage beside each
-month's Creative figure. The monthly budget it measures against is stated once,
-in the Creative definition at the top of the report, rather than repeated in
-every cell. The year-to-date row runs against the full accrued allowance, not
-against 50h.
+Clause 4.1 also rolls up to 10 unused hours into the following month, so a month
+following an underused one genuinely has more than 50 available. Reporting
+against that moving figure was considered and ruled against: a denominator that
+changes month to month is one the reader cannot check against anything in their
+own agreement. The definition block at the top of the report states both the
+rollover and the basis, so the two are never read as the same number. If that
+ruling is ever revisited, the calculation and its clause citation are together
+in `summaryHtml()`.
+
+The year-to-date row runs against the full accrued allowance, not against 50h.
+
+**Over 100% is not an overrun and must not be dressed as one.** Clause 6.1 makes
+hours beyond the allowance a negotiated supplement, billed quarterly, so an over
+month is a contract mechanism working rather than a budget breach. It used to
+render in alarm red, which told the client something untrue about their own
+agreement. Over months now set the percentage in plain white, carry an
+`Overage` tag, and the mechanism is stated once under the table, citing the
+clause. The note renders only when there is an over month to explain.
+
+The chart carries a dashed **50h allowance line** in neutral ink, in the vertical
+layout only. Without it a reader has to count gridlines to find the one threshold
+every figure on the page is measured against. It is neutral rather than a series
+or status colour because the line is the contract, not a verdict on the bars that
+cross it. In the rotated layout the hours are written at the end of each bar
+instead, so a vertical rule through eight rows of labels would cost more than it
+explains.
 
 ### Freshness
 
@@ -292,18 +402,31 @@ report is not showing.
 
 ### Data-integrity annotations
 
-Months whose data is known to be wrong are flagged through a single config
-array near the top of the `<script>` in `index.html`:
+`DATA_FLAGS` near the top of the `<script>` in `index.html` flags a
+`(year, months, series)` slice as not fully trustworthy. **It is currently
+empty, and the mechanism is kept.**
+
+The one entry it held flagged Creative, January to May 2026 as under-reported,
+with a note saying we were recovering the missing entries and would restate the
+figures. That is exactly what the reconstruction encoding now does, in the chart
+itself: those months are restated, and the stripes say which hours came from a
+record rather than from a timer. Leaving the flag would have put a warning
+triangle on precisely the months the chart already explains, attached to copy
+that is no longer true.
+
+The machinery stays because the next data problem will not be this one, and a
+warn treatment that is already built and already checked is worth more than the
+twenty lines it costs.
 
 ```js
 var DATA_FLAGS = [
   {
-    id: 'moss-2026-creative-jan-may',
+    id: 'moss-2026-jan-may',
     year: 2026,
-    months: [0, 1, 2, 3, 4],   // Jan–May, zero-indexed
-    series: 'creative',        // 'creative' | 'nonCreative'
+    months: [0, 1, 2, 3, 4],   // Jan-May, zero-indexed
+    series: 'retainer',        // the only series the report draws
     label: 'Under-reported',
-    detail: 'Some Creative time was not fully captured in our time tracking, …'
+    detail: 'One sentence on why the figures are wrong, naming no months.'
   }
 ];
 ```
@@ -314,33 +437,20 @@ One entry drives every surface at once:
   than the hairline every other bar carries so it reads as deliberate
 - a **warn triangle** on the canvas beside the bar's end label, in the rotated
   layout
-- a **warn triangle** to the left of that month's Creative figure in the summary
-  table, so the flagged months are findable without opening a row
 - a note in the bar's tooltip
-- a labelled tag beside the **Creative** heading in the month's expanded detail,
-  which opens the modal
-- a `Data note` column in both CSV exports
+- a labelled tag at the top of the month's expanded detail, which opens the modal
+- a `Data note` column in the CSV exports
 
 The flag language is warn yellow, and only warn yellow. Flagged bars used to be
-filled with a diagonal hatch, which made those months read as a different kind
-of measurement rather than as the same hours with a note attached, and collided
-with the texture the projections use. The modal was lined with the same diagonal
-for the same reason, and lost it for the same reason.
+filled with a diagonal hatch, which is now spoken for twice over: once by the
+projection texture and once by the reconstruction hatches.
 
-The flag sits with the series it applies to rather than with the month, since
-under-reporting never applied to the non-Creative side.
+`detail` **names no months and no dates.** The chart outlines the flagged months,
+so a span written into the copy was a second copy of the same fact and one more
+thing to keep in step with the `months` array above it.
 
-`detail` **names no months and no dates.** The chart outlines the flagged months
-and the table marks them, so a span written into the copy was a third copy of
-the same fact and one more thing to keep in step with the `months` array above
-it. The copy explains why the figures are low, and nothing else.
-
-**Delete the entry once the underlying data is repaired.** Nothing else needs
-to change. `npm run check` will tell you if a flag names a month outside 0 to 11
-or a series the report does not draw.
-
-The currently shipped flag covers **Creative, Jan–May 2026**, where time was not
-fully captured and real usage is understated.
+`npm run check` will tell you if a flag names a month outside 0 to 11 or a series
+the report does not draw.
 
 ## API
 
@@ -357,117 +467,119 @@ Response:
 ```json
 {
   "year": 2026,
+  "timezone": "America/Denver",
   "retainerBudget": 50,
-  "generatedAt": "2026-07-30T12:41:00.000Z",
+  "generatedAt": "2026-08-04T12:41:00.000Z",
   "months": [
     {
       "month": 0,
-      "retainerHours": 7.83,
-      "sowHours": 10.93,
-      "retainerItems": [
+      "hours": { "logged": 1.75, "documented": 9.6, "estimated": 11.4 },
+      "reconstructed": 21,
+      "total": 22.75,
+      "items": [
         {
           "id": "86a1b2c3",
-          "name": "Program Color Palettes",
-          "hours": 2.68,
+          "name": "Program Colour Palettes",
           "url": "https://app.clickup.com/t/86a1b2c3",
-          "listId": "901143…"
+          "listId": "901143…",
+          "hours": { "logged": 0, "documented": 6.5, "estimated": 0 },
+          "reconstructed": 6.5,
+          "total": 6.5
         }
-      ],
-      "sowItems": [{ "name": "Moss Brochure Template", "hours": 4.25 }]
+      ]
     }
     /* …one entry per month, Jan→Dec */
   ],
-  "retainer": [/* 12 monthly hour totals, Jan→Dec (convenience) */],
-  "sow":      [/* 12 monthly hour totals, Jan→Dec (convenience) */],
+  "totals": {
+    "hours": { "logged": 133.17, "documented": 37.35, "estimated": 38.34 },
+    "reconstructed": 75.69,
+    "total": 208.86
+  },
+  "memberCount": 9,
   "totalEntries": 1732,
-  "unmatchedEntries": 1321,
-  "unmatchedHours": 13039.54
+  "skippedEntries": 3
 }
 ```
 
-- `months[]` carries the per-month, per-task detail the report renders.
-  `retainerItems` / `sowItems` are summed per task and sorted descending.
-  Tasks are keyed by ClickUp task id where available (so a renamed task stays a
-  single line item) and fall back to the task name.
-- `url` is the task's ClickUp permalink: `task_url` from the API when present,
-  otherwise the stable `https://app.clickup.com/t/{task_id}` form. It can be
-  `null`, and the report renders a disabled link icon in that case.
-- `generatedAt` is when the payload was built server-side; the report surfaces
-  it as "Data updated …".
-- `retainerBudget` is the assumed monthly retainer budget (hours) used for the
-  `% used` figures.
+- `months[]` carries the per-month, per-task detail the report renders. `items`
+  are sorted by total descending, and each one carries its own three-way split:
+  a single task can hold logged and reconstructed time at once, which is exactly
+  the case the report exists to show.
+- Every figure is **already rounded** to two decimals, and a month's `hours` are
+  the sum of the rounded items listed under it, so a month's rows always
+  reconcile against its header exactly. The tradeoff is that a header can differ
+  from the raw unrounded sum by a few hundredths; reconciliation is the property
+  that matters to a client reading the table.
+- `total` is `logged + documented + estimated` and `reconstructed` is
+  `documented + estimated`, both derived from the rounded parts, so a reader who
+  adds up the three figures on screen gets the total printed beside them.
+- `url` is the task's permalink: `task_url` from the API when present, otherwise
+  the stable `https://app.clickup.com/t/{task_id}` form. It can be `null`, and
+  the report renders a disabled link icon in that case.
+- `generatedAt` is when the payload was built server-side; the report surfaces it
+  as "Data updated …".
+- `retainerBudget` is the contracted monthly allowance in hours (clause 3.1),
+  used for the `% used` figures.
 - An item with `aggregated: true` is the rolled-up tail of short tasks; `count`
   is how many were folded in. The report renders it as
-  "Other retainer support (13 tasks)".
+  "Additional retainer support (7 tasks)".
 - `timezone` is the zone months were bucketed in, `memberCount` how many
-  assignees the query covered, and `skippedEntries` how many entries were
-  dropped for an unusable duration.
-- `contributors.queried` is how many assignees the time-entries call covered;
-  `contributors.contributing` is how many actually logged matched time.
-  `contributing === 1` while `queried > 1` is the regression that hid the team
-  for five months, and the report renders that state as visibly broken.
-- `team[]` is one entry per contributing person, resolved through `roster.js`,
-  plus at most one collapsed studio entry. `months[].contributorIds` carries ids
-  only. No per-person hours or email addresses appear anywhere, including
-  `?debug=1`.
-- `?debug=1` adds `debug.unrosteredContributorIds` and `debug.rosterCoverage`,
-  which is how you learn somebody needs adding to the roster.
-- `unmatchedEntries` / `unmatchedHours` count time outside the four tracked
-  folders (i.e. other clients in the shared workspace), a sanity check that the
-  folder mapping is complete. It is deliberately **not** shown in the report,
-  which is Moss-only.
+  assignees the query covered, and `skippedEntries` how many entries were dropped
+  for an unusable duration.
+- **No entry `description` ever appears**, at any debug level. Descriptions carry
+  the `[RECON:*]` markers, which are internal machinery.
+- **No per-person anything appears.** No names, ids, usernames, initials, email
+  addresses or avatars, at any debug level. Report A shows a static team block
+  written into `index.html`; the API is not asked who worked what.
+- `?debug=1` adds `debug`, which is deliberately narrow: assignee count, entry
+  count, how many entries were discarded for falling outside the retainer
+  folders, `classificationConflicts`, and one resolved sample entry. A raw
+  ClickUp entry carries the logger's username and email, so nothing raw is
+  echoed.
+- `debug.discardedEntries` counts time outside the two retainer folders, which is
+  every other client in the shared workspace plus any Moss work running under a
+  separate signed agreement. It is a sanity check that the folder mapping is
+  complete, and it is deliberately **not** shown in the report.
 
-### Team roster
+### The team block
 
-`roster.js` maps ClickUp user id to the name, title and images shown for a
-person. It is **generated** by `scripts/generate-roster.js`, hand-edited for
-titles, then committed and reviewed like any other source file.
+Report A shows a **hardcoded** list of team members: `var TEAM` near
+`teamHtml()` in `index.html`, three fields each (`name`, `title`, `image`).
+Editing the team is editing that array.
 
-```bash
-MOSS_CLICKUP_TOKEN=... npm run roster
-```
+It replaced a dynamic roster built from whichever ClickUp accounts had logged
+time in a given month, resolved through a committed `roster.js` and a
+fuzzy-matching generator script. All of that is gone: `roster.js`,
+`scripts/generate-roster.js`, the per-month avatar stacks, the contributor
+counts and the one-account-reporting alarm.
 
-ClickUp is authoritative for exactly one thing: **which user ids logged matched
-time**. Names, titles and images come only from `roster.js`. Nothing
-ClickUp-sourced (display name, username, avatar, initials, email) ever reaches
-the client. A teammate can rename their account or change their avatar at any
-time with no notice, and this report is live in front of a client, so a wrong
-face is worse than a generic mark.
+Two reasons, and the second is the real one.
 
-That is also why discovery is a one-off script and never happens at request
-time. The generator auto-accepts only exact matches; anything looser is reported
-as an error for a human to resolve rather than guessed at. `IGNORE_SLUGS` at the
-top of the script holds images that will never match a ClickUp account.
+ClickUp was authoritative for which user ids logged matched time, so the
+client's view of who works on their account moved with our timesheets. A month
+where one person forgot to log time showed the client a smaller team.
 
-Contributors with no roster entry collapse into a **single** studio entry
-(`Founding Creative`), however many of them there are. Their real ids stay in
-each month's `contributorIds` so counts remain accurate, but the frontend
-resolves them all to one avatar.
+And a teammate can rename their ClickUp account or change their avatar at any
+time with no notice. This report is live in front of a client, and a name they
+have never heard is worse than a generic mark. The roster existed to stop
+ClickUp-sourced identity reaching the page, which it did, at the cost of a
+generator, a matching heuristic, an ignore list and a studio fallback. A
+hardcoded array does the same job in six lines.
 
-`active: false` keeps a departed teammate resolving correctly for past years
-while dropping them from the current year's contributors.
+The API no longer returns `team`, `contributors` or `contributorIds` at all, so
+there is nothing to leak.
 
-Images live at `team/roster/<slug>.webp` (160px source) and
-`team/stack/<slug>.webp` (48px head crop). The report renders only the stack
-crop, in the avatar row inside each month's expanded detail, where the name and
-job title appear in a rendered tooltip below the face. The browser's own `title`
-attribute is deliberately not used: it waits about a second, styles itself, and
-never fires on touch. Never use a roster image there: it is four times the
-weight and the face is unreadable at that size. The API still returns both, so
-a future surface can use the larger one.
+Images live at `team/roster/<slug>.webp`, 160px square. Every tag carries
+`loading="lazy"`, explicit width and height, and an `onerror` handler that hides
+the tile rather than rendering the browser's broken-image glyph. The name and
+title beside it stay, so a member can be added before their artwork is.
 
-The studio mark is deliberately never rendered as an avatar. Among faces it read
-as a person nobody could name, so unrostered contributors are simply not shown
-and an avatar whose file fails to load is dropped rather than replaced with it.
+`team/stack/` still holds the 48px head crops the old avatar row used. Nothing
+renders them now. They are left in place because the next surface that wants a
+small face should not have to re-cut them.
 
-`blake`, `diggy` and `stacey` have images but no matching ClickUp account, so
-they are stored but unreferenced. The generator reports them rather than
-guessing; wire them up by adding a roster entry once the right user id is known.
-
-The roster is **agency-wide, not per-client**: the report already filters to
-users who logged time against the configured folders, so one roster serves every
-client this app is pointed at. A per-client fork should **regenerate**
-`roster.js` rather than copy it, so a stale roster does not follow the fork.
+**No hours, no percentages, no ordering by contribution** appear in this block.
+Who is on the account is not a leaderboard.
 
 ### How entries are fetched
 
@@ -505,29 +617,41 @@ rename split a single task's history in two. Entries with no task at all are
 grouped under one `(no task)` row.
 
 `toItems()` keeps every task in the total. Anything under **0.25h** is rolled
-into a single trailing row, `Other retainer support` or `Other project support`,
-carrying a `count` and `aggregated: true`. The row is omitted when the sum is
-zero. This replaced an earlier filter that dropped sub-0.005h tasks from the
-list while still counting them in the total, so the rows could not sum to the
-header.
+into a single trailing row, `Additional retainer support`, carrying a `count`
+and `aggregated: true`. The row is omitted when the sum is zero. This replaced
+an earlier filter that dropped sub-0.005h tasks from the list while still
+counting them in the total, so the rows could not sum to the header.
 
-`retainerHours` / `sowHours` are derived from the emitted items, so a month's
-rows always reconcile against its header exactly. The tradeoff is that the
-header can differ from the raw unrounded sum by a few hundredths of an hour;
-reconciliation is the property that matters to a client reading the table.
+Hours accumulate raw and are rounded once on the way out. Rounding each entry as
+it lands would drift a month's total away from the entries that make it up, a
+hundredth at a time.
 
-### Folder mapping
+### The folder firewall
 
-| Bucket           | Folder              | ID            |
-| ---------------- | ------------------- | ------------- |
-| Creative         | Retainer (Active)   | `90114447278` |
-| Creative         | Retainer (Archive)  | `90116369473` |
-| Non-Creative     | SOW (Active)        | `90117343728` |
-| Non-Creative     | SOW (Archive)       | `90117412643` |
+| Folder | ID |
+| --- | --- |
+| Moss Creative Retainer (Delivery) | `90114447278` |
+| Moss Creative Retainer (Archive) | `90116369473` |
 
-Each entry's folder is read from `task_location.folder_id` (the canonical field
-in ClickUp's v2 `/team/{id}/time_entries` response), with defensive fallbacks
-for other shapes.
+`RETAINER_FOLDER_IDS` in `api/time.js` is the **whole** firewall, and it is the
+only place in the repo that names a folder. Any entry resolving outside those
+two is discarded before it reaches a bucket, so it cannot arrive in a total by
+some later route.
+
+Everything else in that workspace is either another client or Moss work running
+under a separate signed agreement, and clause 2.2.2 is why the second kind must
+not appear here: work covered by another agreement is fulfilled under that
+agreement and does not draw on the retainer.
+
+**Widening that list is a contract decision, not a code change.** `npm run
+check` fails if the array changes, and fails if either report names a folder id
+at all.
+
+Each entry's folder is read from `task_location.folder_id`, the canonical field
+in ClickUp's v2 `/team/{id}/time_entries` response, with defensive fallbacks for
+other shapes. Note that the MCP connector returns this field as `null` while the
+raw API populates it. That has been investigated and is a non-issue. Do not
+re-investigate it.
 
 ### Confirming the field mapping against live data
 
@@ -542,6 +666,91 @@ This returns the first raw ClickUp entry plus the folder ID, task URL and
 Denver month resolved from it, along with the member IDs the query covered, so
 you can verify the mapping without redeploying. If `memberCount` is 1, the
 `assignee` fix is not reaching ClickUp.
+
+## Report B: Ad Hoc Creative Support
+
+A separate page, a separate source, and no line of code between them.
+
+### Days and dollars, never hours
+
+Both are contract terms. Both already appear in every signed statement of work,
+in Moss's own possession, which means every figure on the page can be checked
+against a piece of paper they already hold. Nothing here is derived from time
+tracking, so there is no unit to convert and no conversion to argue about.
+
+`npm run check` fails if `report-b.html` or `data/sows.json` contains the word
+in any form, including in a comment. That is blunt on purpose: this is the kind
+of separation that erodes one reasonable-looking exception at a time.
+
+### The data model
+
+`data/sows.json` is hand-maintained and updated when a document is executed, not
+continuously. Two top-level keys, `regions` and `sows`.
+
+Regions are the primary cut, **not departments**. Departments are org chart;
+regions hold budget. A report organised by who pays maps to how decisions
+actually get made, and is useful to the regional leads rather than only to the
+main contact. Energy is not a geography, but Moss treats it as a business unit
+in the same way it treats a region, so it lives in the same enum.
+
+| Value | Label |
+| --- | --- |
+| `mid-florida` | Mid-Florida |
+| `south-florida` | South Florida |
+| `dfw` | Dallas Fort Worth |
+| `hawaii` | Hawaii |
+| `energy` | Energy |
+| `nashville` | Nashville |
+| `corporate` | Corporate |
+| `multi-region` | Multi-Region |
+
+Attribution: a document serving one named region takes that region, and
+`regions` lists it alone. A document serving two or more takes
+`region: "multi-region"` and lists every member in `regions`. Org-wide or
+head-office work takes `corporate`.
+
+`npm run sows` checks all of it, and is run as part of `npm run check`: the
+region enum, the attribution rules above, that `totalDays` equals the sum of its
+line items to two decimals, that `totalPrice` equals theirs exactly, that a
+document in drafting carries no figures, and that the banned unit appears
+nowhere.
+
+### The scaffolded state
+
+Nashville has a document in drafting. It appears in the data with
+`status: "drafting"` and no figures, and its region definition carries
+`scaffolded: true`.
+
+On the page it renders at its defined position, never hidden and never sorted to
+the bottom, at reduced opacity with a dashed border, an inline `SOW in drafting`
+tag, and a **skeleton bar** where each figure will go. It contributes nothing to
+any total.
+
+The skeleton is the point. A zero would say "this region bought nothing", which
+is the opposite of true, and the visual state has to carry that without a
+caption explaining it. Sorting it to the bottom or hiding it would turn "we have
+planned for this" into "we have forgotten this".
+
+### The Multi-Region distribution toggle
+
+**Experimental, and built to be deleted.** Off by default. When on, every
+multi-region document has its days and price divided evenly across the regions
+it names, and those fractions are added to each member region's row.
+
+It is a pure function of the parsed data. It never mutates the source and never
+writes back, and the whole view is re-derived from the file on every toggle, so
+a round trip through the switch lands on exactly the figures it started from.
+The grand total is computed from the executed documents directly rather than by
+adding the region rows up, so distribution cannot change what they come to.
+
+Rounding is integer throughout, hundredths of a day and whole cents, with any
+remainder assigned to the first region named. An even split of 3.75 days across
+three regions is 1.25 each only by luck; $4,501.03 across three is not, and the
+arithmetic has to be exact rather than usually exact.
+
+Removal is cutting between the four `EXPERIMENTAL: MULTI-REGION DISTRIBUTION
+START` / `END` marker pairs. Nothing else is touched, and the page still works.
+`npm run check` fails if the markers stop being balanced.
 
 ## Deploy (Vercel)
 
@@ -568,14 +777,32 @@ works without further configuration. To point it at a different API, append
 
 ### Under construction mode
 
-**The report is currently hidden.** `vercel.json` routes every request to
-`construction.html`, so a visitor gets the holding page and nothing else: not
-the report, not `/api/time`, not a fixture. `/assets` is the single exception,
-because the holding page wears the same wordmark as the report.
+**Both reports are currently hidden from the client, and preview deployments
+still serve them in full.**
 
-To put the report back, delete the `routes` array from `vercel.json` and
-redeploy. That is the whole switch. `construction.html` stays where it is,
-costing nothing and ready for the next time.
+`vercel.json` routes every request to `construction.html`, but only for the
+hostnames a client could actually land on:
+
+- `moss.foundingcreative.com`, the link the client has
+- `moss-hours.vercel.app`
+- `moss-hours-foundingadmins-projects.vercel.app`
+- `moss-hours-git-main-foundingadmins-projects.vercel.app`
+
+Every other hostname falls through to the filesystem, which means a preview
+deployment serves the real `index.html`, the real `report-b.html` and a working
+`/api/time`. That is the point: work in progress can be reviewed on a real
+deployment without anything reaching the client's URL. `/assets` is exempt
+everywhere, because the holding page wears the same wordmark as the reports.
+
+To go live, delete the `routes` array and redeploy. That is the whole switch.
+`construction.html` stays where it is, costing nothing and ready for the next
+time.
+
+**This scoping fails open.** A hostname missing from that list is a hostname
+serving the report to whoever visits it, so `npm run check` treats a missing
+host as a hard failure rather than a warning, and warns separately for as long
+as the mode is on at all. If a domain is ever added to the project, add it there
+too.
 
 Three things about it are worth knowing before changing any of it:
 
@@ -585,7 +812,7 @@ Three things about it are worth knowing before changing any of it:
    lower-level property, matched in order and *before* the filesystem, which is
    what makes hiding a deployed file possible at all. It cannot be combined with
    `rewrites`, `redirects` or `headers` in the same config, and there are none
-   here.
+   here. The `has` conditions are what scope it per hostname.
 2. **The holding page is served `no-store`**, so no one is left looking at a
    cached copy of it after the routes come off.
 3. **The response is a plain 200.** A 503 is the honest status for a maintenance
@@ -593,13 +820,9 @@ Three things about it are worth knowing before changing any of it:
    link shared with one client rather than something crawled, so the page
    carries `noindex` and leaves the status alone.
 
-`npm run dev` is unaffected. The static server knows nothing about
-`vercel.json`, so the report still opens against the fixtures while the deployed
-site is hidden, which is the point: this mode exists to cover work in progress.
+`npm run dev` is unaffected. The static server knows nothing about `vercel.json`,
+so both reports open against the fixtures while the deployed site is hidden.
 Open `/construction.html` there to preview the holding page itself.
-
-`npm run check` warns for as long as the routes are in place, so the switch
-cannot be left on unnoticed.
 
 ### Traffic (Vercel Web Analytics)
 
@@ -636,16 +859,32 @@ npm run dev      # zero-dependency static server, prints the fixture URLs
 ```
 index.html?api=./fixtures/2026-typical.json&year=2026
 index.html?api=./fixtures/2026-edge.json&year=2026
+report-b.html
 ```
 
 | Fixture | What it is for |
 | --- | --- |
-| `2026-typical` | Mid-year. Eight tracked months, four projected, the data flag live, an aggregated tail row, a task with no permalink. Reach for this one by default. |
-| `2026-edge` | The states real data rarely reaches. The one-account-reporting alarm, a single tracked month, an empty category on each side, no permalinks anywhere, and a contributor id missing from the roster. |
+| `2026-typical` | Mid-year. Eight tracked months, five reconstructed and three logged live, two months over the allowance, an aggregated tail row, a task with no permalink. Reach for this one by default. |
+| `2026-edge` | The states real data rarely reaches. No permalinks anywhere, a month that is entirely estimated, a zero month sitting inside the tracked range rather than after it, and a single task carrying all three classes at once. |
 
-The fixtures are the API contract written down. Changing the shape of
-`api/time.js`'s response means changing them too, and `npm run check` will catch
-a fixture that has stopped parsing or lost a month.
+Report B needs no fixture: `data/sows.json` is committed and is the real thing.
+Point it at another file with `report-b.html?data=./some-other.json`.
+
+The fixtures are the API contract written down, and the contract now includes
+arithmetic: a month's `hours` must be the sum of the rounded items listed under
+it, and its `total` the sum of its three classes. Hand-maintaining that across
+two files was a standing invitation to commit a fixture whose drawer disagreed
+with its own row, which is the exact defect the report exists to make
+impossible.
+
+So they are **generated**:
+
+```bash
+npm run fixtures      # rebuilds both from the specs in scripts/build-fixtures.mjs
+```
+
+Edit the spec, rerun, commit both. `npm run check` verifies the arithmetic
+independently, so a hand-edited fixture that has drifted still fails.
 
 `npm run dev:api` (`vercel dev`) is for work that actually touches
 `api/time.js`. The static server answers `/api/time` with a 501 and a pointer to
@@ -665,10 +904,38 @@ local copies to get around that is fine while you work and a disaster to commit:
 npm run check
 ```
 
-It checks for em dashes (a standing house rule, see `CLAUDE.md`), that the CDN
-URLs are intact, that the fixtures parse and carry all twelve months, and that
-every `DATA_FLAGS` entry names real months and a real series. These are the
-mistakes that have actually been made here, not a general linter.
+One command, and it runs everything:
+
+| Check | Catches |
+| --- | --- |
+| Em dashes | A standing house rule, see `CLAUDE.md` |
+| CDN URLs intact | A local Chart.js or tokens copy left in place, which ships an unstyled, chartless report |
+| `RETAINER_FOLDER_IDS` unchanged | Work under a separate signed agreement reaching the client's retainer report |
+| No folder id in either report | Folder scoping leaking out of `api/time.js` |
+| No hours in Report B | The one unit that must never appear there |
+| No ClickUp reference in Report B | The separation becoming a filter rather than an architecture |
+| `data/sows.json` valid | Runs `npm run sows`: enum, attribution, arithmetic |
+| `EXPERIMENTAL` markers balanced | The distribution toggle becoming un-removable |
+| Fixtures parse, carry 12 months, reconcile | A fixture that lies in local preview and then passes review |
+| No `[RECON:` anywhere client-facing | Internal machinery reaching a client's screen |
+| `DATA_FLAGS` well-formed | A flag that silently flags nothing |
+| `api/time.js` behaviour | Runs `npm run test:api` against a stubbed ClickUp |
+| Under-construction hosts covered | A hostname quietly serving the live report |
+
+The two sub-suites can also be run alone:
+
+```bash
+npm run test:api      # api/time.js against a stubbed ClickUp, no token needed
+npm run sows          # data/sows.json
+```
+
+`scripts/test-api.mjs` is worth reading before changing `api/time.js`. Every
+case in it is a defect this report has actually shipped or an acceptance
+criterion the rebuild had to hold: work from a folder the client must never see,
+a running timer counted as negative work, late-evening work landing in the wrong
+month, two distinct tasks sharing a name merging into one row, and a
+reconstruction marker reaching the client surface.
+
 ## Minting the token
 
 ClickUp issues exactly **one personal token per user account**, so every project

@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Moss · Ad Hoc Creative Support</title>
+  <link rel="icon" href="https://brand.foundingcreative.com/favicon.svg" />
+
+  <!-- Founding Creative design-system tokens (fonts, colors, radius, shadows, spacing) -->
+  <link rel="stylesheet" href="https://brand.foundingcreative.com/css/tokens.css" />
+
+  <style>
+    /* ─────────────────────────────────────────────────────────────
+       Ad Hoc Creative Support.
+
+       Every figure on this page comes from a signed statement of work. Nothing
+       here is derived from time tracking, and no code path connects this file
+       to the retainer report's data source. That is an architectural
+       separation rather than a filter: a filter is one flag away from failing
+       open, and the unit this page speaks in is the unit Moss actually bought.
+
+       Days and dollars. Both are contract terms. Both already appear in every
+       signed document, in Moss's own possession, which means every figure here
+       can be checked against a piece of paper they already hold.
+
+       Deliberately not the retainer green. That colour means retainer work
+       everywhere else in this system, and using it here would say these two
+       reports measure the same thing. Regions are drawn in neutral white
+       instead, which is the one ink in the palette that carries no meaning of
+       its own.
+       ───────────────────────────────────────────────────────────── */
+    :root {
+      --surface: rgba(255, 255, 255, 0.05);
+      --surface-2: rgba(255, 255, 255, 0.10);
+      --line: rgba(255, 255, 255, 0.14);
+      --line-soft: rgba(255, 255, 255, 0.08);
+
+      --ink-strong: rgba(255, 255, 255, 0.92);
+      --dim: rgba(255, 255, 255, 0.78);
+      --dim-2: rgba(255, 255, 255, 0.62);
+
+      /* The region measure. Neutral by design, see the note above. */
+      --region-fill: rgba(255, 255, 255, 0.34);
+
+      --action: var(--holo-cyan);
+      --sel-row: rgba(214, 228, 242, 0.085);
+
+      --badge-size: 12.5px;
+      --badge-pad: 4px 10px;
+      --badge-weight: 700;
+
+      --t-section: var(--h5, 32px);
+      --t-figure: var(--h6, 26px);
+    }
+    @media (max-width: 640px) {
+      :root { --t-section: var(--h6, 26px); --t-figure: var(--text-lg, 20px); }
+    }
+
+    body {
+      background:
+        radial-gradient(1100px 560px at 82% -8%, rgba(255, 255, 255, 0.045), transparent 60%),
+        var(--n-black);
+      background-attachment: fixed;
+      font-size: 17px;
+    }
+    .page { max-width: 1060px; margin: 0 auto; padding: 0 28px 90px; }
+    .num { font-variant-numeric: tabular-nums; }
+    @media (max-width: 560px) { .page { padding: 0 18px 64px; } }
+
+    /* ── Masthead and title, matched to the retainer report ─────── */
+    .masthead {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center;
+      padding: 18px 0 20px; margin-bottom: 30px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+    .lockup { --fc-h: 30px; display: flex; align-items: center; height: var(--fc-h); }
+    .lockup img { display: block; width: auto; height: var(--fc-h); }
+    @media (max-width: 700px) {
+      .masthead { padding: 12px 0 14px; margin-bottom: 24px; }
+      .lockup { --fc-h: 24px; }
+    }
+
+    .title-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+    .title-id { display: flex; align-items: center; gap: 22px; min-width: 0; }
+    .client-slot {
+      --slot: 104px;
+      display: flex; align-items: center; justify-content: center; flex: none;
+      width: var(--slot); height: var(--slot);
+      background: linear-gradient(158deg, rgba(255,255,255,0.062), rgba(255,255,255,0.022));
+      border: 1px solid var(--line); border-radius: var(--r-lg);
+    }
+    /* The same cap-band shift the retainer report uses. Measured from Moss's
+       artwork, not guessed: centring the artboard floats the letters high. */
+    .client-slot .client-mark {
+      display: block; height: auto; width: 100%; max-width: calc(var(--slot) - 26px);
+      transform: translateY(21.7%);
+    }
+    .report-title {
+      font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 600;
+      letter-spacing: -0.01em; line-height: 1.05;
+    }
+    .report-range { font-size: 15px; color: var(--dim); margin-top: 7px; }
+    @media (max-width: 560px) {
+      .title-id { gap: 16px; }
+      .client-slot { --slot: 78px; border-radius: var(--r-md); }
+      .title-row { margin-bottom: 24px; }
+    }
+
+    /* ── Sections ───────────────────────────────────────────────── */
+    .sec { margin-bottom: 92px; }
+    .sec:last-child { margin-bottom: 0; }
+    .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+    .sec-title {
+      font-family: var(--font-display); font-size: var(--t-section); font-weight: 600;
+      line-height: 1.2; letter-spacing: var(--tracking-display); margin: 0;
+    }
+    .eyebrow {
+      font-size: 12px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+      color: var(--dim-2);
+    }
+    @media (max-width: 640px) { .sec { margin-bottom: 62px; } }
+
+    /* ── Summary card ───────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(158deg, rgba(255,255,255,0.062), rgba(255,255,255,0.022));
+      border: 1px solid var(--line); border-radius: var(--r-xl);
+      padding: 26px 28px 24px; box-shadow: var(--shadow-xl);
+    }
+    /* Three figures of equal standing. None of them outranks the others: what
+       was bought, how much of it, and what it came to are one statement. */
+    .hero-figures {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px 38px;
+    }
+    .figure .eyebrow { margin-bottom: 9px; }
+    .figure .v {
+      font-family: var(--font-display); font-size: clamp(30px, 4.4vw, 44px); font-weight: 600;
+      line-height: 1; letter-spacing: -0.015em;
+    }
+    .figure .sub { font-size: 14px; color: var(--dim-2); margin-top: 9px; }
+    /* The one piece of ornament, shared with the retainer report so the two
+       pages read as one system. */
+    .grad {
+      background: linear-gradient(100deg, #FFFFFF 0%, var(--mint) 26%, var(--holo-cyan) 45%,
+                                  var(--holo-lavender) 64%, #FFFFFF 88%, var(--mint) 100%);
+      background-size: 260% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: sheen 14s linear infinite;
+    }
+    @keyframes sheen { to { background-position: -260% 0; } }
+    @media (prefers-reduced-motion: reduce) { .grad { animation: none; } }
+    @media (max-width: 760px) {
+      .hero-figures { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+      .hero { padding: 20px 18px 18px; }
+    }
+
+    .split { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 22px; }
+    .def-text { font-size: 14.5px; line-height: 1.55; color: var(--dim-2); margin: 0; max-width: 74ch; text-wrap: pretty; }
+    .def-text b { color: var(--ink-strong); font-weight: 700; }
+
+    /* ── Region table ───────────────────────────────────────────── */
+    .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 15.5px; }
+    .table th, .table td { padding: 13px 12px; text-align: left; }
+    .table th {
+      font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--dim-2); white-space: nowrap; padding-bottom: 9px;
+    }
+    .table td.r, .table th.r { text-align: right; white-space: nowrap; }
+    .table-scroll { overflow-x: auto; margin-top: 8px; }
+
+    .table tbody tr.rrow { cursor: pointer; }
+    .table tbody tr.rrow:hover .rname { color: var(--white); }
+    .table tbody tr.rrow:hover .caret { color: var(--action); }
+    .table tbody tr.rrow:focus-visible { outline: 2px solid var(--action); outline-offset: -2px; }
+    .table .rname { font-weight: 600; display: flex; align-items: center; gap: 8px; transition: color .12s ease; }
+    .table .caret { display: inline-flex; width: 15px; height: 15px; flex: none; color: var(--dim-2); transition: transform .16s ease, color .16s ease; }
+    .table .caret svg { width: 100%; height: 100%; }
+    .table tbody tr.rrow[aria-expanded="true"] .caret { transform: rotate(90deg); color: var(--action); }
+    .table tbody tr.rrow[aria-expanded="true"] .rname { font-weight: 700; color: var(--white); }
+
+    /* The open region is one surface: top and sides on the row, sides and
+       bottom on the drawer, with the join left open, exactly as the retainer
+       report draws it. border-collapse: separate is what makes the radius
+       possible and is the only reason this table is not collapsed. */
+    .table tbody tr.rrow[aria-expanded="true"] > td {
+      background: var(--sel-row); border-top: 1px solid var(--action);
+    }
+    .table tbody tr.rrow[aria-expanded="true"] > td:first-child {
+      border-left: 1px solid var(--action);
+      border-top-left-radius: var(--r-md); padding-left: 14px;
+    }
+    .table tbody tr.rrow[aria-expanded="true"] > td:last-child {
+      border-right: 1px solid var(--action);
+      border-top-right-radius: var(--r-md); padding-right: 14px;
+    }
+    .table tbody tr.acc > td { padding: 0; }
+    .table tbody tr.acc:not([hidden]) > td {
+      background: var(--sel-row); border: 1px solid var(--action); border-top: 0;
+      border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md);
+    }
+    .acc-inner { padding: 4px 16px 26px; }
+    @media (max-width: 680px) { .acc-inner { padding: 4px 10px 22px; } }
+
+    .table .measure { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+    .table .track { flex: 0 0 110px; height: 6px; background: rgba(255,255,255,0.10); border-radius: var(--r-full); overflow: hidden; }
+    .table .track .fill { display: block; height: 100%; background: var(--region-fill); border-radius: var(--r-full); }
+    .table tbody tr.rrow td.primary { font-weight: 700; color: var(--white); }
+    .table tfoot td {
+      border-top: 1px solid var(--line);
+      font-weight: 700; padding-top: 20px; padding-bottom: 4px;
+      font-size: 17px; color: var(--white);
+    }
+    .table tfoot td.ytd-label {
+      font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -0.005em;
+    }
+
+    /* ── Scaffolded region ──────────────────────────────────────────
+       A region with a document in drafting is not a region with no activity,
+       and the difference has to survive without a caption explaining it. So it
+       is drawn as something deliberately unfinished rather than as something
+       empty: a dashed edge, a stepped-back weight, and a skeleton bar where a
+       figure will go. Nothing about it reads as a zero, because it is not one.
+
+       It stays in its defined position. Sorting it to the bottom or hiding it
+       would turn "we have planned for this" into "we have forgotten this". */
+    .table tbody tr.rrow.is-scaffold > td {
+      opacity: .58;
+      border-top: 1px dashed var(--line);
+      border-bottom: 1px dashed var(--line);
+    }
+    .table tbody tr.rrow.is-scaffold > td:first-child { border-left: 1px dashed var(--line); border-top-left-radius: var(--r-md); border-bottom-left-radius: var(--r-md); }
+    .table tbody tr.rrow.is-scaffold > td:last-child { border-right: 1px dashed var(--line); border-top-right-radius: var(--r-md); border-bottom-right-radius: var(--r-md); }
+    .table tbody tr.rrow.is-scaffold[aria-expanded="true"] > td { border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    .skeleton {
+      display: inline-block; width: 46px; height: 8px; vertical-align: -1px;
+      border: 1px dashed var(--line); border-radius: var(--r-full);
+    }
+    .tag {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-body); font-size: var(--badge-size); font-weight: var(--badge-weight);
+      letter-spacing: .01em; line-height: 1.35;
+      padding: var(--badge-pad); border-radius: var(--r-full);
+      border: 1px dashed var(--line); color: var(--dim-2); white-space: nowrap;
+    }
+    .tag.solid { border-style: solid; }
+
+    /* ── Statement detail, inside a region's drawer ─────────────── */
+    .sow { border-top: 1px solid var(--line-soft); }
+    .sow:first-child { border-top: 0; }
+    .sow-head {
+      display: flex; align-items: center; gap: 13px; width: 100%;
+      padding: 12px 0; cursor: pointer;
+      background: none; border: 0; text-align: left;
+      font-family: var(--font-body); color: inherit;
+    }
+    .sow-head:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; border-radius: var(--r-xs); }
+    .sow-head .caret { color: var(--dim-2); }
+    .sow-head[aria-expanded="true"] .caret { transform: rotate(90deg); color: var(--action); }
+    .sow-name { flex: 1 1 0; min-width: 0; font-size: 15.5px; font-weight: 600; color: var(--ink-strong); }
+    .sow-date { flex: none; font-size: 13.5px; color: var(--dim-2); }
+    .sow-val { flex: none; min-width: 86px; text-align: right; font-size: 15.5px; font-weight: 600; color: var(--white); font-variant-numeric: tabular-nums; }
+    .sow-items { padding: 2px 0 16px 28px; }
+    .li {
+      display: flex; align-items: baseline; gap: 13px;
+      padding: 7px 0; font-size: 14.5px; color: var(--dim);
+    }
+    .li .ws { flex: 0 0 118px; color: var(--dim-2); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+    .li .name { flex: 1 1 0; min-width: 0; }
+    .li .v { flex: none; min-width: 72px; text-align: right; font-variant-numeric: tabular-nums; }
+    .empty-note { font-size: 15px; color: var(--dim-2); font-style: italic; margin: 14px 0; max-width: 62ch; text-wrap: pretty; }
+    @media (max-width: 620px) {
+      .sow-head { flex-wrap: wrap; }
+      .sow-date { order: 3; width: 100%; padding-left: 28px; }
+      .li { flex-wrap: wrap; }
+      .li .ws { flex-basis: 100%; }
+      .sow-items { padding-left: 12px; }
+      .table .track { display: none; }
+    }
+
+    /* ── Controls ───────────────────────────────────────────────── */
+    .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--dim); }
+    .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .switch .track-sw {
+      width: 38px; height: 21px; flex: none; border-radius: var(--r-full);
+      background: var(--surface); border: 1px solid var(--line);
+      position: relative; transition: background .14s ease, border-color .14s ease;
+    }
+    .switch .track-sw::after {
+      content: ""; position: absolute; top: 2px; left: 2px;
+      width: 15px; height: 15px; border-radius: 50%;
+      background: var(--dim-2); transition: transform .16s ease, background .16s ease;
+    }
+    .switch input:checked + .track-sw { background: rgba(105, 238, 255, 0.18); border-color: var(--action); }
+    .switch input:checked + .track-sw::after { transform: translateX(17px); background: var(--action); }
+    .switch input:focus-visible + .track-sw { outline: 2px solid var(--action); outline-offset: 2px; }
+    .switch:hover { color: var(--white); }
+
+    /* ── States and footer ──────────────────────────────────────── */
+    .state { text-align: center; padding: 80px 20px; color: var(--dim); font-size: 17px; }
+    .err { color: #FF8A80; }
+    .err code { display: block; margin-top: 12px; color: var(--dim); font-size: 14.5px; word-break: break-word; }
+    .foot {
+      margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line-soft);
+      display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;
+      font-size: 14px; line-height: 1.65; color: var(--dim-2);
+    }
+    .foot-link {
+      color: var(--action); text-decoration: underline; text-underline-offset: 3px;
+      text-decoration-thickness: 1px; text-decoration-color: rgba(105, 238, 255, 0.45);
+    }
+    .foot-link:hover { text-decoration-color: var(--action); }
+    .foot-link.primary {
+      display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+      font-size: 14px; font-weight: 700; color: var(--white);
+      text-decoration-color: rgba(255, 255, 255, 0.28);
+    }
+    .foot-link.primary:hover { color: var(--action); text-decoration-color: var(--action); }
+    .foot img { height: 15px; width: auto; display: block; }
+
+    @media print {
+      :root {
+        --white: #111111; --text: #111111;
+        --ink-strong: rgba(0, 0, 0, 0.92);
+        --dim: rgba(0, 0, 0, 0.70); --dim-2: rgba(0, 0, 0, 0.55);
+        --line: rgba(0, 0, 0, 0.18); --line-soft: rgba(0, 0, 0, 0.10);
+        --surface: transparent; --surface-2: rgba(0, 0, 0, 0.10);
+        --region-fill: rgba(0, 0, 0, 0.45);
+      }
+      .grad { background: none; -webkit-text-fill-color: #111; color: #111; animation: none; }
+      body { background: #fff !important; color: #111; font-size: 10.5pt; }
+      .page { max-width: none; padding: 0; }
+      .masthead { position: static; background: none; backdrop-filter: none; padding-top: 0; }
+      .lockup img, .report-title .client-mark { filter: invert(1); }
+      .hero { background: none !important; box-shadow: none; }
+      .switch, .caret { display: none !important; }
+      .sec { break-inside: avoid; margin-bottom: 26px; }
+      a { color: #111 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <div class="lockup">
+        <img class="fc" src="assets/fc-wordmark-white.svg" alt="Founding Creative" />
+      </div>
+    </header>
+
+    <div class="title-row">
+      <div class="title-id">
+        <span class="client-slot"><img class="client-mark" src="assets/moss-wordmark-white.svg" alt="Moss" /></span>
+        <div class="title-stack">
+          <h1 class="report-title">Ad Hoc Creative Support</h1>
+          <div class="report-range" id="range"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="content"><div class="state">Loading…</div></div>
+
+    <footer class="foot">
+      <a class="foot-link primary" href="https://foundingcreative.com" target="_blank" rel="noopener">
+        <img src="assets/fc-icon-white.svg" alt="" />
+        <span>foundingcreative.com</span>
+      </a>
+      <span id="foot-note"></span>
+    </footer>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════
+       Config and helpers
+       ═══════════════════════════════════════════════════════════════ */
+    var DATA_URL = new URLSearchParams(location.search).get('data') || 'data/sows.json';
+
+    var ICONS = {
+      chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
+    };
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      });
+    }
+
+    /* Days carry at most two decimals and are written without trailing zeroes,
+       because a contract that says half a day should not read as 0.50. */
+    function fmtDays(d) {
+      var n = Math.round((d || 0) * 100) / 100;
+      var s = n.toFixed(2).replace(/\.?0+$/, '');
+      return s + (n === 1 ? ' day' : ' days');
+    }
+
+    /* Money is held in whole cents everywhere and converted only here, so an
+       even split can never lose a cent between the rows and the total. */
+    function fmtCents(c) {
+      var v = (c || 0) / 100;
+      return '$' + v.toLocaleString('en-US', {
+        minimumFractionDigits: v % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2
+      });
+    }
+    function toCents(n) { return Math.round((n || 0) * 100); }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      var p = String(iso).split('-');
+      var MONTHS = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+      return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0];
+    }
+
+    var state = { data: null, open: null, openSow: null, distribute: false };
+
+    /* ═══════════════════════════════════════════════════════════════
+       Derivation
+
+       One pure function from the parsed file to everything on screen. It never
+       writes back, and it is re-run from the source data on every toggle, which
+       is what makes a round trip through the experimental switch below land on
+       exactly the figures it started from.
+       ═══════════════════════════════════════════════════════════════ */
+    function derive(data, distribute) {
+      var rows = data.regions.map(function (r) {
+        return {
+          value: r.value, label: r.label, scaffolded: !!r.scaffolded,
+          count: 0, days: 0, cents: 0, sows: [], distributedInto: 0
+        };
+      });
+      var byValue = {};
+      rows.forEach(function (r) { byValue[r.value] = r; });
+
+      /* Executed only. A document still in drafting has no agreed figures, so
+         counting it would put a number on the page that nobody has signed. */
+      var executed = data.sows.filter(function (s) { return s.status === 'executed'; });
+
+      executed.forEach(function (s) {
+        /* EXPERIMENTAL: MULTI-REGION DISTRIBUTION START */
+        if (distribute && s.region === 'multi-region' && s.regions.length > 1) {
+          var parts = splitEvenly(s);
+          parts.forEach(function (p) {
+            var t = byValue[p.region];
+            if (!t) return;
+            t.count += 1;
+            t.days += p.days;
+            t.cents += p.cents;
+            t.sows.push({ sow: s, days: p.days, cents: p.cents, share: parts.length });
+          });
+          var multi = byValue['multi-region'];
+          if (multi) multi.distributedInto = Math.max(multi.distributedInto, parts.length);
+          return;
+        }
+        /* EXPERIMENTAL: MULTI-REGION DISTRIBUTION END */
+        var t = byValue[s.region];
+        if (!t) return;
+        t.count += 1;
+        t.days += s.totalDays;
+        t.cents += toCents(s.totalPrice);
+        t.sows.push({ sow: s, days: s.totalDays, cents: toCents(s.totalPrice), share: 0 });
+      });
+
+      rows.forEach(function (r) { r.days = Math.round(r.days * 100) / 100; });
+
+      /* The grand total is taken from the executed documents themselves, not by
+         adding the region rows up. Distribution moves figures between rows and
+         must not be able to change what they come to, so the total is computed
+         from a source distribution never touches. */
+      var totals = executed.reduce(function (a, s) {
+        a.count += 1;
+        a.days += s.totalDays;
+        a.cents += toCents(s.totalPrice);
+        return a;
+      }, { count: 0, days: 0, cents: 0 });
+      totals.days = Math.round(totals.days * 100) / 100;
+
+      var peak = rows.reduce(function (a, r) { return Math.max(a, r.cents); }, 0);
+      return { rows: rows, totals: totals, peak: peak, drafting: data.sows.filter(function (s) {
+        return s.status === 'drafting';
+      }) };
+    }
+
+    /* EXPERIMENTAL: MULTI-REGION DISTRIBUTION START
+       Splits one multi-region document evenly across the regions it names.
+
+       On trial, and built so removing it touches nothing else: one switch, this
+       function, and one call site in derive(), each wrapped in the same pair of
+       markers. Deleting everything between the markers leaves a working page.
+
+       Everything divides in integers, hundredths of a day and whole cents, and
+       any remainder goes to the first region named. An even split of 3.75 days
+       across three regions is otherwise 1.25 three times only by luck, and the
+       arithmetic has to be exact rather than usually exact: the point of the
+       toggle is that it rearranges figures without changing what they total. */
+    function splitEvenly(s) {
+      var n = s.regions.length;
+      var totalHundredths = Math.round(s.totalDays * 100);
+      var totalCents = toCents(s.totalPrice);
+      var perDay = Math.floor(totalHundredths / n);
+      var perCent = Math.floor(totalCents / n);
+      var dayRest = totalHundredths - perDay * n;
+      var centRest = totalCents - perCent * n;
+      return s.regions.map(function (region, i) {
+        return {
+          region: region,
+          days: (perDay + (i === 0 ? dayRest : 0)) / 100,
+          cents: perCent + (i === 0 ? centRest : 0)
+        };
+      });
+    }
+    /* EXPERIMENTAL: MULTI-REGION DISTRIBUTION END */
+
+    /* ═══════════════════════════════════════════════════════════════
+       Render
+       ═══════════════════════════════════════════════════════════════ */
+    function render() {
+      var d = derive(state.data, state.distribute);
+      var content = document.getElementById('content');
+      content.innerHTML = heroHtml(d) + tableHtml(d);
+      document.getElementById('range').textContent =
+        d.totals.count + (d.totals.count === 1 ? ' signed statement of work' : ' signed statements of work') +
+        ' · ' + fmtDays(d.totals.days) + ' scoped';
+      document.getElementById('foot-note').textContent =
+        'Sourced from signed statements of work, not from time tracking.';
+      wireTable();
+      wireSwitch();
+    }
+
+    function heroHtml(d) {
+      var h = '<section class="sec"><div class="hero"><div class="hero-figures">';
+      h += '<div class="figure"><div class="eyebrow">Statements of work</div>' +
+           '<div class="v grad num">' + d.totals.count + '</div>' +
+           '<div class="sub">Executed and in delivery</div></div>';
+      h += '<div class="figure"><div class="eyebrow">Days scoped</div>' +
+           '<div class="v num">' + fmtDays(d.totals.days).replace(/ days?$/, '') + '</div>' +
+           '<div class="sub">Agreed in the signed documents</div></div>';
+      h += '<div class="figure"><div class="eyebrow">Total invested</div>' +
+           '<div class="v num">' + fmtCents(d.totals.cents) + '</div>' +
+           '<div class="sub">At the rate each document sets</div></div>';
+      h += '</div>';
+      h += '<div class="split"><p class="def-text">Ad hoc creative support is scoped, priced and ' +
+           'signed one project at a time, in days and dollars. It sits outside the retainer and ' +
+           'draws nothing from it. <b>Regions are the cut here</b> rather than departments, ' +
+           'because regions hold the budget and this is a record of what each one bought.</p></div>';
+      h += '</div></section>';
+      return h;
+    }
+
+    function tableHtml(d) {
+      var h = '<section class="sec"><div class="sec-head">' +
+        '<h2 class="sec-title">By region</h2>';
+      /* EXPERIMENTAL: MULTI-REGION DISTRIBUTION START */
+      h += '<label class="switch"><input type="checkbox" id="distSwitch"' +
+        (state.distribute ? ' checked' : '') + '>' +
+        '<span class="track-sw"></span><span>Distribute Multi-Region evenly</span></label>';
+      /* EXPERIMENTAL: MULTI-REGION DISTRIBUTION END */
+      h += '</div>';
+
+      h += '<div class="table-scroll"><table class="table"><thead><tr>' +
+        '<th>Region</th><th class="r">Statements</th><th class="r">Days</th>' +
+        '<th class="r">Investment</th></tr></thead><tbody>';
+
+      d.rows.forEach(function (r) {
+        var open = state.open === r.value;
+        h += '<tr class="rrow' + (r.scaffolded ? ' is-scaffold' : '') + '" data-r="' + esc(r.value) +
+             '" tabindex="0" aria-expanded="' + open + '" aria-controls="acc-' + esc(r.value) + '">';
+        h += '<td><span class="rname"><span class="caret" aria-hidden="true">' + ICONS.chevron + '</span>' +
+             esc(r.label) +
+             (r.scaffolded ? ' <span class="tag">SOW in drafting</span>' : '') +
+             (r.distributedInto ? ' <span class="tag solid">Distributed across ' + r.distributedInto + ' regions</span>' : '') +
+             '</span></td>';
+
+        if (r.scaffolded) {
+          // Not a zero. Nothing has been agreed yet, so there is no figure to
+          // state, and a skeleton says that where a 0 would say the opposite.
+          h += '<td class="r"><span class="skeleton" aria-label="Not yet scoped"></span></td>';
+          h += '<td class="r"><span class="skeleton" aria-hidden="true"></span></td>';
+          h += '<td class="r"><span class="skeleton" aria-hidden="true"></span></td>';
+        } else {
+          var w = d.peak > 0 ? Math.round((r.cents / d.peak) * 100) : 0;
+          h += '<td class="r num">' + r.count + '</td>';
+          h += '<td class="r num">' + (r.days > 0 ? fmtDays(r.days).replace(/ days?$/, '') : '0') + '</td>';
+          h += '<td class="r primary"><span class="measure">' +
+               '<span class="track"><span class="fill" style="width:' + w + '%"></span></span>' +
+               '<span class="num">' + fmtCents(r.cents) + '</span></span></td>';
+        }
+        h += '</tr>';
+        h += '<tr class="acc" id="acc-' + esc(r.value) + '" data-r="' + esc(r.value) + '"' +
+             (open ? '' : ' hidden') + '><td colspan="4"><div class="acc-inner">' +
+             regionDetailHtml(r, d) + '</div></td></tr>';
+      });
+
+      h += '</tbody><tfoot><tr>';
+      h += '<td class="ytd-label">All regions</td>';
+      h += '<td class="r num">' + d.totals.count + '</td>';
+      h += '<td class="r num">' + fmtDays(d.totals.days).replace(/ days?$/, '') + '</td>';
+      h += '<td class="r num"><span class="grad">' + fmtCents(d.totals.cents) + '</span></td>';
+      h += '</tr></tfoot></table></div>';
+      h += '</section>';
+      return h;
+    }
+
+    function regionDetailHtml(r, d) {
+      if (r.scaffolded && !r.sows.length) {
+        var pending = d.drafting.filter(function (s) { return s.region === r.value; });
+        return '<p class="empty-note">No statement of work has been executed for ' + esc(r.label) +
+          ' yet. ' + (pending.length
+            ? esc(pending[0].name) + ' is in drafting, and its days and price appear here once it is signed.'
+            : 'Scoped work appears here once a document is signed.') + '</p>';
+      }
+      if (!r.sows.length) {
+        return '<p class="empty-note">No statement of work has been executed for ' + esc(r.label) + ' yet.</p>';
+      }
+      return r.sows.map(function (entry, i) {
+        var s = entry.sow;
+        var key = r.value + ':' + s.id;
+        var open = state.openSow === key;
+        var h = '<div class="sow">';
+        h += '<button type="button" class="sow-head" data-sow="' + esc(key) + '" aria-expanded="' + open +
+             '" aria-controls="sow-' + esc(key) + '">' +
+             '<span class="caret" aria-hidden="true">' + ICONS.chevron + '</span>' +
+             '<span class="sow-name">' + esc(s.name) +
+             (entry.share ? ' <span class="tag solid">1 of ' + entry.share + '</span>' : '') + '</span>' +
+             '<span class="sow-date">' + esc(fmtDate(s.executedDate)) + '</span>' +
+             '<span class="sow-val num">' + fmtDays(entry.days) + '</span>' +
+             '<span class="sow-val num">' + fmtCents(entry.cents) + '</span>' +
+             '</button>';
+        h += '<div class="sow-items" id="sow-' + esc(key) + '"' + (open ? '' : ' hidden') + '>';
+        if (!s.lineItems.length) {
+          h += '<p class="empty-note">This document carries no itemised breakdown.</p>';
+        } else if (entry.share) {
+          // A distributed share has no line items of its own: the breakdown
+          // belongs to the whole document, not to one region's slice of it.
+          h += '<p class="empty-note">An even share of ' + esc(s.name) + ', which is scoped across ' +
+               entry.share + ' regions. Its line items belong to the whole document.</p>';
+        } else {
+          h += s.lineItems.map(function (li) {
+            return '<div class="li">' +
+              '<span class="ws">' + esc(li.workstream) + '</span>' +
+              '<span class="name">' + esc(li.lineItem) + '</span>' +
+              '<span class="v">' + fmtDays(li.days) + '</span>' +
+              '<span class="v">' + fmtCents(toCents(li.price)) + '</span>' +
+              '</div>';
+          }).join('');
+        }
+        h += '</div></div>';
+        return h;
+      }).join('');
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       Wiring
+       ═══════════════════════════════════════════════════════════════ */
+    function openRegion(value) {
+      state.open = state.open === value ? null : value;
+      state.openSow = null;
+      render();
+    }
+
+    function wireTable() {
+      document.querySelectorAll('.table tbody tr.rrow').forEach(function (row) {
+        var value = row.dataset.r;
+        row.addEventListener('click', function () { openRegion(value); });
+        row.addEventListener('keydown', function (e) {
+          if (e.target !== row) return;
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          openRegion(value);
+        });
+      });
+      document.querySelectorAll('.sow-head').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var key = btn.dataset.sow;
+          state.openSow = state.openSow === key ? null : key;
+          render();
+        });
+      });
+    }
+
+    /* EXPERIMENTAL: MULTI-REGION DISTRIBUTION START */
+    function wireSwitch() {
+      var el = document.getElementById('distSwitch');
+      if (!el) return;
+      el.addEventListener('change', function () {
+        state.distribute = el.checked;
+        render();
+      });
+    }
+    /* EXPERIMENTAL: MULTI-REGION DISTRIBUTION END */
+
+    /* A page with no switch on it still has to boot, so this stands in when the
+       experimental block above is cut out. */
+    if (typeof wireSwitch !== 'function') { window.wireSwitch = function () {}; }
+
+    fetch(DATA_URL)
+      .then(function (r) {
+        if (!r.ok) throw new Error('Could not load the statement of work index (' + r.status + ')');
+        return r.json();
+      })
+      .then(function (data) {
+        state.data = data;
+        render();
+      })
+      .catch(function (e) {
+        document.getElementById('content').innerHTML =
+          '<div class="state err">Couldn’t load the data.<code>' + esc(e.message) + '</code></div>';
+      });
+  </script>
+
+  <!-- Vercel Web Analytics. Pageviews only, no cookies and no custom events. -->
+  <script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
