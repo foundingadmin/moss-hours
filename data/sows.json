@@ -1,0 +1,46 @@
+{
+  "_note": "Hand-maintained. Every figure here comes from a signed SOW document, never from time tracking. Update it when a SOW is executed, not continuously. Run scripts/validate-sows.js before committing.",
+  "_units": "Days and dollars, both of them contract terms that already appear in every signed SOW. This file must never carry a time-tracked unit of any kind.",
+  "regions": [
+    { "value": "mid-florida", "label": "Mid-Florida", "scaffolded": false },
+    { "value": "south-florida", "label": "South Florida", "scaffolded": false },
+    { "value": "dfw", "label": "Dallas Fort Worth", "scaffolded": false },
+    { "value": "hawaii", "label": "Hawaii", "scaffolded": false },
+    { "value": "energy", "label": "Energy", "scaffolded": false },
+    { "value": "nashville", "label": "Nashville", "scaffolded": true },
+    { "value": "corporate", "label": "Corporate", "scaffolded": false },
+    { "value": "multi-region", "label": "Multi-Region", "scaffolded": false }
+  ],
+  "sows": [
+    {
+      "id": "sow-2026-wood-summit",
+      "name": "2026 Wood Summit",
+      "status": "executed",
+      "executedDate": "2026-01-20",
+      "region": "energy",
+      "regions": ["energy"],
+      "department": "biz-strat",
+      "totalDays": 3.75,
+      "totalPrice": 4500,
+      "lineItems": [
+        { "workstream": "Strategy", "lineItem": "Creative Director", "days": 0.5, "price": 600 },
+        { "workstream": "Strategy", "lineItem": "Art Director", "days": 0.5, "price": 600 },
+        { "workstream": "Presentations", "lineItem": "New Slide Creation", "days": 2, "price": 2400 },
+        { "workstream": "Management", "lineItem": "Project Coordinator", "days": 0.5, "price": 600 },
+        { "workstream": "Management", "lineItem": "Content Management", "days": 0.25, "price": 300 }
+      ]
+    },
+    {
+      "id": "nashville-creative-support",
+      "name": "Nashville Creative Support",
+      "status": "drafting",
+      "executedDate": null,
+      "region": "nashville",
+      "regions": ["nashville"],
+      "department": "regional-marketing",
+      "totalDays": 0,
+      "totalPrice": 0,
+      "lineItems": []
+    }
+  ]
+}

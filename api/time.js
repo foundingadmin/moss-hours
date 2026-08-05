@@ -1,5 +1,3 @@
-import { ROSTER, STUDIO_FALLBACK } from '../roster.js';
-
 /* Minted from the "Moss Hours Report" OAuth app in ClickUp, so this project
    holds its own revocable credential. ClickUp issues exactly one personal token
    per user account, which meant every project built against that account shared
@@ -21,13 +19,16 @@ const CACHE_PAST_YEAR = 's-maxage=86400, stale-while-revalidate=604800';
 // invocations of a warm function rather than refetched on every request.
 const MEMBER_CACHE_MS = 10 * 60 * 1000;
 
-// Monthly Creative retainer budget, in hours (used for % / meter figures).
+// Monthly retainer allowance, in hours. Clause 3.1 of the service level
+// agreement: 50 agency hours per month across a 24 month term.
 const RETAINER_BUDGET_HOURS = 50;
 
-const FOLDER_IDS = {
-  retainer: ['90114447278', '90116369473'],
-  sow: ['90117343728', '90117412643'],
-};
+/* The two Moss Creative Retainer folders, and the only two folders this report
+   is allowed to see. Everything else in the workspace is discarded before it
+   reaches a bucket, which is what keeps work running under a separate signed
+   agreement off the client's surface. This list is the whole firewall, so treat
+   widening it as a contract question rather than a code change. */
+const RETAINER_FOLDER_IDS = ['90114447278', '90116369473'];
 
 // The agency works out of Denver. Vercel runs in UTC, so months have to be
 // resolved against Denver's offset or late-evening work lands on the next day
@@ -41,39 +42,49 @@ const BOUNDARY_PAD_MS = 48 * 60 * 60 * 1000;
 // Tasks below this are rolled into a single aggregated row rather than filling
 // the report with one and two minute entries.
 const AGGREGATE_THRESHOLD_HOURS = 0.25;
+const AGGREGATE_ROW_NAME = 'Additional retainer support';
 
 const NO_TASK_KEY = '__no_task__';
 const NO_TASK_NAME = '(no task)';
+
+/* Reconstruction markers. January through May 2026 were not tracked as they
+   happened and are being rebuilt from real sources, so an entry has to be able
+   to say which of the three classes it belongs to.
+
+   Two write paths need two levers. A person logging time by hand in the ClickUp
+   UI applies a time entry tag. The API connector used for bulk writes cannot
+   attach tags at all: it sends them as plain strings where ClickUp expects
+   objects, and the tagged write fails after the entry already exists. So a
+   programmatic write carries its marker as a description prefix instead.
+
+   The tag names are the ones that exist in the workspace, used verbatim. Note
+   the second is `estimate`, not `estimated`. */
+const TAG_DOCUMENTED = 'documented';
+const TAG_ESTIMATED = 'estimate';
+const PREFIX_DOCUMENTED = '[RECON:DOC]';
+const PREFIX_ESTIMATED = '[RECON:EST]';
 
 const DENVER = new Intl.DateTimeFormat('en-CA', {
   timeZone: TIMEZONE,
   year: 'numeric',
   month: '2-digit',
-  day: '2-digit',
 });
 
 // Built from a parts map rather than formatToParts array order, which is not
-// guaranteed across engines. The day is carried as well as the month: it is
-// what lets the report show where inside a month the work actually landed.
+// guaranteed across engines.
 function denverYM(ms) {
   const p = Object.fromEntries(
     DENVER.formatToParts(new Date(ms)).map((x) => [x.type, x.value])
   );
-  return { year: +p.year, month: +p.month - 1, day: +p.day };
+  return { year: +p.year, month: +p.month - 1 };
 }
 
 /* The current year in Denver, not in UTC. Vercel runs in UTC, so for the last
    several hours of 31 December `new Date().getFullYear()` already reports next
-   year. That decides which roster members are dropped and how long a response
-   is cached, and a year cached for a day does not quietly self-correct the way
-   a live request did. */
+   year. That decides how long a response is cached, and a year cached for a day
+   does not quietly self-correct the way a live request did. */
 function currentDenverYear() {
   return denverYM(Date.now()).year;
-}
-
-// Days in a month, so a day series is exactly as long as its month.
-function daysInMonth(year, month) {
-  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 }
 
 async function clickup(path) {
@@ -93,8 +104,9 @@ async function clickup(path) {
 }
 
 // /team/{id}/time_entries silently scopes to the token holder unless assignee
-// is supplied, which hid every other team member's hours. Resolved per request
-// rather than hardcoded, so people joining or leaving need no code change.
+// is supplied, which hid every other team member's hours for five months.
+// Resolved per request rather than hardcoded, so people joining or leaving need
+// no code change.
 let memberCache = null;
 
 async function fetchMemberIds() {
@@ -154,25 +166,63 @@ async function fetchYearEntries(year, assignee) {
   return entries;
 }
 
+/* Entries that carried both markers. An entry claiming to be documented and
+   estimated at once is a data problem someone has to go and fix, so it is
+   surfaced under ?debug=1 rather than resolved quietly.
+
+   Module level because a handler is not the only thing that reads it, and
+   cleared at the top of every request: a warm function would otherwise carry
+   one request's conflicts into the next and grow this array without bound. */
+let classificationConflicts = [];
+
+/* Logged, documented or estimated, in that precedence. Tags first because they
+   are what a person applies by hand and therefore the more deliberate signal;
+   the description prefix second because it is what the bulk connector can
+   manage.
+
+   Absence is the logged state, deliberately. It means none of the correctly
+   logged hours have to be touched, and a forgotten marker defaults to the
+   truthful class rather than inflating the reconstruction. */
+function classifyEntry(entry) {
+  const tags = Array.isArray(entry?.tags) ? entry.tags : [];
+  const hasTag = (wanted) => tags.some((t) => t?.name === wanted);
+
+  const documented = hasTag(TAG_DOCUMENTED);
+  const estimated = hasTag(TAG_ESTIMATED);
+  if (documented && estimated) {
+    classificationConflicts.push(String(entry?.id ?? ''));
+    return 'documented';
+  }
+  if (documented) return 'documented';
+  if (estimated) return 'estimated';
+
+  const description = typeof entry?.description === 'string' ? entry.description : '';
+  if (description.startsWith(PREFIX_DOCUMENTED)) return 'documented';
+  if (description.startsWith(PREFIX_ESTIMATED)) return 'estimated';
+
+  return 'logged';
+}
+
+const emptyHours = () => ({ logged: 0, documented: 0, estimated: 0 });
+
 /* Debug view. Deliberately narrow: a raw ClickUp entry carries the logger's
-   username and email, so nothing raw is echoed. rosterCoverage is how we learn
-   somebody needs adding to roster.js. */
-function buildDebug(entries, memberIds, contributingIds, unrosteredIds, folderIdOf, taskUrlOf) {
+   username, email and avatar, and the description carries the reconstruction
+   markers, so nothing raw is ever echoed. */
+function buildDebug(entries, memberIds, discarded, folderIdOf) {
   const sample = entries[0] || null;
-  const rostered = contributingIds.size - unrosteredIds.length;
   return {
-    memberIds,
     queriedCount: memberIds.length,
     totalEntries: entries.length,
-    unrosteredContributorIds: unrosteredIds,
-    rosterCoverage: `${rostered}/${contributingIds.size}`,
+    discardedEntries: discarded.count,
+    discardedHours: Math.round(discarded.hours * 100) / 100,
+    classificationConflicts,
     sampleResolved: sample
       ? {
           folderId: folderIdOf(sample),
-          taskUrl: taskUrlOf(sample),
+          inRetainer: RETAINER_FOLDER_IDS.includes(folderIdOf(sample)),
           denverMonth: denverYM(parseInt(sample.start)),
+          classification: classifyEntry(sample),
           hasTask: Boolean(sample?.task?.id),
-          hasUser: Boolean(sample?.user?.id),
         }
       : null,
   };
@@ -187,6 +237,8 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  classificationConflicts = [];
 
   const year = parseInt(req.query.year) || currentDenverYear();
 
@@ -211,7 +263,7 @@ export default async function handler(req, res) {
     // `task_location: { list_id, folder_id, space_id }` object, so
     // task_location.folder_id is the canonical field. The fallbacks below
     // guard against shape differences. Hit /api/time?debug=1 in production
-    // to dump a raw entry and confirm the mapping against live data.
+    // to dump a resolved entry and confirm the mapping against live data.
     const folderIdOf = (entry) =>
       String(
         entry?.task_location?.folder_id ||
@@ -229,23 +281,13 @@ export default async function handler(req, res) {
       return id ? `https://app.clickup.com/t/${id}` : null;
     };
 
+    /* One bucket per month, each holding a per-task tally split three ways.
+       Keyed on ClickUp task id: this workspace has several distinct tasks
+       sharing a name, which keying on name silently merged, and a rename split
+       one task's history in two. */
+    const months = Array.from({ length: 12 }, () => new Map());
 
-    // One bucket per month, each holding a per-task tally for the Creative
-    // (retainer) and Non-Creative (SOW) categories. Keyed on ClickUp task id:
-    // this workspace has several distinct tasks sharing a name, which keying on
-    // name silently merged, and a rename split one task's history in two.
-    const months = Array.from({ length: 12 }, (_, m) => ({
-      retainerTasks: new Map(),
-      sowTasks: new Map(),
-      contributors: new Set(),
-      // Per-day totals, indexed by day-of-month minus one. Entries are placed
-      // by their start day in Denver, the same rule the month buckets use.
-      retainerDaily: new Array(daysInMonth(year, m)).fill(0),
-      sowDaily: new Array(daysInMonth(year, m)).fill(0),
-    }));
-    const contributingIds = new Set();
-    let unmatchedEntries = 0;
-    let unmatchedHours = 0;
+    const discarded = { count: 0, hours: 0 };
     let skippedEntries = 0;
 
     for (const entry of entries) {
@@ -262,167 +304,135 @@ export default async function handler(req, res) {
         continue;
       }
 
-      const { year: entryYear, month, day } = denverYM(startTs);
+      const { year: entryYear, month } = denverYM(startTs);
       if (entryYear !== year) continue;
 
       const hours = durationMs / 3600000;
-      const fid = folderIdOf(entry);
 
-      let bucket, daily;
-      if (FOLDER_IDS.retainer.includes(fid)) {
-        bucket = months[month].retainerTasks;
-        daily = months[month].retainerDaily;
-      } else if (FOLDER_IDS.sow.includes(fid)) {
-        bucket = months[month].sowTasks;
-        daily = months[month].sowDaily;
-      } else {
-        unmatchedEntries += 1;
-        unmatchedHours += hours;
+      /* Anything outside the retainer folders is dropped here and never
+         bucketed, so it cannot reach a total by any later route. */
+      if (!RETAINER_FOLDER_IDS.includes(folderIdOf(entry))) {
+        discarded.count += 1;
+        discarded.hours += hours;
         continue;
       }
 
-      // Orphaned timers carry no task object; they collapse into one row rather
-      // than one row per entry.
-      // Who logged it. Ids only: names, titles and images come from the roster,
-      // never from ClickUp, so a renamed account cannot reach the client.
-      const userId = entry?.user?.id !== undefined && entry?.user?.id !== null
-        ? String(entry.user.id) : null;
-      if (userId) {
-        months[month].contributors.add(userId);
-        contributingIds.add(userId);
-      }
-
-      if (daily && day >= 1 && day <= daily.length) daily[day - 1] += hours;
-
       const taskId = entry?.task?.id ? String(entry.task.id) : null;
       const key = taskId || NO_TASK_KEY;
-      const existing = bucket.get(key);
-      if (existing) {
-        existing.hours += hours;
-      } else {
-        bucket.set(key, {
+      const bucket = months[month];
+
+      let task = bucket.get(key);
+      if (!task) {
+        // Orphaned timers carry no task object; they collapse into one row
+        // rather than one row per entry.
+        task = {
           id: taskId,
           name: taskId ? entry?.task?.name || '(untitled task)' : NO_TASK_NAME,
-          hours,
           url: taskId ? taskUrlOf(entry) : null,
           listId: entry?.task_location?.list_id ? String(entry.task_location.list_id) : null,
-        });
+          hours: emptyHours(),
+        };
+        bucket.set(key, task);
       }
-    }
 
-    /* Resolve contributing ids to display metadata through ROSTER only. A
-       contributor with no roster entry collapses into a single studio entry,
-       never one per unknown person, and their real id never reaches the client
-       through `team`. Inactive people still resolve for past years so historical
-       reports stay accurate, but drop off the current year's strip. */
-    const CURRENT_YEAR = currentDenverYear();
-    const unrosteredIds = [...contributingIds].filter((id) => !ROSTER[id]).sort();
-    const team = [];
-    for (const id of [...contributingIds].sort()) {
-      const person = ROSTER[id];
-      if (!person) continue;
-      if (person.active === false && year === CURRENT_YEAR) continue;
-      team.push({
-        id,
-        name: person.name,
-        title: person.title || '',
-        roster: person.roster,
-        stack: person.stack,
-        isStudio: false,
-      });
-    }
-    team.sort((a, b) => a.name.localeCompare(b.name));
-    if (unrosteredIds.length) {
-      team.push({
-        id: 'studio',
-        name: STUDIO_FALLBACK.name,
-        title: STUDIO_FALLBACK.title,
-        roster: STUDIO_FALLBACK.roster,
-        stack: STUDIO_FALLBACK.stack,
-        isStudio: true,
-      });
+      /* Accumulated raw and rounded once on the way out. Rounding each entry as
+         it lands would drift a month's total away from the entries that make it
+         up by a cent of an hour at a time. */
+      task.hours[classifyEntry(entry)] += hours;
     }
 
     const round = (n) => Math.round(n * 100) / 100;
 
-    // Every task stays in the total. Anything under the threshold is rolled into
-    // one trailing row, so the visible rows always sum to the header rather than
-    // quietly dropping short entries as the old filter did.
-    const toItems = (map, aggregateName) => {
-      const all = [...map.values()].map((t) => ({ ...t, hours: round(t.hours) }));
+    const roundHours = (h) => {
+      const out = {
+        logged: round(h.logged),
+        documented: round(h.documented),
+        estimated: round(h.estimated),
+      };
+      // Derived from the rounded parts, not from the raw ones, so a reader who
+      // adds up the three figures on screen gets the total printed beside them.
+      return {
+        hours: out,
+        reconstructed: round(out.documented + out.estimated),
+        total: round(out.logged + out.documented + out.estimated),
+      };
+    };
+
+    /* Every task stays in the total. Anything under the threshold is rolled
+       into one trailing row, so the visible rows always sum to the header
+       rather than quietly dropping short entries. */
+    const toItems = (map) => {
+      const all = [...map.values()].map((t) => ({
+        id: t.id,
+        name: t.name,
+        url: t.url,
+        listId: t.listId,
+        ...roundHours(t.hours),
+      }));
 
       const items = all
-        .filter((t) => t.hours >= AGGREGATE_THRESHOLD_HOURS)
-        .sort((a, b) => b.hours - a.hours);
+        .filter((t) => t.total >= AGGREGATE_THRESHOLD_HOURS)
+        .sort((a, b) => b.total - a.total);
 
-      const small = all.filter((t) => t.hours < AGGREGATE_THRESHOLD_HOURS && t.hours > 0);
-      const aggregateHours = round(small.reduce((sum, t) => sum + t.hours, 0));
-
-      if (aggregateHours > 0) {
+      const small = all.filter((t) => t.total < AGGREGATE_THRESHOLD_HOURS && t.total > 0);
+      if (small.length) {
+        const summed = small.reduce((acc, t) => {
+          acc.logged += t.hours.logged;
+          acc.documented += t.hours.documented;
+          acc.estimated += t.hours.estimated;
+          return acc;
+        }, emptyHours());
         items.push({
           id: null,
-          name: aggregateName,
-          hours: aggregateHours,
+          name: AGGREGATE_ROW_NAME,
           url: null,
           listId: null,
           count: small.length,
           aggregated: true,
+          ...roundHours(summed),
         });
       }
       return items;
     };
 
-    // The header is the sum of what is actually listed, so a month's rows always
-    // reconcile against its total instead of drifting by rounding.
-    const sumItems = (items) => round(items.reduce((sum, t) => sum + t.hours, 0));
+    /* A month's header is the sum of the rows printed under it, each already
+       rounded, so the drawer can never disagree with the row it hangs from. */
+    const sumItems = (items) =>
+      roundHours(
+        items.reduce((acc, t) => {
+          acc.logged += t.hours.logged;
+          acc.documented += t.hours.documented;
+          acc.estimated += t.hours.estimated;
+          return acc;
+        }, emptyHours())
+      );
 
-    const monthsOut = months.map((mo, i) => {
-      const retainerItems = toItems(mo.retainerTasks, 'Other retainer support');
-      const sowItems = toItems(mo.sowTasks, 'Other project support');
-      return {
-        month: i,
-        retainerHours: sumItems(retainerItems),
-        sowHours: sumItems(sowItems),
-        retainerItems,
-        sowItems,
-        // Ids only. The frontend resolves them through the roster and collapses
-        // every unrostered id onto one studio avatar.
-        contributorIds: [...mo.contributors].sort(),
-        // One entry per day of the month. Rounded like every other figure, so
-        // the day series sums to within a rounding step of the month's total.
-        retainerDaily: mo.retainerDaily.map(round),
-        sowDaily: mo.sowDaily.map(round),
-      };
+    const monthsOut = months.map((bucket, i) => {
+      const items = toItems(bucket);
+      return { month: i, ...sumItems(items), items };
     });
+
+    const yearTotals = sumItems(
+      monthsOut.map((m) => ({ hours: m.hours }))
+    );
 
     return res.status(200).json({
       year,
       timezone: TIMEZONE,
       retainerBudget: RETAINER_BUDGET_HOURS,
-      /* queried is how many assignees the time_entries call covered; contributing
-         is how many of them actually logged matched time. contributing === 1
-         while queried > 1 is the exact regression that hid the team for five
-         months, and the report renders that state as broken on sight. */
-      contributors: {
-        queried: memberIds.length,
-        contributing: contributingIds.size,
-      },
-      team,
-      ...(req.query.debug ? { debug: buildDebug(entries, memberIds, contributingIds, unrosteredIds, folderIdOf, taskUrlOf) } : {}),
       /* When this payload was pulled from ClickUp, which since the response is
          cached is not the same as when the request arrived. That is the point:
          the report shows it as "last updated", so a cached copy states its real
          age rather than claiming to be current. */
       generatedAt: new Date().toISOString(),
       months: monthsOut,
-      // Flat aggregates kept for convenience / back-compat.
-      retainer: monthsOut.map((m) => m.retainerHours),
-      sow: monthsOut.map((m) => m.sowHours),
+      totals: yearTotals,
+      ...(req.query.debug
+        ? { debug: buildDebug(entries, memberIds, discarded, folderIdOf) }
+        : {}),
       memberCount: memberIds.length,
       totalEntries: entries.length,
       skippedEntries,
-      unmatchedEntries,
-      unmatchedHours: round(unmatchedHours),
     });
   } catch (e) {
     // A failure is never cached, at the edge or in the browser. Vercel would

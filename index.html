@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Moss · Hours Report</title>
+  <title>Moss · Fractional Creative Usage</title>
   <link rel="icon" href="https://brand.foundingcreative.com/favicon.svg" />
 
   <!-- Founding Creative design-system tokens (fonts, colors, radius, shadows, spacing) -->
@@ -13,22 +13,36 @@
     /* ─────────────────────────────────────────────────────────────
        Report-specific styling, layered on the DS dark scheme.
 
-       Series colors: FC's brand mint / lavender hues, stepped into the
-       dark-mode lightness band for the chart + meter fills, with the full
-       brand values kept for strokes, swatches and text accents.
+       One series, one hue. Retainer hours are FC's brand mint, stepped into the
+       dark-mode lightness band for the chart fills, with the full brand value
+       kept for strokes, swatches and text accents.
+
+       The report's second dimension is not a second kind of work, it is how
+       well a given hour is evidenced: logged as it happened, or reconstructed
+       from records. That is a distinction inside one quantity rather than
+       between two, so it is carried by pattern density on the same green. A
+       second hue would say these are two different things, which they are not.
        ───────────────────────────────────────────────────────────── */
     :root {
-      /* Series fills sit at matched lightness gaps below their brand ink, so the
-         outline reads against the fill with the same weight in both colours:
-         mint 0.884 over 0.654, lavender 0.779 over 0.549. */
+      /* The fill sits at a lightness gap below the ink, so the outline reads
+         against the fill: mint 0.884 over 0.654. */
       --creative-fill: #27AC4B;
       --creative-ink: var(--mint);                  /* #7EF893 */
-      --noncreative-fill: #7F5CB2;
-      --noncreative-ink: var(--holo-lavender);      /* #C6A2FF */
+
+      /* The DOM-side hatches, matched to the canvas patterns drawChart builds.
+         Denser stripe means stronger evidence: documented traces to a record,
+         estimated comes from direct knowledge of the work. Change one of these
+         and the other has to move with it. */
+      --hatch-documented: repeating-linear-gradient(45deg,
+        var(--creative-fill) 0 3px, transparent 3px 6px);
+      --hatch-estimated: repeating-linear-gradient(45deg,
+        var(--creative-fill) 0 2px, transparent 2px 7px);
 
       /* Semantic status. Green means the retainer is being used, which is good
-         all the way to 100%; only going over is a warning. Yellow is reserved
-         for data integrity, never for utilisation. */
+         all the way to 100%. Over 100% is a contract mechanism rather than a
+         failure (clause 6.1), so it is set apart in plain white rather than in
+         an alarm colour. Yellow stays reserved for data integrity, never for
+         utilisation. */
       --ok: var(--mint);
       --over: #FF8A80;
 
@@ -39,8 +53,8 @@
       --warn-surface-2: rgba(245, 194, 107, 0.16);
       --warn-line: rgba(245, 194, 107, 0.38);
 
-      /* Action colour. Deliberately neither series: mint is Creative and
-         lavender is Other, so an affordance wearing either reads as data. */
+      /* Action colour. Deliberately not the series: mint is retainer hours, so
+         an affordance wearing it reads as data. */
       --action: var(--holo-cyan);
       --action-soft: rgba(105, 238, 255, 0.16);
 
@@ -368,14 +382,15 @@
     .swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
 
 
-    /* ── Category definitions, inside the hero card ──────────────────
-       Answers "why is there a green series and a purple one?" and states the
-       retainer terms once, in the place the reader meets the two colours. Kept
-       deliberately light: the figures themselves are charted below, and a full
-       roster of tiles here never filled its row on a small team. */
-    /* Each definition is sized to its own text rather than to the taller of the
-       two, so its colour bar measures that definition and not the row. */
-    .defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 36px; align-items: start; }
+    /* ── Retainer definition, inside the hero card ───────────────────
+       States what the retainer is, what this report contains, and what the
+       percentages are measured against. It is the only place the terms are
+       written out, and every claim in it maps to a numbered clause of the
+       signed agreement, because the people reading this report will include
+       some who have never seen that agreement. */
+    /* Sized to its own text rather than to a row, so its colour bar measures
+       the definition and not the space around it. */
+    .defs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px 36px; align-items: start; }
     .def { display: flex; gap: 14px; align-items: stretch; }
     /* The swatch runs the full height of the text beside it: at this size the
        colour is the label, so it is given enough of itself to read as one. */
@@ -391,61 +406,29 @@
       border-radius: var(--r-full); padding: 3px 9px; white-space: nowrap;
     }
     .def-text { font-size: 14.5px; line-height: 1.55; color: var(--dim-2); margin: 5px 0 0; text-wrap: pretty; }
-    @media (max-width: 700px) { .defs { grid-template-columns: minmax(0, 1fr); gap: 18px; } }
 
-    /* The regression this exists to catch: one account reporting while many
-       were queried. It has to look broken on sight, not read as a footnote. */
-    .data-alarm {
-      display: flex; align-items: center; gap: 8px; margin: 0 0 18px;
-      font-size: 14px; font-weight: 700; color: var(--warn);
-      background: var(--warn-surface); border: 1px solid var(--warn-line);
-      border-radius: var(--r-md); padding: 10px 13px;
+    /* ── Team ───────────────────────────────────────────────────────
+       A named, static block. It used to be built from whichever ClickUp
+       accounts had logged time that month, which meant the client's view of
+       who works on their account moved with our timesheets, and a renamed
+       account could put an unfamiliar name in front of them. Nothing here is
+       fetched: the list is written into this file and changes when the team
+       changes. */
+    .team-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 160px));
+      gap: 22px 26px; margin-top: 16px;
     }
-    .data-alarm svg { width: 16px; height: 16px; flex: none; }
-
-    /* ── Monthly contributor stack ──────────────────────────────── */
-    .stack { display: flex; align-items: center; }
-    /* The cut-out between overlapping avatars is the only edge they need. It
-       used to carry a hairline ring outside it as well, because the studio mark
-       is mostly black and read as a hole in the row; that mark no longer
-       appears here, and the second edge read as a stray white stroke. */
-    .stack { overflow: visible; }
-    .stack .av, .stack .av-more {
-      width: 60px; height: 60px; border-radius: var(--r-md);
-      border: 2px solid var(--n-black); background: var(--surface-2);
-      display: block; position: relative;
+    .team-member { min-width: 0; }
+    .team-member img {
+      display: block; width: 100%; max-width: 160px; height: auto; aspect-ratio: 1;
+      object-fit: cover; border-radius: var(--r-md);
+      background: var(--surface-2); border: 1px solid var(--line);
     }
-    .stack .av img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
-    .stack > * + * { margin-left: -16px; }
-    .stack .av { transition: transform .14s ease; }
-    .stack .av:hover, .stack .av:focus-visible { transform: translateY(-4px); z-index: 3; outline: none; }
-    .stack .av:focus-visible { box-shadow: 0 0 0 2px var(--action); }
-
-    /* Name and title, rendered rather than left to the browser's tooltip. */
-    /* Below the face, not above it: the avatars sit at the top of the drawer, so
-       a tooltip above would cover the month row the drawer belongs to. */
-    .stack .av::after {
-      content: attr(data-tip);
-      position: absolute; top: calc(100% + 9px); left: 50%; transform: translateX(-50%) translateY(-3px);
-      z-index: 4; pointer-events: none; white-space: nowrap;
-      font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--white);
-      background: #0E0E0E; border: 1px solid var(--line); border-radius: var(--r-sm);
-      padding: 7px 10px; box-shadow: var(--shadow-xl);
-      opacity: 0; transition: opacity .13s ease, transform .13s ease;
+    .team-name { margin: 11px 0 0; font-size: 15.5px; font-weight: 700; color: var(--white); }
+    .team-title { margin: 2px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--dim-2); text-wrap: pretty; }
+    @media (max-width: 430px) {
+      .team-grid { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 18px; }
     }
-    .stack .av:hover::after, .stack .av:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
-    /* The first avatar's tooltip would otherwise start off the left edge of a
-       narrow drawer. */
-    .stack .av:first-child::after { left: 0; transform: translateX(0) translateY(-3px); }
-    .stack .av:first-child:hover::after,
-    .stack .av:first-child:focus-visible::after { transform: translateX(0) translateY(0); }
-    .av-more {
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 700; color: var(--dim);
-      background: var(--surface-2);
-    }
-    .stack-wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .stack-label { font-size: 14px; color: var(--dim-2); }
 
     /* ── Data-integrity flag ────────────────────────────────────────
        The flag language is warn yellow, and only warn yellow: an outline round
@@ -501,6 +484,23 @@
       padding: 9px 14px; cursor: pointer; transition: all .14s ease;
     }
     .legend-item > .swatch { align-self: stretch; height: auto; width: 9px; border-radius: var(--r-full); }
+    /* The rail is the legend's swatch, so on a reconstructed series it carries
+       the hatch rather than the flat fill. At 9px a 45 degree stripe reads as
+       texture rather than as a pattern you could count, which is the point: the
+       label beside it is what names the class. The pattern alone was never
+       going to carry this, which is why every entry has words. */
+    .swatch.hatch-doc, .swatch.hatch-est {
+      background-color: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(126, 248, 147, 0.45);
+    }
+    /* The wash under the stripes, matching what the canvas patterns lay down,
+       so a swatch in the legend is the same material as the bar it names. */
+    .swatch.hatch-doc, .swatch.hatch-est,
+    .row .track .fill.doc, .row .track .fill.est, .recon-mark {
+      background-color: rgba(39, 172, 75, 0.34);
+    }
+    .swatch.hatch-doc { background-image: var(--hatch-documented); }
+    .swatch.hatch-est { background-image: var(--hatch-estimated); }
     .lg-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
     .legend-item:hover, .legend-item:focus-visible { background: var(--surface); border-color: var(--line); outline: none; }
     /* The total can be pointed at like the other two, and isolates the total
@@ -604,6 +604,21 @@
     }
     .key-text { font-size: 13.5px; line-height: 1.6; color: var(--dim-2); margin: 0; }
     .key-text b { color: var(--dim); font-weight: 700; }
+
+    /* The note that makes the striped bars self-explanatory. It sits between
+       the chart and the table because that is where a reader who has just seen
+       the stripes asks what they are, and it has to be answered before they
+       reach the figures rather than in a footnote after them. */
+    .recon-note {
+      margin: 22px 0 0; padding: 16px 18px;
+      background: var(--surface); border: 1px solid var(--line-soft);
+      border-radius: var(--r-md);
+      font-size: 14.5px; line-height: 1.65; color: var(--dim-2);
+      max-width: 82ch; text-wrap: pretty;
+    }
+    .recon-note p { margin: 0; }
+    .recon-note p + p { margin-top: 10px; }
+    .recon-note b { color: var(--ink-strong); font-weight: 700; }
 
     /* Below this the plot is rotated and every month owns a full row, so there
        is no corner left to float the legend into. It goes back into the flow
@@ -719,26 +734,48 @@
     .acc-note { font-size: 13px; color: var(--dim-2); margin: 26px 0 0; }
     @media (max-width: 680px) { .acc-inner { padding: 4px 10px 22px; } }
 
-    /* Both categories side by side, so the two task lists that add up to the
-       row's total are visible at once instead of one scrolling past the other.
-       They stack below 860px, where two columns of task names would truncate to
-       nothing useful. */
-    .cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 68px; align-items: start; }
-    @media (max-width: 860px) { .cat-grid { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
-
     .table .primary { font-weight: 600; color: var(--white); }
     .table .of { color: var(--dim-2); font-weight: 500; }
-    /* The two series figures in a month row are the same numbers the drawer
-       below repeats per task, so they are set at the same weight. At the body
-       default they read as lighter than the task rows they summarise, which
-       inverts the hierarchy. */
+    /* The series figures in a month row are the same numbers the drawer below
+       repeats per task, so they are set at the same weight. At the body default
+       they read as lighter than the task rows they summarise, which inverts the
+       hierarchy. */
     .table tbody tr.mrow td.col-series { font-weight: 600; }
+    /* Reconstructed hours are the same hours in the same unit, so they are set
+       in the same green and separated by texture, exactly as the chart does it.
+       The dot is small enough to be a mark on the figure rather than a swatch
+       competing with it. */
+    .recon-mark {
+      display: inline-block; width: 9px; height: 9px; margin-right: 7px;
+      border-radius: 2px; vertical-align: baseline;
+      background-color: rgba(255, 255, 255, 0.06);
+      background-image: var(--hatch-documented);
+      border: 1px solid rgba(126, 248, 147, 0.45);
+    }
     /* The share of the retainer, reading as an annotation on the figure it
        follows rather than as a second number of equal standing. */
     .table .use {
       display: inline-block; min-width: 46px; margin-left: 10px;
       font-size: 13.5px; font-weight: 700; text-align: right;
     }
+    /* Over 100% is not a failure state and must not be dressed as one. Clause
+       6.1 makes hours beyond the retainer a negotiated, quarterly-billed
+       supplement, so an over month is set apart in plain white and named, with
+       the mechanism stated once under the table. Red would have told the client
+       something untrue about their own contract. */
+    .table .use.is-over { color: var(--ink-strong); }
+    .over-tag {
+      display: inline-block; margin-left: 8px; padding: 2px 7px;
+      font-size: 11px; font-weight: 700; letter-spacing: .04em;
+      color: var(--dim); background: var(--surface);
+      border: 1px solid var(--line); border-radius: var(--r-full);
+      vertical-align: 1px;
+    }
+    .table-note {
+      margin: 16px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--dim-2);
+      max-width: 78ch; text-wrap: pretty;
+    }
+    .table-note b { color: var(--dim); font-weight: 700; }
     .table td.r, .table th.r { white-space: nowrap; }
     .table .col-gap { padding-right: 24px; }
     /* Sums are set apart by a rule and by weight, not by a tinted panel. */
@@ -811,8 +848,17 @@
 
     .row { display: flex; align-items: center; gap: 13px; padding: 9px 0; }
     .row .name { flex: 1 1 0; min-width: 0; font-size: 15.5px; font-weight: 500; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .row .track { flex: 0 0 130px; height: 6px; background: rgba(255, 255, 255, 0.14); border-radius: var(--r-full); overflow: hidden; }
-    .row .track .fill { display: block; height: 100%; border-radius: var(--r-full); }
+    /* One task's hours, split the way the chart splits a month: solid for the
+       part logged as it happened, hatched for the part reconstructed. A task
+       can hold both at once, which is exactly why the split lives at this level
+       and not only on the month. */
+    .row .track {
+      display: flex; flex: 0 0 130px; height: 6px;
+      background: rgba(255, 255, 255, 0.14); border-radius: var(--r-full); overflow: hidden;
+    }
+    .row .track .fill { display: block; height: 100%; background-color: var(--creative-fill); }
+    .row .track .fill.doc { background-image: var(--hatch-documented); }
+    .row .track .fill.est { background-image: var(--hatch-estimated); }
     .row .hrs { flex: none; min-width: 72px; white-space: nowrap; font-size: 15.5px; font-weight: 600; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
     .row .link {
       flex: none; display: inline-flex; align-items: center; justify-content: center;
@@ -855,9 +901,6 @@
     @media (hover: none) and (min-width: 561px) {
       .cat-foot { padding-right: 34px; }
     }
-    /* Half the width means half the room for a task name, which is the one
-       thing here worth protecting. The mini-bar is the first thing to go. */
-    @media (min-width: 861px) { .cat-grid .row .track { flex: 0 0 76px; } }
     @media (max-width: 560px) {
       .row .track { display: none; }
       /* A truncated task name is the one thing on this page a client cannot
@@ -908,6 +951,12 @@
     .foot-link.primary:hover { color: var(--action); text-decoration-color: var(--action); }
     .foot img { height: 15px; width: auto; display: block; }
 
+    /* Empty unless SLA_DOCUMENT_URL is set, and an empty flex item with no gap
+       of its own takes no space, so the footer is untouched until it fills. */
+    .foot-sla { display: flex; flex-direction: column; gap: 2px; }
+    .foot-sla:empty { display: none; }
+    .sla-label { font-size: 12.5px; color: var(--dim-2); }
+
     .foot-data { display: flex; align-items: center; gap: 14px; }
     /* Same face, size and weight as the link opposite it. The readout was set
        in monospace to stop a ticking seconds field twitching the line once a
@@ -934,13 +983,15 @@
        Re-point the tokens rather than patching selector by selector, so
        every colour that inherits from them flips with one change. The
        brand hues are re-stepped for contrast against white paper, which
-       also carries the derived --creative-ink / --noncreative-ink / --ok. */
+       also carries the derived --creative-ink and --ok. The two hatches are
+       built from --creative-fill, so they re-step with it and the logged /
+       reconstructed distinction survives onto paper, where it matters most:
+       a printed copy is what gets forwarded into a meeting. */
     @media print {
       :root {
         --mint: #147A38;
         --holo-lavender: #5E3B96;
         --creative-fill: #2E9950;
-        --noncreative-fill: #8461BE;
         --warn: #9A6512;
         --over: #B3261E;
         --white: #111111;
@@ -1017,7 +1068,7 @@
       <div class="title-id">
         <span class="client-slot"><img class="client-mark" src="assets/moss-wordmark-white.svg" alt="Moss" /></span>
         <div class="title-stack">
-          <h1 class="report-title">Hours Report</h1>
+          <h1 class="report-title">Fractional Creative Usage</h1>
           <div class="report-range" data-range></div>
         </div>
       </div>
@@ -1034,6 +1085,9 @@
         <img src="assets/fc-icon-white.svg" alt="" />
         <span>foundingcreative.com</span>
       </a>
+      <!-- Rendered only when SLA_DOCUMENT_URL is set. Empty by default, and
+           empty means nothing renders here at all. -->
+      <div class="foot-sla" id="footSla"></div>
       <div class="foot-data">
         <span class="fetched" id="clockFetched">Loading data…</span>
         <button class="btn icon-only" id="refreshBtn" title="Refresh data from ClickUp" aria-label="Refresh data from ClickUp"></button>
@@ -1073,6 +1127,15 @@
        back is one word. */
     var SHOW_EXPORT = false;
 
+    /* The signed agreement, hosted somewhere the client can open it. Every
+       factual claim this report makes cites a clause of that document, so a
+       reader who wants to check one should not have to ask us for the file.
+
+       Empty until Josh supplies the URL. While it is empty the footer renders
+       exactly as it did before, because a link to nowhere is worse than no link
+       at all: it tells the reader the document exists and then fails them. */
+    var SLA_DOCUMENT_URL = '';
+
     /* Projections are hidden, not removed. With this off the chart stops at the
        last tracked month, the textured ground and the estimate band are never
        drawn, and the key naming them is suppressed. projectRest() and its
@@ -1082,20 +1145,24 @@
     var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    // Two categorical series. `fill` is the mark color (brand hue, stepped into
-    // the dark-mode lightness band); `ink` is the full-brand value used for
-    // strokes, swatches and figures.
-    var CATS = [
-      { key: 'creative',    label: 'Creative',     budgeted: true,
-        fill: '#27AC4B', ink: '#7EF893',                                 // literals: Chart.js canvas
-        fillVar: 'var(--creative-fill)', inkVar: 'var(--creative-ink)',  // DOM: re-pointable per media
-        tint: 'rgba(126, 248, 147, 0.10)',
-        items: 'creativeItems', hours: 'creative' },
-      { key: 'nonCreative', label: 'Other', budgeted: false,
-        fill: '#9B77D0', ink: '#C6A2FF',
-        fillVar: 'var(--noncreative-fill)', inkVar: 'var(--noncreative-ink)',
-        tint: 'rgba(198, 162, 255, 0.10)',
-        items: 'nonCreativeItems', hours: 'nonCreative' }
+    /* One series in one hue, split three ways by how well each hour is
+       evidenced. `fill` is the mark colour (brand mint, stepped into the
+       dark-mode lightness band); `ink` is the full-brand value used for
+       strokes, swatches and figures. Both are canvas literals, because
+       Chart.js draws to a canvas and cannot read a custom property.
+
+       Every one of the three carries the same green. The pattern is the only
+       difference, and it runs denser where the evidence is stronger. Read
+       bottom to top, this is also the stacking order on the chart. */
+    var SERIES_INK = '#7EF893';
+    var SERIES_FILL = '#27AC4B';
+    var SERIES = [
+      { key: 'logged',     label: 'Logged as it happened',
+        hatch: null,          markClass: '' },
+      { key: 'documented', label: 'Reconstructed, documented',
+        hatch: 'documented',  markClass: 'hatch-doc' },
+      { key: 'estimated',  label: 'Reconstructed, estimated',
+        hatch: 'estimated',   markClass: 'hatch-est' }
     ];
 
     /* Data-integrity annotations. Each entry flags a (year, months, series)
@@ -1110,18 +1177,20 @@
        span into the copy only fixed a second thing to keep in step with the
        `months` array above. It explains why the figures are low, and nothing
        else. */
-    var DATA_FLAGS = [
-      {
-        id: 'moss-2026-creative-jan-may',
-        year: 2026,
-        months: [0, 1, 2, 3, 4],           // Jan–May
-        series: 'creative',
-        label: 'Under-reported',
-        detail: 'Some Creative time was not fully captured in our time tracking, so ' +
-                'the hours shown here are lower than the work actually delivered. We ' +
-                'are recovering the missing entries and will restate these figures.'
-      }
-    ];
+    /* Empty on purpose, and the mechanism is kept.
+
+       The one entry this held flagged January through May 2026 as
+       under-reported, with a note saying we were recovering the missing entries
+       and would restate the figures. That is precisely what the reconstruction
+       encoding now does, in the chart itself: those months are restated, and
+       the stripes say which hours came from records rather than from a timer.
+       Leaving the flag would put a warning triangle on exactly the months the
+       chart already explains, attached to copy that is no longer true.
+
+       The machinery stays because the next data problem will not be this one,
+       and a warn treatment that is already built and already checked is worth
+       more than the twenty lines it costs. */
+    var DATA_FLAGS = [];
 
     function flagFor(year, monthIdx, seriesKey) {
       for (var i = 0; i < DATA_FLAGS.length; i++) {
@@ -1140,8 +1209,7 @@
     }
 
     var chart = null;
-    var state = { months: [], range: [], selected: null, hidden: {}, generatedAt: null,
-                  team: [], teamById: {}, contributors: null };
+    var state = { months: [], range: [], selected: null, hidden: {}, generatedAt: null };
 
     var view = { mode: 'year' };
     var priorYear = { year: null, months: null, state: 'idle' };  // 'idle' | 'loading' | 'done' | 'none'
@@ -1178,7 +1246,7 @@
     function projectRest() {
       var lastActual = lastActualMonth();
       var lastComplete = lastCompleteMonth();
-      var out = { from: lastActual + 1, creative: [], nonCreative: [],
+      var out = { from: lastActual + 1, total: [],
                   low: [], high: [], spread: 0, basis: 'none' };
       if (out.from > 11) return out;
 
@@ -1187,8 +1255,11 @@
       });
       if (!done.length) return out;
 
-      var meanC = done.reduce(function (a, m) { return a + m.creative; }, 0) / done.length;
-      var meanO = done.reduce(function (a, m) { return a + m.nonCreative; }, 0) / done.length;
+      /* Projected against the month's total, not against the logged /
+         reconstructed split. A future month has no evidence class: it has not
+         happened, so there is nothing yet to have documented or estimated. The
+         texture and the hollow bar are what say the figure is projected. */
+      var meanT = done.reduce(function (a, m) { return a + m.total; }, 0) / done.length;
       out.basis = 'average';
 
       var shape = null;
@@ -1209,7 +1280,6 @@
       /* How far a tracked month has typically sat from the average, as a
          fraction of it. Population spread, not a sample estimate: these are all
          the months there are, not a draw from a larger set. */
-      var meanT = meanC + meanO;
       var sd = Math.sqrt(done.reduce(function (a, m) {
         return a + (m.total - meanT) * (m.total - meanT);
       }, 0) / done.length);
@@ -1218,10 +1288,8 @@
         : SPREAD_MIN;
 
       for (var i = out.from; i <= 11; i++) {
-        var f = shape ? shape[i] : 1;
-        out.creative[i] = meanC * f;
-        out.nonCreative[i] = meanO * f;
-        var mid = out.creative[i] + out.nonCreative[i];
+        var mid = meanT * (shape ? shape[i] : 1);
+        out.total[i] = mid;
         out.low[i] = Math.max(0, mid * (1 - out.spread));
         out.high[i] = mid * (1 + out.spread);
       }
@@ -1346,31 +1414,37 @@
        Data shaping
        ═══════════════════════════════════════════════════════════════ */
     function normalize(data) {
+      /* The API is authoritative for the arithmetic: it emits every figure
+         already rounded, and derives a month's totals from the same items it
+         lists under it, so nothing is re-added here and the drawer can never
+         disagree with the row it hangs from. The fallbacks cover a payload from
+         an older deploy reaching a newer page: that lands on zeroes rather than
+         on NaN spread across the chart. */
       return (data.months || []).map(function (m) {
+        var h = m.hours || {};
         return {
           month: m.month,
-          creative: m.retainerHours || 0,
-          nonCreative: m.sowHours || 0,
-          total: (m.retainerHours || 0) + (m.sowHours || 0),
-          creativeItems: m.retainerItems || [],
-          nonCreativeItems: m.sowItems || [],
-          contributorIds: m.contributorIds || [],
-          // Per-day totals, present from the API's day buckets. Absent on an
-          // older payload, in which case the day view says so rather than
-          // drawing an empty month.
-          creativeDaily: m.retainerDaily || null,
-          nonCreativeDaily: m.sowDaily || null
+          logged: h.logged || 0,
+          documented: h.documented || 0,
+          estimated: h.estimated || 0,
+          reconstructed: m.reconstructed || 0,
+          total: m.total || 0,
+          items: m.items || []
         };
       });
     }
     function sortItems(items) {
-      return items.slice().sort(function (a, b) { return b.hours - a.hours; });
+      return items.slice().sort(function (a, b) { return b.total - a.total; });
     }
     function totals() {
-      var t = { creative: 0, nonCreative: 0, total: 0 };
+      var t = { logged: 0, documented: 0, estimated: 0, reconstructed: 0, total: 0 };
       state.range.forEach(function (m) {
-        t.creative += m.creative; t.nonCreative += m.nonCreative; t.total += m.total;
+        t.logged += m.logged; t.documented += m.documented; t.estimated += m.estimated;
+        t.reconstructed += m.reconstructed; t.total += m.total;
       });
+      // Summed from figures the API already rounded, so anything past two
+      // decimals here is float noise rather than real precision.
+      Object.keys(t).forEach(function (k) { t[k] = Math.round(t[k] * 100) / 100; });
       return t;
     }
     /* Months of retainer the client has actually paid for, which is not the same
@@ -1451,11 +1525,6 @@
       BUDGET = data.retainerBudget || 50;
       state.generatedAt = data.generatedAt ? new Date(data.generatedAt) : new Date();
       state.months = normalize(data);
-      state.team = data.team || [];
-      state.contributors = data.contributors || null;
-      // The studio entry is skipped rather than stored: its mark is not shown.
-      state.teamById = {};
-      state.team.forEach(function (p) { if (!p.isStudio) state.teamById[p.id] = p; });
 
       var active = [];
       state.months.forEach(function (m) { if (m.total > 0) active.push(m.month); });
@@ -1478,11 +1547,11 @@
         ' of tracked time · ' + MONTH_NAMES[first] + ' – ' + MONTH_NAMES[last] + ' ' + YEAR);
 
       // The table is part of the overview section now, not a section of its own.
-      content.innerHTML = heroHtml() + overviewHtml();
+      content.innerHTML = heroHtml() + teamHtml() + overviewHtml();
 
       wireLegend();
       wireSummaryTable();
-      wireAvatarFallbacks();
+      wireTeamImages();
       wireExport();
       drawChart();
       updateChartNote();
@@ -1497,7 +1566,7 @@
 
       var h = '<section class="sec"><div class="hero">';
       h += '<div class="hero-top">';
-      h += '<div class="hero-total"><div class="eyebrow">Combined hours delivered · ' + YEAR + '</div>' +
+      h += '<div class="hero-total"><div class="eyebrow">Retainer hours delivered · ' + YEAR + '</div>' +
            '<div class="v grad num">' + fmtH(t.total) + '</div>' +
            '<div class="hero-ctx"><strong>Year to date</strong> · ' +
            months + ' ' + (months === 1 ? 'month' : 'months') + '</div></div>';
@@ -1511,35 +1580,81 @@
 
       /* This space has held the two summary meters and then the team roster.
          Both were repeats of what is charted below. The one thing the reader
-         cannot get anywhere else is what the two colours mean and what the
-         Creative series is measured against, so that is what sits here. */
+         cannot get anywhere else is what the retainer is and what these
+         percentages are measured against, so that is what sits here. */
       h += '<div class="split">' + defsHtml() + '</div>';
 
       h += '</div></section>';
       return h;
     }
 
-    /* The two series, named and explained once, where the reader first meets
-       them. Also the only place the retainer terms are stated. */
+    /* The retainer, stated once, where the reader first meets the figures.
+
+       Written for a reader who has never seen the agreement, because this
+       report is read by people with no context and a stake in the outcome.
+       Every claim maps to a numbered clause so any of it can be checked:
+       3.1 for the allowance and the term, 4.1 for rollover, 2.2.2 for what is
+       excluded and why.
+
+       Note what it does not say. The agreement does not restrict retainer work
+       to one department or one contact, so nothing here implies that. The
+       accurate claim, and the stronger one, is that work already covered by a
+       separate signed agreement is fulfilled under that agreement. */
     function defsHtml() {
-      var h = '';
-      var c = state.contributors;
-      if (c && c.contributing === 1 && c.queried > 1) {
-        h += '<p class="data-alarm">' + ICONS.alert +
-             'Only one account reporting: check data source</p>';
-      }
-      h += '<div class="defs">';
-      h += '<div class="def"><span class="swatch" style="background:' + CATS[0].inkVar + '"></span>' +
-           '<div class="def-body"><div class="def-name">' + CATS[0].label +
+      var h = '<div class="defs">';
+      h += '<div class="def"><span class="swatch" style="background:var(--creative-ink)"></span>' +
+           '<div class="def-body"><div class="def-name">Retainer' +
            '<span class="def-terms">' + BUDGET + 'h per month</span></div>' +
-           '<p class="def-text">Retainer work, drawn against your monthly allowance. Every percentage ' +
-           'in this report is the share of that allowance used.</p></div></div>';
-      h += '<div class="def"><span class="swatch" style="background:' + CATS[1].inkVar + '"></span>' +
-           '<div class="def-body"><div class="def-name">' + CATS[1].label + '</div>' +
-           '<p class="def-text">Project work, scoped and billed separately. It sits outside the ' +
-           'retainer and does not draw against it.</p></div></div>';
+           '<p class="def-text">Moss holds ' + BUDGET + ' agency hours a month under a service level ' +
+           'agreement running February 2025 to February 2027, with up to 10 unused hours rolling ' +
+           'into the following month (clauses 3.1 and 4.1). This report covers retainer work only. ' +
+           'Work running under a separate signed agreement is fulfilled under that agreement and ' +
+           'does not draw on these hours (clause 2.2.2). Every percentage here is the share of the ' +
+           BUDGET + ' hour monthly allowance used.</p></div></div>';
       h += '</div>';
       return h;
+    }
+
+    /* ── Team ───────────────────────────────────────────────────────
+       A hardcoded list, not a query. The block this replaced was built from
+       whichever ClickUp accounts had logged time in a given month, which put
+       the client's view of their own team at the mercy of our timesheets and
+       let a renamed account render a name they had never heard.
+
+       No hours, no percentages, no ordering by contribution. Who is on the
+       account is not a leaderboard. */
+    var TEAM = [
+      { name: 'Josh Titus', title: 'Partner and Creative Director', image: '/team/roster/titus.webp' }
+      /* TODO: Josh to supply the remaining members. Same three fields, and the
+         image is a 160px square webp committed under team/roster/. A member
+         whose image is missing renders as text rather than as a broken tile,
+         so an entry can be added before its artwork is. */
+    ];
+
+    function teamHtml() {
+      if (!TEAM.length) return '';
+      var h = '<section class="sec"><div class="sec-head">' +
+        '<h2 class="sec-title">Your team</h2></div>';
+      h += '<div class="team-grid">';
+      TEAM.forEach(function (p) {
+        h += '<div class="team-member">' +
+          '<img src="' + esc(p.image) + '" alt="' + esc(p.name) + '" ' +
+          'width="160" height="160" loading="lazy" data-team-img="1">' +
+          '<p class="team-name">' + esc(p.name) + '</p>' +
+          '<p class="team-title">' + esc(p.title) + '</p>' +
+          '</div>';
+      });
+      h += '</div></section>';
+      return h;
+    }
+
+    /* A missing file hides its own tile rather than rendering the browser's
+       broken-image glyph on a page a client is reading. The name and title
+       beside it stay, so the person is still listed. */
+    function wireTeamImages() {
+      document.querySelectorAll('img[data-team-img]').forEach(function (img) {
+        img.addEventListener('error', function () { img.style.display = 'none'; });
+      });
     }
 
     function monthSpanLabel(flag) {
@@ -1553,52 +1668,6 @@
       return '<button type="button" class="flag-btn' + (labelled ? ' labelled' : '') +
         '" data-flag="' + esc(flag.id) + '" aria-label="' + esc(flag.label) + ', read the data note">' +
         ICONS.alert + (labelled ? esc(flag.label) : '') + '</button>';
-    }
-
-    /* ── Monthly contributors ───────────────────────────────────────
-       Built from the team the API resolved through roster.js, so it shows who
-       actually worked a month rather than a static brochure list. Names, titles
-       and images never come from ClickUp.
-
-       The studio mark is deliberately not rendered: as an avatar among faces it
-       read as a person nobody could name. Unrostered ids are simply not shown,
-       which is also why nothing here claims to be a count of the team. */
-    function stackFor(ids) {
-      var out = [];
-      (ids || []).forEach(function (id) {
-        var p = state.teamById[id];
-        if (p) out.push({ img: p.stack, name: p.name, title: p.title });
-      });
-      return out;
-    }
-
-    function stackHtml(ids) {
-      var people = stackFor(ids);
-      if (!people.length) return '';
-      var shown = people.slice(0, 6), extra = people.length - shown.length;
-      var h = '<div class="stack-wrap"><div class="stack">';
-      shown.forEach(function (p) {
-        /* The roster's job titles left the page with the roster; they come back
-           here, where the face is the thing that raises the question. Rendered
-           rather than left to the browser's title attribute, which waits a
-           second, styles itself and never appears on touch. */
-        var label = p.name + (p.title ? ' · ' + p.title : '');
-        h += '<span class="av" tabindex="0" data-tip="' + esc(label) + '" aria-label="' + esc(label) + '">' +
-             '<img src="' + esc(p.img) + '" alt="" width="60" height="60" loading="lazy" data-fallback="1">' +
-             '</span>';
-      });
-      if (extra > 0) h += '<span class="av-more" title="' + extra + ' more">+' + extra + '</span>';
-      h += '</div><span class="stack-label">Your team this month</span></div>';
-      return h;
-    }
-
-    /* A missing file used to fall back to the studio mark, which is exactly the
-       artwork we no longer show. An avatar that cannot load is dropped instead:
-       the name is already on the tooltip of the ones that did. */
-    function wireAvatarFallbacks() {
-      document.querySelectorAll('img[data-fallback]').forEach(function (img) {
-        img.addEventListener('error', function () { (img.closest('.av') || img).style.display = 'none'; });
-      });
     }
 
     /* ── Monthly overview ────────────────────────────────────────────
@@ -1616,77 +1685,129 @@
           : '') +
         '</div>';
       h += '<div class="chart-block">';
+      /* Three entries, each with its swatch and its label in words. The pattern
+         is carrying the entire honesty claim this report makes, and a texture
+         nobody has named is just a texture. */
       h += '<div class="legend" id="legend">';
-      CATS.forEach(function (c, i) {
+      SERIES.forEach(function (s, i) {
         h += '<button class="legend-item" data-i="' + i + '" data-off="false" aria-pressed="true">' +
-          '<span class="swatch" style="background:' + c.inkVar + '"></span>' +
-          '<span class="lg-stack"><span class="lg-name">' + c.label + '</span>' +
-          '<span class="val">' + fmtH(t[c.hours]) + '</span></span></button>';
+          '<span class="swatch ' + s.markClass + '"' +
+          (s.hatch ? '' : ' style="background:var(--creative-ink)"') + '></span>' +
+          '<span class="lg-stack"><span class="lg-name">' + s.label + '</span>' +
+          '<span class="val">' + fmtH(t[s.key]) + '</span></span></button>';
       });
-      // A key rather than a control: the total is drawn from the other two, so
-      // there is nothing to isolate it from.
-      h += '<span class="legend-item is-key" data-i="total">' +
-        '<span class="swatch dash" aria-hidden="true"></span>' +
-        '<span class="lg-stack"><span class="lg-name">Combined</span>' +
-        '<span class="val">' + fmtH(t.total) + '</span></span></span>';
       h += '</div>';
       h += '<div class="chart-wrap"><canvas id="overviewChart" role="img" ' +
-        'aria-label="Bar chart of Creative and Other hours, with a combined hours line"></canvas></div>';
+        'aria-label="Stacked bar chart of retainer hours per month, split into hours logged as ' +
+        'they happened and hours reconstructed from records"></canvas></div>';
       h += '</div>';
       h += '<div class="chart-key" id="chartNote"></div>';
+      h += reconNoteHtml();
       h += summaryHtml();
       h += '</section>';
       return h;
     }
 
 
+    /* The note under the chart. It is placed here, above the table, because a
+       reader who has just seen striped bars asks what they mean before they
+       start reading figures, and an answer parked in a footnote arrives after
+       they have already decided what to think.
+
+       No apology in it. The process changed and the record got better, which is
+       the whole story and a good one. */
+    function reconNoteHtml() {
+      return '<div class="recon-note">' +
+        '<p>January through May 2026 were rebuilt from records rather than tracked as the work ' +
+        'happened. <b>Documented</b> hours trace to an existing record: an invoice, a calendar ' +
+        'event, an email thread or a dated work log. <b>Estimated</b> hours are work the team ' +
+        'knows was delivered, sized from direct knowledge of it.</p>' +
+        '<p>Requests from Moss in May 2026 prompted a change in process. From June 2026 every ' +
+        'piece of retainer work carries its own task and is tracked to the minute as it happens, ' +
+        'which is why the bars from June onward are solid.</p>' +
+        '</div>';
+    }
+
     /* ── Monthly summary table, with the task detail as a per-month
        accordion so a month's figures and its tasks read as one thing ── */
     function summaryHtml() {
-      var t = totals(), ytdPct = pctOf(t.creative, allowance());
+      var t = totals();
+      var ytdPct = pctOf(t.total, allowance());
+      var anyOver = state.range.some(function (m) { return pctOf(m.total, BUDGET) > 100; });
 
       var h = '<div class="table-scroll"><table class="table"><thead><tr>' +
         '<th>Month</th>' +
-        '<th class="r">Creative</th>' +
-        '<th class="r col-gap">' + CATS[1].label + '</th>' +
-        '<th class="r col-total">Combined</th>' +
+        '<th class="r">Logged</th>' +
+        '<th class="r">Reconstructed</th>' +
+        '<th class="r col-gap col-total">Total</th>' +
+        '<th class="r">Allowance used</th>' +
         '</tr></thead><tbody>';
 
       state.range.forEach(function (m) {
-        var pct = pctOf(m.creative, BUDGET);
+        /* Percent of the contracted 50 hours per month (clause 3.1), flat.
+           Clause 4.1 also rolls up to 10 unused hours into the following month,
+           so a month following an underused one has more than 50 available. The
+           ruling is to report against the contracted 50 regardless, because a
+           denominator that moves month to month is a figure the reader cannot
+           check against anything in their own agreement. The definition block
+           above states both the rollover and the basis, so the two are never
+           read as the same number. */
+        var pct = pctOf(m.total, BUDGET);
         var open = m.month === state.selected;
         h += '<tr class="mrow" data-m="' + m.month + '" tabindex="0" aria-expanded="' + open +
              '" aria-controls="acc-' + m.month + '">';
-        // The data flag used to sit beside the month name here as well. It is
-        // stated in full when the row opens, which is both stronger and only
-        // one place.
         h += '<td><span class="mo"><span class="caret" aria-hidden="true">' + ICONS.chevron + '</span>' +
              '<span class="mo-full">' + MONTH_NAMES[m.month] + '</span>' +
              '<span class="mo-abbr">' + MONTH_ABBR[m.month] + '</span></span></td>';
-        // Each figure carries its series colour, so a row's numbers and the
-        // colour-coded task lists it opens onto are read as the same thing.
-        // A flagged month leads its figure with the warn mark, which is the
-        // same triangle the chart draws and the drawer's tag carries.
-        var cFlag = flagFor(YEAR, m.month, CATS[0].key);
-        h += '<td class="r num col-series">' +
-             (cFlag ? '<span class="flag-mark" aria-hidden="true">' + ICONS.alert + '</span>' : '') +
-             '<span style="color:' + CATS[0].inkVar + '">' + fmtH(m.creative) + '</span>' +
-             '<span class="use" style="color:' + pctColor(pct) + '">' + pct + '%</span></td>';
-        h += '<td class="r num col-series col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(m.nonCreative) + '</td>';
-        h += '<td class="r num primary col-total">' + fmtH(m.total) + '</td>';
+        h += '<td class="r num col-series" style="color:var(--creative-ink)">' + fmtH(m.logged) + '</td>';
+        // Same hue as Logged, marked by the hatch rather than recoloured: these
+        // are the same hours in the same unit, differently evidenced.
+        h += '<td class="r num col-series" style="color:var(--creative-ink)">' +
+             (m.reconstructed > 0 ? '<span class="recon-mark" aria-hidden="true"></span>' : '') +
+             fmtH(m.reconstructed) + '</td>';
+        /* The Total column is a helper, not a headline: it saves the reader
+           adding two figures in their head. Where a month has no reconstructed
+           hours there is nothing to add, so the cell is left empty rather than
+           repeating the Logged figure. Silence is the signal that nothing
+           needed adding. */
+        h += '<td class="r num primary col-gap col-total">' +
+             (m.logged > 0 && m.reconstructed > 0 ? fmtH(m.total) : '') + '</td>';
+        h += '<td class="r num">' + usePctHtml(pct) + '</td>';
         h += '</tr>';
         h += '<tr class="acc" id="acc-' + m.month + '" data-m="' + m.month + '"' + (open ? '' : ' hidden') +
-             '><td colspan="4"><div class="acc-inner">' + monthDetailHtml(m) + '</div></td></tr>';
+             '><td colspan="5"><div class="acc-inner">' + monthDetailHtml(m) + '</div></td></tr>';
       });
 
       h += '</tbody><tfoot><tr>';
       h += '<td class="ytd-label"><span class="mo-full">Year to date</span><span class="mo-abbr">Total</span></td>';
-      h += '<td class="r num" style="color:' + CATS[0].inkVar + '">' + fmtH(t.creative) +
-           '<span class="use" style="color:' + pctColor(ytdPct) + '">' + ytdPct + '%</span></td>';
-      h += '<td class="r num col-gap" style="color:' + CATS[1].inkVar + '">' + fmtH(t.nonCreative) + '</td>';
-      h += '<td class="r num col-total"><span class="grad">' + fmtH(t.total) + '</span></td>';
+      h += '<td class="r num" style="color:var(--creative-ink)">' + fmtH(t.logged) + '</td>';
+      h += '<td class="r num" style="color:var(--creative-ink)">' + fmtH(t.reconstructed) + '</td>';
+      // The year-to-date row always states every column, including this one:
+      // it is the figure the whole page is about.
+      h += '<td class="r num col-gap col-total"><span class="grad">' + fmtH(t.total) + '</span></td>';
+      h += '<td class="r num">' + usePctHtml(ytdPct) + '</td>';
       h += '</tr></tfoot></table></div>';
+
+      /* Stated once, under the table, and only when there is an over month to
+         explain. Clause 6.1 makes hours beyond the retainer a negotiated
+         supplement billed quarterly, so an over month is a contract mechanism
+         working rather than a budget breach, and the report says so plainly
+         instead of colouring it red and leaving the reader to guess. */
+      if (anyOver) {
+        h += '<p class="table-note"><b>Over 100% is not an overrun.</b> Hours beyond the monthly ' +
+             'allowance are supplemental overage, negotiated and billed quarterly under clause 6.1 ' +
+             'of the agreement.</p>';
+      }
       return h;
+    }
+
+    /* The share of the allowance, and where it runs over, what that means.
+       Plain white rather than an alarm colour: see the note under the table. */
+    function usePctHtml(pct) {
+      var over = pct > 100;
+      return '<span class="use' + (over ? ' is-over' : '') + '"' +
+        (over ? '' : ' style="color:' + pctColor(pct) + '"') + '>' + pct + '%</span>' +
+        (over ? '<span class="over-tag">Overage</span>' : '');
     }
 
     /* One month at a time: opening a row closes whichever was open, and
@@ -1740,85 +1861,87 @@
 
     }
 
-    /* What the row itself cannot show: where the hours went, and who worked
-       them. The month, its total and its Creative / Other split are all in the
-       row this hangs from, so none of them are repeated here. */
-    function taskCount(m) {
-      return (m.creativeItems || []).length + (m.nonCreativeItems || []).length;
-    }
-
-    /* Top of the drawer: who worked the month on one side, how much there is to
-       read on the other. Neither is in the row above, which already carries the
-       month, its split and its total. */
+    /* What the row itself cannot show: where the hours went. The month, its
+       split and its total are all in the row this hangs from, so none of them
+       are repeated at the top. */
     function drawerHeadHtml(m) {
-      var n = taskCount(m);
+      var n = (m.items || []).length;
+      var flag = flagFor(YEAR, m.month, 'retainer');
       return '<div class="acc-top">' +
-        (stackHtml(m.contributorIds) || '<span></span>') +
+        (flag ? flagBtnHtml(flag, true) : '<span></span>') +
         '<span class="dh-meta">' + n + (n === 1 ? ' task' : ' tasks') + ' this month</span>' +
         '</div>';
     }
 
     function monthDetailHtml(m) {
       var h = drawerHeadHtml(m);
-      h += '<div class="cat-grid">';
-      CATS.forEach(function (c) {
-        var items = m[c.items] || [];
-        // The flag rides with the series it applies to, beside its name.
-        var flag = flagFor(YEAR, m.month, c.key);
-        h += '<div class="cat">';
-        h += '<div class="cat-head"><span class="srow-label">' +
-             '<span class="swatch" style="background:' + c.inkVar + '"></span>' + c.label + '</span>' +
-             (flag ? flagBtnHtml(flag, true) : '') + '</div>';
-        h += taskRows(items, c) || '<p class="empty-note">No ' + c.label.toLowerCase() + ' time tracked this month.</p>';
-        h += catFootHtml(m, c);
-        h += '</div>';
-      });
+      h += '<div class="cat">';
+      h += taskRows(m.items) ||
+           '<p class="empty-note">No retainer time tracked this month.</p>';
+      h += catFootHtml(m);
       h += '</div>';
-      h += '<p class="acc-note">Sorted by most hours. Links open the ClickUp task where one exists.</p>';
+      h += '<p class="acc-note">Sorted by most hours. Links open the task where one exists.</p>';
       return h;
     }
 
-    /* The foot of one category's task list. The figure is the month's own total
-       for that series rather than a fresh sum of the rows, so the drawer can
-       never disagree with the row it hangs from. The two reconcile by
-       construction anyway: the API derives its monthly hours from the same
-       items it emits.
+    /* The foot of the task list. The figure is the month's own stored total
+       rather than a fresh sum of the rows, so the drawer can never disagree
+       with the row it hangs from. The two reconcile by construction anyway: the
+       API derives a month's totals from the same items it emits.
 
-       Creative also states what the month came to against its allowance. The
-       month row above carries that percentage too, and it is repeated here
-       because the reader has just finished going down the Creative rows and
-       this is where the question comes up. */
-    function catFootHtml(m, cat) {
-      var v = m[cat.hours] || 0;
+       It also states what the month came to against its allowance. The month
+       row above carries that percentage too, and it is repeated here because
+       the reader has just finished going down the rows and this is where the
+       question comes up. */
+    function catFootHtml(m) {
+      var pct = pctOf(m.total, BUDGET);
       var h = '<div class="cat-foot"><div class="cat-total">' +
-        '<span class="ct-label">' + cat.label + ' total</span>' +
-        '<span class="ct-val" style="color:' + cat.inkVar + '">' + fmtH(v) + '</span>' +
+        '<span class="ct-label">Retainer total</span>' +
+        '<span class="ct-val" style="color:var(--creative-ink)">' + fmtH(m.total) + '</span>' +
         '</div>';
-      if (cat.budgeted) {
-        var pct = pctOf(v, BUDGET);
-        h += '<p class="ct-note"><b style="color:' + pctColor(pct) + '">' + pct + '%</b>' +
-             ' of monthly budget</p>';
-      }
+      h += '<p class="ct-note">' +
+        (pct > 100
+          ? '<b>' + pct + '%</b> of monthly allowance, billed as overage under clause 6.1'
+          : '<b style="color:' + pctColor(pct) + '">' + pct + '%</b> of monthly allowance') +
+        '</p>';
       return h + '</div>';
     }
 
-    function taskRows(items, cat) {
+    /* One row per task, with its bar split the way the chart splits a month.
+       A single task can hold logged and reconstructed time at once, which is
+       why the split is drawn here rather than only on the month: the bar shows
+       that a task was partly watched and partly rebuilt, and the alternative
+       was making the reader take that on trust. */
+    function taskRows(items) {
       if (!items || !items.length) return '';
-      var max = items.reduce(function (a, t) { return Math.max(a, t.hours); }, 0);
+      var max = items.reduce(function (a, t) { return Math.max(a, t.total); }, 0);
       return '<div style="margin-top:6px">' + sortItems(items).map(function (t) {
-        var w = max > 0 ? Math.round((t.hours / max) * 100) : 0;
+        var hrs = t.hours || {};
         // Short tasks arrive rolled up into one row so the lines still sum to
         // the header; show how many were folded in.
         var name = t.aggregated
           ? t.name + ' (' + t.count + (t.count === 1 ? ' task' : ' tasks') + ')'
           : t.name;
         var link = t.url
-          ? '<a class="link" href="' + esc(t.url) + '" target="_blank" rel="noopener" title="Open “' + esc(t.name) + '” in ClickUp" aria-label="Open ' + esc(t.name) + ' in ClickUp">' + ICONS.external + '</a>'
-          : '<span class="link placeholder" title="No ClickUp link available" aria-hidden="true">' + ICONS.external + '</span>';
+          ? '<a class="link" href="' + esc(t.url) + '" target="_blank" rel="noopener" title="Open “' + esc(t.name) + '”" aria-label="Open ' + esc(t.name) + '">' + ICONS.external + '</a>'
+          : '<span class="link placeholder" title="No link available" aria-hidden="true">' + ICONS.external + '</span>';
+        // Widths are a share of the widest task in the month, so the segments
+        // of one row are to the same scale as every other row's.
+        var seg = SERIES.map(function (s) {
+          var v = hrs[s.key] || 0;
+          if (!(v > 0) || !(max > 0)) return '';
+          return '<span class="fill ' + (s.hatch === 'documented' ? 'doc' : s.hatch === 'estimated' ? 'est' : '') +
+                 '" style="width:' + ((v / max) * 100) + '%"></span>';
+        }).join('');
+        // Named in the tooltip as well as drawn, because a hatch on a 6px bar
+        // is a hint and the figures behind it should be readable.
+        var tip = t.reconstructed > 0
+          ? fmtH(hrs.logged || 0) + ' logged, ' + fmtH(t.reconstructed) + ' reconstructed'
+          : '';
         return '<div class="row">' +
           '<span class="name" title="' + esc(name) + '">' + esc(name) + '</span>' +
-          '<span class="track"><span class="fill" style="width:' + w + '%;background:' + cat.fillVar + '"></span></span>' +
-          '<span class="hrs">' + fmtH(t.hours) + '</span>' +
+          '<span class="track"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + seg + '</span>' +
+          '<span class="hrs">' + fmtH(t.total) + '</span>' +
           link +
         '</div>';
       }).join('') + '</div>';
@@ -1871,15 +1994,70 @@
         : { size: 13, weight: on ? '700' : '400' };
     }
 
-    /* The total overlay is the one series that is not a category, so it is
-       drawn in neutral ink rather than competing with Creative or Other. */
+    /* The total overlay is the one dataset that is not part of the stack, so it
+       is drawn in neutral ink rather than competing with the series. */
     function totalInk() { return printing ? '#444444' : 'rgba(255,255,255,0.78)'; }
-    function isTotalSeries(i) { return !CATS[i]; }
+    function isTotalSeries(i) { return !SERIES[i]; }
+
+    /* The two reconstruction hatches, drawn once onto an offscreen tile and
+       repeated by the canvas. Both are the series green on a transparent
+       ground at 45 degrees, and they differ only in how much of the tile the
+       stripe covers: documented is dense, estimated is sparse.
+
+       The tile is 6px for the dense hatch and 7px for the sparse one, sized so
+       the stripe and its gap divide the tile exactly. A tile that does not
+       divide evenly produces a visible seam every repeat, which at bar width
+       reads as a defect in the data rather than in the pattern.
+
+       A pattern is a bitmap, so it cannot be faded the way fade() handles a
+       colour and it will not follow a re-pointed token. Ghosting and the print
+       re-step are therefore baked into the tile, and the cache is keyed on
+       both. */
+    var hatchCache = {};
+    function hatchPattern(g, kind, alpha) {
+      var key = kind + ':' + alpha + (printing ? ':print' : '');
+      if (hatchCache[key]) return hatchCache[key];
+      var stripe = kind === 'documented' ? 3 : 2;
+      var period = kind === 'documented' ? 6 : 7;   // stripe 3 / gap 3, stripe 2 / gap 5
+      var base = printing ? '#2E9950' : SERIES_FILL;
+
+      /* Drawn as upright stripes and then rotated by the pattern's own
+         transform, rather than drawn as diagonals into a square tile.
+
+         A 45 degree stripe of period P needs a tile of P times root two to
+         repeat without a seam, which is never a whole number of pixels, and the
+         rounded tile leaves a break every repeat: the hatch renders as rows of
+         dashes and reads as a defect in the data rather than as a texture.
+         Upright stripes tile exactly at P, and the rotation is applied to the
+         finished pattern, so the geometry stays whole. */
+      var c = document.createElement('canvas');
+      c.width = period;
+      c.height = 1;
+      var x = c.getContext('2d');
+      /* A wash of the same green under the stripes. Stripes alone on a
+         transparent ground let the page's black through the gaps, and at half
+         coverage a reconstructed bar read as a different, darker colour rather
+         than as the same green with a texture over it. The wash keeps the whole
+         stack in one family; stripe density carries the distinction. */
+      x.fillStyle = rgba(base, 0.22 * alpha);
+      x.fillRect(0, 0, period, 1);
+      x.fillStyle = rgba(base, alpha);
+      x.fillRect(0, 0, stripe, 1);
+
+      var p = g.createPattern(c, 'repeat');
+      // Chromium, Firefox and Safari all carry these. If a browser does not,
+      // the hatch simply renders upright, which still reads as reconstructed.
+      if (p && p.setTransform && typeof DOMMatrix === 'function') {
+        p.setTransform(new DOMMatrix().rotate(45));
+      }
+      hatchCache[key] = p;
+      return p;
+    }
 
     /* Projected bars must not be readable as delivered hours: they are drawn as
        outlines over a textured ground, and named in the key under the chart. */
     function projFill() { return 'transparent'; }
-    function projLine(c) { return rgba(c.ink, 0.6); }
+    function projLine() { return rgba(SERIES_INK, 0.6); }
     function rgba(hex, a) {
       var n = parseInt(hex.slice(1), 16);
       return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
@@ -1897,29 +2075,52 @@
       return 'rgba(' + p[0] + ',' + p[1] + ',' + p[2] + ',' + (base * a) + ')';
     }
 
-    function barColors(catIdx, which) {
-      var c = CATS[catIdx];
-      var ghosted = emphasis !== null && emphasis !== catIdx;
+    /* Per-bar fills and strokes for one series. `g` is the chart's own 2d
+       context, which is what a canvas pattern has to be created against.
+
+       Every series returns the same green. Where a series is reconstructed the
+       fill is a hatch of that green rather than a different colour, so the
+       whole stack reads as one quantity with a texture running through part of
+       it, which is what it is. */
+    function barColors(seriesIdx, which, g) {
+      var s = SERIES[seriesIdx];
+      var ghosted = emphasis !== null && emphasis !== seriesIdx;
       return chartRows.map(function (r) {
         var dim = ghosted || (hoverMonth !== null && !(r.kind === 'month' && r.month === hoverMonth));
         var a = dim ? GHOST_A : 1;
-        if (r.projected) return which === 'fill' ? projFill() : fade(projLine(c), a);
-        var flagged = r.kind === 'month' && !!flagFor(YEAR, r.month, c.key);
-        // A flagged month is a normal bar wearing a warn outline. It used to be
-        // filled with a diagonal hatch, which made those months read as a
-        // different kind of measurement rather than as the same hours with a
-        // note attached, and collided with the texture the projections use.
-        if (which === 'fill') return fade(c.fill, a);
-        return fade(flagged ? WARN_INK : c.ink, a);
+        if (r.projected) return which === 'fill' ? projFill() : fade(projLine(), a);
+        var flagged = r.kind === 'month' && !!flagFor(YEAR, r.month, 'retainer');
+        if (which === 'fill') {
+          return s.hatch && g ? hatchPattern(g, s.hatch, a) : fade(SERIES_FILL, a);
+        }
+        // A flagged month is a normal bar wearing a warn outline.
+        return fade(flagged ? WARN_INK : SERIES_INK, a);
+      });
+    }
+
+    /* Per-bar corner radius for one series in the stack. A segment is rounded
+       only where it is the last one with hours in it, so a month with logged
+       and reconstructed time is one bar with one rounded end, not three
+       lozenges piled up.
+
+       Hidden series count as absent: switching a legend entry off has to hand
+       the rounded end to whatever is now on top. */
+    function topOfStackRadius(seriesIdx) {
+      return chartRows.map(function (r) {
+        for (var i = SERIES.length - 1; i >= 0; i--) {
+          if (state.hidden[i]) continue;
+          if (r[SERIES[i].key] > 0) return i === seriesIdx ? 4 : 0;
+        }
+        // An empty month has nothing on top, so the first series carries it.
+        return seriesIdx === 0 ? 4 : 0;
       });
     }
 
     /* The warn outline has to read as deliberate rather than as the hairline
        every other bar carries, so a flagged bar's stroke is drawn heavier. */
-    function barWidths(catIdx) {
-      var c = CATS[catIdx];
+    function barWidths() {
       return chartRows.map(function (r) {
-        return (r.kind === 'month' && !r.projected && flagFor(YEAR, r.month, c.key)) ? 2.4 : 1.5;
+        return (r.kind === 'month' && !r.projected && flagFor(YEAR, r.month, 'retainer')) ? 2.4 : 1.5;
       });
     }
 
@@ -1929,16 +2130,6 @@
     }
 
     function wireLegend() {
-      /* The total is the dataset after the categories, so pointing at its key
-         isolates it exactly the way pointing at a series does: everything that
-         is not it drops back. It has no click, so no focus handling either. */
-      var key = document.querySelector('#legend .legend-item.is-key');
-      if (key) {
-        key.addEventListener('mouseenter', function () {
-          if (chartHasTotal) applyEmphasis(CATS.length);
-        });
-        key.addEventListener('mouseleave', function () { applyEmphasis(null); });
-      }
       document.querySelectorAll('#legend .legend-item:not(.is-key)').forEach(function (b) {
         var i = parseInt(b.dataset.i);
         if (isNaN(i)) return;
@@ -1962,6 +2153,9 @@
     function chartTheme(isPrint) {
       printing = isPrint;
       projGroundPattern = null;
+      // Both hatch tiles carry the screen green baked in, so they are discarded
+      // with the projection ground and rebuilt against the print palette.
+      hatchCache = {};
       if (!chart) return;
       var s = chart.options.scales;
       // Which axis carries the months flips with the orientation.
@@ -2023,29 +2217,35 @@
         if (c.options.indexAxis !== 'y') return;
         var g = c.ctx;
         var font = getComputedStyle(document.body).fontFamily;
-        c.data.datasets.forEach(function (ds, di) {
-          if (isTotalSeries(di) || !c.isDatasetVisible(di)) return;
-          var ghosted = emphasis !== null && emphasis !== di;
-          var meta = c.getDatasetMeta(di);
-          meta.data.forEach(function (bar, bi) {
-            var r = chartRows[bi];
-            if (!r) return;
-            var x = bar.x + END_GAP;
-            var a = ghosted ? GHOST_A : 1;
-            if (r.kind === 'month' && flagFor(YEAR, r.month, CATS[di].key)) {
-              drawWarnIcon(g, x + 7, bar.y, 14,
-                fade(printing ? '#9A6512' : WARN_INK, a));
-              x += FLAG_W;
-            }
-            g.save();
-            g.font = '600 12.5px ' + font;
-            g.textAlign = 'left';
-            g.textBaseline = 'middle';
-            g.fillStyle = r.projected
-              ? PROJ_INK : fade(printing ? '#333333' : CATS[di].ink, a);
-            g.fillText(fmtH(ds.data[bi]), x, bar.y);
-            g.restore();
-          });
+        /* One figure per month, not one per series. The three series are
+           stacked into a single bar now, so three labels would land on top of
+           each other at the same y. The month's total is what the reader wants
+           off the end of a bar anyway; the split is in the table below and in
+           the tooltip. The last visible segment is what the label is placed
+           against, so it clears whatever the stack actually ends on. */
+        var last = null;
+        for (var di = c.data.datasets.length - 1; di >= 0; di--) {
+          if (!isTotalSeries(di) && c.isDatasetVisible(di)) { last = di; break; }
+        }
+        if (last === null) return;
+        var meta = c.getDatasetMeta(last);
+        meta.data.forEach(function (bar, bi) {
+          var r = chartRows[bi];
+          if (!r) return;
+          var x = bar.x + END_GAP;
+          var a = (emphasis !== null) ? GHOST_A : 1;
+          if (r.kind === 'month' && flagFor(YEAR, r.month, 'retainer')) {
+            drawWarnIcon(g, x + 7, bar.y, 14, fade(printing ? '#9A6512' : WARN_INK, a));
+            x += FLAG_W;
+          }
+          g.save();
+          g.font = '600 12.5px ' + font;
+          g.textAlign = 'left';
+          g.textBaseline = 'middle';
+          g.fillStyle = r.projected
+            ? PROJ_INK : fade(printing ? '#333333' : SERIES_INK, a);
+          g.fillText(fmtH(r.total), x, bar.y);
+          g.restore();
         });
       }
     };
@@ -2070,6 +2270,43 @@
       projGroundPattern = g.createPattern(c, 'repeat');
       return projGroundPattern;
     }
+
+    /* The monthly allowance, drawn across the plot.
+
+       Without it a reader has to count gridlines to see where 50 hours sits,
+       which is the one comparison every figure on this page is making. It is
+       drawn in neutral ink rather than in a series or status colour: the line
+       is the contract, not a verdict on the bars that cross it. Dashed, so it
+       reads as a threshold rather than as another month of data.
+
+       Vertical layout only. Rotated, the value axis runs left to right and the
+       hours are written at the end of each bar instead, so a vertical rule
+       through eight rows of labels would cost more than it explains. */
+    var allowanceLine = {
+      id: 'allowanceLine',
+      afterDatasetsDraw: function (c) {
+        if (c.options.indexAxis === 'y' || !(BUDGET > 0)) return;
+        var val = c.scales.y;
+        if (!val || BUDGET > val.max) return;
+        var y = val.getPixelForValue(BUDGET);
+        var a = c.chartArea;
+        var g = c.ctx;
+        g.save();
+        g.strokeStyle = printing ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.42)';
+        g.setLineDash([5, 4]);
+        g.lineWidth = 1;
+        g.beginPath();
+        g.moveTo(a.left, y); g.lineTo(a.right, y);
+        g.stroke();
+        g.setLineDash([]);
+        g.font = '700 11px ' + getComputedStyle(document.body).fontFamily;
+        g.textAlign = 'right';
+        g.textBaseline = 'bottom';
+        g.fillStyle = printing ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)';
+        g.fillText(BUDGET + 'h monthly allowance', a.right - 2, y - 5);
+        g.restore();
+      }
+    };
 
     var projBoundary = {
       id: 'projBoundary',
@@ -2165,7 +2402,7 @@
         if (c.options.indexAxis === 'y') return;
         var p = chartProjection;
         if (!p || p.from > 11 || !p.spread) return;
-        var meta = c.getDatasetMeta(CATS.length);
+        var meta = c.getDatasetMeta(SERIES.length);
         if (!meta || !meta.data || !meta.data.length) return;
         var val = c.scales.y;
         if (!val) return;
@@ -2183,7 +2420,7 @@
 
         // Isolating a series pushes the band back with the total line it belongs
         // to, so the emphasis reads as one move rather than the band hanging on.
-        var faded = hoverMonth !== null || (emphasis !== null && emphasis !== CATS.length);
+        var faded = hoverMonth !== null || (emphasis !== null && emphasis !== SERIES.length);
         var g = c.ctx;
         var hiPts = pts.map(function (pt) { return { x: pt.x, y: pt.hi }; });
         var loPts = pts.map(function (pt) { return { x: pt.x, y: pt.lo }; });
@@ -2281,10 +2518,10 @@
     function updateLegendTotals() {
       var t = totals();
       document.querySelectorAll('#legend .legend-item').forEach(function (b) {
-        var c = CATS[parseInt(b.dataset.i)];
+        var s = SERIES[parseInt(b.dataset.i)];
         var v = b.querySelector('.val');
-        if (!v) return;
-        v.textContent = fmtH(c ? t[c.hours] : t.total);
+        if (!v || !s) return;
+        v.textContent = fmtH(t[s.key]);
       });
     }
 
@@ -2320,16 +2557,16 @@
           ds.pointBorderColor = pointColors();
           return;
         }
-        ds.backgroundColor = barColors(i, 'fill');
+        ds.backgroundColor = barColors(i, 'fill', chart.ctx);
         ds.borderColor = barColors(i, 'line');
-        ds.borderWidth = barWidths(i);
+        ds.borderWidth = barWidths();
       });
       chart.update('none');
     }
     function pointColors() {
       var ink = totalInk();
       // Isolating the total itself is the one case where these stay lit.
-      var ghosted = emphasis !== null && emphasis !== CATS.length;
+      var ghosted = emphasis !== null && emphasis !== SERIES.length;
       return chartRows.map(function (r) {
         if (r.projected) return PROJ_INK;
         var dim = ghosted || (hoverMonth !== null && r.month !== hoverMonth);
@@ -2350,10 +2587,16 @@
       chartProjection = SHOW_PROJECTIONS ? p : null;
       var rows = state.months.map(function (m) {
         var projected = m.month >= p.from;
-        var c = projected ? (p.creative[m.month] || 0) : m.creative;
-        var o = projected ? (p.nonCreative[m.month] || 0) : m.nonCreative;
+        /* A projected month has no evidence class: it has not happened, so
+           there is nothing yet to have logged or reconstructed. Its whole
+           figure rides in the logged slot and the projected treatment (a hollow
+           bar over the textured ground) is what says it is an estimate. */
+        var t = projected ? (p.total[m.month] || 0) : m.total;
         return { kind: 'month', month: m.month, projected: projected,
-                 creative: c, nonCreative: o, total: c + o };
+                 logged: projected ? t : m.logged,
+                 documented: projected ? 0 : m.documented,
+                 estimated: projected ? 0 : m.estimated,
+                 total: t };
       });
       // Dropped rather than drawn empty, so the plot ends where tracked time
       // ends instead of running on into four blank months.
@@ -2378,34 +2621,34 @@
          until the instance holding it is released. */
       if (chart) { chart.destroy(); chart = null; }
 
-      /* Seven months of paired vertical bars on a 390px screen leaves each bar
-         about 14px wide, with the figures unreadable and the flag markers
-         floating in space. Rotated, every month gets a full row: the bars are
-         thick, the month labels are horizontal, and the hours sit at the end of
-         each bar. Height grows with the range so bar thickness is constant. */
+      /* Seven months of vertical bars on a 390px screen leaves each bar about
+         28px wide, with the figures unreadable and the flag markers floating in
+         space. Rotated, every month gets a full row: the bars are thick, the
+         month labels are horizontal, and the hours sit at the end of each bar.
+         Height grows with the range so bar thickness is constant. */
       chartRows = buildRows();
-      var day = view.mode === 'day';
-      /* The rotated layout exists so seven fat month rows beat seven hair-thin
-         columns on a phone. A month of days is 28 to 31 rows, which would be a
-         metre of scrolling, so the day view stays vertical at every width. */
-      var horiz = isNarrow() && !day;
-      chartHasTotal = !horiz && !day;
+      var horiz = isNarrow();
+      /* The stack top is the month's total, so a line tracing it would draw the
+         same figure twice. The line survives for the projection feature only,
+         where it is what the estimate band hangs off, and it comes back with
+         SHOW_PROJECTIONS rather than being deleted. */
+      chartHasTotal = !horiz && SHOW_PROJECTIONS;
       var wrap = el.parentNode;
       // Height of the floating legend, reserved at the top of the plot area so
       // the tallest bar or the total line can never run underneath it.
       var LEGEND_H = window.matchMedia('(max-width: 700px)').matches ? 0 : 78;
       wrap.style.height = horiz ? (chartRows.length * 52 + 26 + LEGEND_H) + 'px' : '';
 
-      /* The widest bar and whether it carries a flag, which together size the
-         right-hand gutter the end labels are written into. */
+      /* The longest bar and whether it carries a flag, which together size the
+         right-hand gutter the end labels are written into. The bars are stacked
+         now, so the longest one is the biggest month total rather than the
+         biggest single series. */
       var peak = 0, peakFlagged = false;
       chartRows.forEach(function (r) {
-        CATS.forEach(function (c) {
-          if (r[c.hours] > peak) {
-            peak = r[c.hours];
-            peakFlagged = r.kind === 'month' && !!flagFor(YEAR, r.month, c.key);
-          }
-        });
+        if (r.total > peak) {
+          peak = r.total;
+          peakFlagged = r.kind === 'month' && !!flagFor(YEAR, r.month, 'retainer');
+        }
       });
       var gutter = Math.ceil(fmtH(peak).length * 8.1) + END_GAP + 12 + (peakFlagged ? FLAG_W : 0);
 
@@ -2435,48 +2678,52 @@
                to every series, not the visible ones, also means hiding a series
                does not silently rescale the bars still on screen. */
             x: { ticks: { display: false }, grid: { color: GRID },
-                 border: { display: false }, beginAtZero: true, max: peak || undefined },
+                 border: { display: false }, beginAtZero: true, max: peak || undefined,
+                 stacked: true },
             y: { ticks: { font: catTickFont, color: catTickColor, padding: 4 },
-                 grid: { display: false }, border: { display: true, color: AXIS, width: 1 } }
+                 grid: { display: false }, border: { display: true, color: AXIS, width: 1 },
+                 stacked: true }
           }
         : {
             /* A month of days will not carry 31 labels at this width, so the day
                axis thins them out rather than rotating them to fit. */
-            x: { ticks: { autoSkip: day, maxTicksLimit: day ? 10 : undefined,
-                          maxRotation: 0, font: catTickFont, color: catTickColor },
+            x: { ticks: { maxRotation: 0, font: catTickFont, color: catTickColor },
                  grid: { display: false }, border: { display: true, color: AXIS, width: 1 },
-                 stacked: day },
+                 stacked: true },
             y: { ticks: { font: { size: 12.5 }, color: 'rgba(255,255,255,0.55)',
                           callback: function (v) { return v + 'h'; }, padding: 6 },
                  grid: { color: GRID }, border: { display: false },
-                 beginAtZero: true, grace: '10%', stacked: day,
+                 beginAtZero: true, grace: '10%', stacked: true,
                  suggestedMax: bandTop || undefined }
           };
 
       chart = new Chart(el, {
         type: 'bar',
         // projBand after projBoundary: the band sits over the textured ground.
-        plugins: [barEndLabels, projBoundary, projBand],
+        plugins: [barEndLabels, allowanceLine, projBoundary, projBand],
         data: {
           labels: chartRows.map(rowLabel),
-          datasets: CATS.map(function (c, i) {
+          datasets: SERIES.map(function (s, i) {
             return {
-              label: c.label,
-              data: chartRows.map(function (r) { return r[c.hours]; }),
-              backgroundColor: barColors(i, 'fill'),
+              label: s.label,
+              data: chartRows.map(function (r) { return r[s.key]; }),
+              backgroundColor: barColors(i, 'fill', el.getContext('2d')),
               borderColor: barColors(i, 'line'),
-              borderWidth: barWidths(i),
-              borderRadius: 4,
+              borderWidth: barWidths(),
+              /* Only the segment that finishes a stack gets the radius. Rounding
+                 every segment would draw a curve into the middle of a bar, which
+                 reads as a gap between two quantities rather than as one bar
+                 made of three parts. */
+              borderRadius: topOfStackRadius(i),
               // Square off the axis end, round the value end.
               borderSkipped: horiz ? 'left' : 'bottom',
               hidden: !!state.hidden[i],
-              categoryPercentage: horiz ? 0.74 : (day ? 0.9 : 0.66),
-              barPercentage: horiz ? 0.9 : (day ? 0.92 : 0.86),
-              borderRadius: day ? 2 : 4,
-              stack: day ? 'd' : undefined,
+              categoryPercentage: horiz ? 0.74 : 0.66,
+              barPercentage: horiz ? 0.9 : 0.86,
+              stack: 'retainer',
               order: 1
             };
-          }).concat(horiz || day ? [] : [totalLineDataset()])
+          }).concat(chartHasTotal ? [totalLineDataset()] : [])
         },
         options: {
           indexAxis: horiz ? 'y' : 'x',
@@ -2521,7 +2768,10 @@
               titleFont: { size: 13, weight: '700' },
               bodyFont: { size: 13 },
               footerFont: { size: 12, weight: '500' },
-              footerColor: '#F5C26B',
+              // Neutral, because the footer now carries the month's total. Warn
+              // yellow is reserved for data integrity and would say the wrong
+              // thing about an ordinary figure.
+              footerColor: 'rgba(255,255,255,0.78)',
               displayColors: true,
               boxWidth: 9, boxHeight: 9, boxPadding: 5, usePointStyle: false,
               callbacks: {
@@ -2529,27 +2779,31 @@
                   var r = chartRows[items[0].dataIndex];
                   return r ? rowTitle(r) : '';
                 },
+                /* One line per series with hours in it. A stacked bar shows
+                   three entries at once, so a series contributing nothing to
+                   this month is dropped rather than printed as a zero: on a
+                   solid month that would be two lines of nothing under the one
+                   line that matters. */
                 label: function (c) {
                   // The value lives on whichever axis is not the category one.
                   var v = c.chart.options.indexAxis === 'y' ? c.parsed.x : c.parsed.y;
-                  var cat = CATS[c.datasetIndex];
-                  if (!cat) return ' Combined: ' + fmtH(v);
-                  var txt = ' ' + cat.label + ': ' + fmtH(v);
-                  if (cat.budgeted) txt += '  ·  ' + pctOf(v, BUDGET) + '% of ' + BUDGET + 'h';
-                  return txt;
+                  var s = SERIES[c.datasetIndex];
+                  if (!s) return ' Total: ' + fmtH(v);
+                  if (!(v > 0)) return '';
+                  return ' ' + s.label + ': ' + fmtH(v);
                 },
+                /* The month's total and what it came to against the allowance,
+                   stated once under the split rather than repeated on each of
+                   the three lines above. */
                 footer: function (items) {
                   var r = chartRows[items[0].dataIndex];
-                  if (r && r.projected) return 'Estimate, not tracked time.';
-                  var notes = [];
-                  items.forEach(function (it) {
-                    if (isTotalSeries(it.datasetIndex)) return;
-                    var row = chartRows[it.dataIndex];
-                    if (!row || row.kind !== 'month') return;
-                    var f = flagFor(YEAR, row.month, CATS[it.datasetIndex].key);
-                    if (f && notes.indexOf(f.label) === -1) notes.push(f.label);
-                  });
-                  return notes.length ? '⚠ ' + notes.join(', ') + '. Select for detail.' : '';
+                  if (!r) return '';
+                  if (r.projected) return 'Estimate, not tracked time.';
+                  var lines = [fmtH(r.total) + ' total  ·  ' +
+                               pctOf(r.total, BUDGET) + '% of ' + BUDGET + 'h'];
+                  var f = r.kind === 'month' ? flagFor(YEAR, r.month, 'retainer') : null;
+                  if (f) lines.push('⚠ ' + f.label + '. Select for detail.');
+                  return lines.join('\n');
                 }
               }
             }
@@ -2764,16 +3018,20 @@
 
     function exportSummary() {
       var t = totals(), allow = allowance();
-      var rows = [['Month', 'Creative hours', 'Retainer budget (h)', 'Creative % used', 'Other hours (SOW)', 'Combined hours', 'Data note']];
+      var rows = [['Month', 'Logged (h)', 'Reconstructed, documented (h)',
+                   'Reconstructed, estimated (h)', 'Total (h)', 'Monthly allowance (h)',
+                   'Allowance used', 'Data note']];
       state.range.forEach(function (m) {
-        var f = flagFor(YEAR, m.month, 'creative');
-        rows.push([MONTH_NAMES[m.month] + ' ' + YEAR, m.creative.toFixed(2), BUDGET,
-                   pctOf(m.creative, BUDGET) + '%', m.nonCreative.toFixed(2), m.total.toFixed(2),
+        var f = flagFor(YEAR, m.month, 'retainer');
+        rows.push([MONTH_NAMES[m.month] + ' ' + YEAR, m.logged.toFixed(2),
+                   m.documented.toFixed(2), m.estimated.toFixed(2), m.total.toFixed(2),
+                   BUDGET, pctOf(m.total, BUDGET) + '%',
                    f ? f.label + ': ' + f.detail : '']);
       });
       rows.push([]);
-      rows.push(['Year to date', t.creative.toFixed(2), allow, pctOf(t.creative, allow) + '%',
-                 t.nonCreative.toFixed(2), t.total.toFixed(2), '']);
+      rows.push(['Year to date', t.logged.toFixed(2), t.documented.toFixed(2),
+                 t.estimated.toFixed(2), t.total.toFixed(2), allow,
+                 pctOf(t.total, allow) + '%', '']);
       rows.push([]);
       rows.push(['Generated', (state.generatedAt || new Date()).toISOString(), 'Source', 'ClickUp time tracking']);
       download('moss-hours-' + YEAR + '-summary-' + stampSuffix() + '.csv', rows);
@@ -2781,23 +3039,25 @@
 
     function exportYear() {
       var t = totals(), allow = allowance(), months = allowanceMonths();
-      var rows = [['Moss hours report', YEAR + ' year summary']];
+      var rows = [['Moss retainer hours', YEAR + ' year summary']];
       rows.push([]);
       rows.push(['Period', MONTH_NAMES[state.range[0].month] + ' to ' +
                  MONTH_NAMES[state.range[state.range.length - 1].month] + ' ' + YEAR]);
       rows.push(['Months of retainer', months]);
-      rows.push(['Retainer budget (h/month)', BUDGET]);
+      rows.push(['Monthly allowance (h)', BUDGET]);
       rows.push([]);
-      rows.push(['Category', 'Hours', 'Available (h)', '% used', 'Share of combined']);
-      rows.push(['Creative (retainer)', t.creative.toFixed(2), allow, pctOf(t.creative, allow) + '%',
-                 (t.total > 0 ? Math.round((t.creative / t.total) * 100) : 0) + '%']);
-      rows.push(['Other (SOW / project work)', t.nonCreative.toFixed(2), '', '',
-                 (t.total > 0 ? Math.round((t.nonCreative / t.total) * 100) : 0) + '%']);
-      rows.push(['Combined delivered', t.total.toFixed(2), '', '', '100%']);
+      rows.push(['How the hours are evidenced', 'Hours', 'Share of total']);
+      var share = function (v) { return (t.total > 0 ? Math.round((v / t.total) * 100) : 0) + '%'; };
+      rows.push(['Logged as it happened', t.logged.toFixed(2), share(t.logged)]);
+      rows.push(['Reconstructed, documented', t.documented.toFixed(2), share(t.documented)]);
+      rows.push(['Reconstructed, estimated', t.estimated.toFixed(2), share(t.estimated)]);
+      rows.push(['Total delivered', t.total.toFixed(2), '100%']);
       rows.push([]);
-      rows.push(['Retainer months consumed', fmtMonths(t.creative / BUDGET) + ' of ' + months]);
+      rows.push(['Allowance available (h)', allow]);
+      rows.push(['Allowance used', pctOf(t.total, allow) + '%']);
+      rows.push(['Retainer months consumed', fmtMonths(t.total / BUDGET) + ' of ' + months]);
 
-      var flags = flagsInRange(YEAR, state.range, 'creative');
+      var flags = flagsInRange(YEAR, state.range, 'retainer');
       if (flags.length) {
         rows.push([]);
         rows.push(['Data note', flags[0].label + ': ' + monthSpanLabel(flags[0])]);
@@ -2809,14 +3069,16 @@
     }
 
     function exportLineItems() {
-      var rows = [['Month', 'Category', 'Task', 'Hours', 'ClickUp link', 'Data note']];
+      var rows = [['Month', 'Task', 'Logged (h)', 'Reconstructed, documented (h)',
+                   'Reconstructed, estimated (h)', 'Total (h)', 'Link', 'Data note']];
       state.range.forEach(function (m) {
-        CATS.forEach(function (c) {
-          var f = flagFor(YEAR, m.month, c.key);
-          sortItems(m[c.items] || []).forEach(function (t) {
-            rows.push([MONTH_NAMES[m.month] + ' ' + YEAR, c.label, t.name, t.hours.toFixed(2),
-                       t.url || '', f ? f.label : '']);
-          });
+        var f = flagFor(YEAR, m.month, 'retainer');
+        sortItems(m.items || []).forEach(function (t) {
+          var h = t.hours || {};
+          rows.push([MONTH_NAMES[m.month] + ' ' + YEAR, t.name,
+                     (h.logged || 0).toFixed(2), (h.documented || 0).toFixed(2),
+                     (h.estimated || 0).toFixed(2), t.total.toFixed(2),
+                     t.url || '', f ? f.label : '']);
         });
       });
       rows.push([]);
@@ -2827,6 +3089,18 @@
     function wireChrome() {
       document.getElementById('refreshBtn').innerHTML = ICONS.refresh;
       document.getElementById('refreshBtn').addEventListener('click', function () { load(true); });
+      renderSlaLink();
+    }
+
+    /* The agreement, in the footer beside the agency link and the freshness
+       readout. Labelled with what the document is and when it was executed, so
+       a reader knows what they are opening before they open it. */
+    function renderSlaLink() {
+      var el = document.getElementById('footSla');
+      if (!el || !SLA_DOCUMENT_URL) return;
+      el.innerHTML = '<span class="sla-label">Service Level Agreement, executed 27 February 2025</span>' +
+        '<a class="foot-link" href="' + esc(SLA_DOCUMENT_URL) + '" target="_blank" rel="noopener">' +
+        'View the signed agreement</a>';
     }
 
     /* The export control lives inside the section it exports, which is rebuilt

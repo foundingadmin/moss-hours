@@ -1,0 +1,9 @@
+# The frozen v1 report. It is committed on purpose and deployed on purpose
+# never: a directory of report files sitting inside a Vercel project is exactly
+# the thing a future config change picks up by accident.
+_archive/
+
+# The rundoc is internal. It quotes the signed agreement, names ClickUp folder
+# ids and works through the commercial reasoning behind the rebuild, none of
+# which should be fetchable from the URL the client has.
+RUNDOC.md
