@@ -15,6 +15,9 @@ prints. No ClickUp token needed. `npm run check` before you commit. The
   ClickUp permalink, and returns clean JSON (CORS enabled).
 - **`index.html`**: a self-contained, client-facing hours **report** (no build
   step) styled with the [Founding Creative brand system](https://brand.foundingcreative.com).
+- **`construction.html`**: a self-contained holding page. While
+  [under construction mode](#under-construction-mode) is on it is the only thing
+  the deployed site serves.
 - **`assets/`**: the Founding Creative wordmark used in the masthead and the
   client wordmark used in the report title, vendored so the report never depends
   on a third-party host at render time.
@@ -562,6 +565,41 @@ you can verify the mapping without redeploying. If `memberCount` is 1, the
 The report calls the API at the same origin (`/api/time`), so once deployed it
 works without further configuration. To point it at a different API, append
 `?api=https://your-deploy.vercel.app/api/time`.
+
+### Under construction mode
+
+**The report is currently hidden.** `vercel.json` routes every request to
+`construction.html`, so a visitor gets the holding page and nothing else: not
+the report, not `/api/time`, not a fixture. `/assets` is the single exception,
+because the holding page wears the same wordmark as the report.
+
+To put the report back, delete the `routes` array from `vercel.json` and
+redeploy. That is the whole switch. `construction.html` stays where it is,
+costing nothing and ready for the next time.
+
+Three things about it are worth knowing before changing any of it:
+
+1. **`routes`, not `rewrites`.** A `rewrites` entry is only consulted once the
+   filesystem has been checked, so a catch-all rewrite cannot shadow a file that
+   exists and `index.html` would still answer at `/`. `routes` is the older,
+   lower-level property, matched in order and *before* the filesystem, which is
+   what makes hiding a deployed file possible at all. It cannot be combined with
+   `rewrites`, `redirects` or `headers` in the same config, and there are none
+   here.
+2. **The holding page is served `no-store`**, so no one is left looking at a
+   cached copy of it after the routes come off.
+3. **The response is a plain 200.** A 503 is the honest status for a maintenance
+   page and is what an uptime monitor wants to see, but this URL is a private
+   link shared with one client rather than something crawled, so the page
+   carries `noindex` and leaves the status alone.
+
+`npm run dev` is unaffected. The static server knows nothing about
+`vercel.json`, so the report still opens against the fixtures while the deployed
+site is hidden, which is the point: this mode exists to cover work in progress.
+Open `/construction.html` there to preview the holding page itself.
+
+`npm run check` warns for as long as the routes are in place, so the switch
+cannot be left on unnoticed.
 
 ### Traffic (Vercel Web Analytics)
 
