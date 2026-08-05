@@ -58,17 +58,27 @@
       padding: 48px 34px;
     }
 
+    /* Every line in the card is centred, so each one is centred on its own
+       terms rather than through a shared `p` rule. A generic `p` selector used
+       to set `max-width` and `margin-inline: auto` here, and `.eyebrow`'s own
+       `margin` shorthand outranked the auto margins, so the eyebrow got the
+       narrow box without the centring and sat flush left inside it. */
     .eyebrow {
-      margin: 0 0 14px;
+      margin: 0 auto 14px;
       font-size: 12.5px;
       font-weight: 700;
       letter-spacing: 0.08em;
+      /* Tracking adds its space after the last letter too, so a centred line
+         sits half a space left of true centre. The indent shifts the line by
+         its full value rather than being halved by the centring, so it is half
+         the tracking, not all of it. Measured, not guessed. */
+      text-indent: 0.04em;
       text-transform: uppercase;
       color: rgba(255, 255, 255, 0.62);
     }
 
     h1 {
-      margin: 0 0 14px;
+      margin: 0 auto 14px;
       font-family: var(--font-display, 'Gelasio', Georgia, serif);
       /* Sized like the report title, which is the heading this one stands in
          for. */
@@ -79,26 +89,13 @@
       color: var(--white, #FFFFFF);
     }
 
-    p { margin: 0; max-width: 34ch; margin-inline: auto; }
-
-    .foot-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--white, #FFFFFF);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      text-decoration-thickness: 1px;
-      text-decoration-color: rgba(255, 255, 255, 0.28);
-      transition: color .14s ease, text-decoration-color .14s ease;
+    /* Balanced rather than filled, so two lines come out near equal instead of
+       a full line above a stub. */
+    .lede {
+      margin: 0 auto;
+      max-width: 32ch;
+      text-wrap: balance;
     }
-    .foot-link:hover {
-      color: var(--holo-cyan, #69EEFF);
-      text-decoration-color: var(--holo-cyan, #69EEFF);
-    }
-    .foot-link img { display: block; height: 15px; width: auto; }
 
     @media (max-width: 560px) {
       .page { gap: 28px; padding: 48px 18px; }
@@ -115,14 +112,9 @@
 
     <div class="card">
       <p class="eyebrow">Moss · Hours Report</p>
-      <h1>Under construction</h1>
-      <p>This report is being updated. It will be back shortly.</p>
+      <h1>Punch list in progress</h1>
+      <p class="lede">A few last items before handover. Back shortly.</p>
     </div>
-
-    <a class="foot-link" href="https://foundingcreative.com" target="_blank" rel="noopener">
-      <img src="assets/fc-icon-white.svg" alt="" />
-      <span>foundingcreative.com</span>
-    </a>
   </main>
 </body>
 </html>
